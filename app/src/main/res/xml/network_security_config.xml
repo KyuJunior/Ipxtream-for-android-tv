@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Configuration for IPXtream TV.
+
+  Most IPTV providers serve streams over plain HTTP (not HTTPS).
+  Without this file, Android 9+ blocks all cleartext HTTP by default.
+
+  This config allows cleartext HTTP ONLY for traffic (stream URLs, API calls).
+  Certificate pinning can be added per-domain in a future security hardening pass.
+-->
+<network-security-config>
+    <!-- Allow cleartext for all domains (IPTV servers are typically HTTP) -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <!-- Trust the device's built-in CA store -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

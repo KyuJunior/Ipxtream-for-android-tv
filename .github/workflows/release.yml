@@ -1,0 +1,89 @@
+name: Auto Release APK
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Auto Increment Version
+        id: versioning
+        run: |
+          gradle_file="app/build.gradle.kts"
+          
+          # Read current versionName and versionCode
+          current_version=$(grep -oP 'versionName\s*=\s*"\K[^"]+' $gradle_file)
+          current_code=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' $gradle_file)
+          
+          echo "Current Version Name: $current_version"
+          echo "Current Version Code: $current_code"
+          
+          # Increment patch version (e.g. 1.0.0 -> 1.0.1)
+          IFS='.' read -r major minor patch <<< "$current_version"
+          new_patch=$((patch + 1))
+          new_version="$major.$minor.$new_patch"
+          new_code=$((current_code + 1))
+          
+          echo "New Version Name: $new_version"
+          echo "New Version Code: $new_code"
+          
+          # Update build.gradle.kts
+          sed -i "s/versionName\s*=\s*\"$current_version\"/versionName   = \"$new_version\"/g" $gradle_file
+          sed -i "s/versionCode\s*=\s*$current_code/versionCode   = $new_code/g" $gradle_file
+          
+          # Set outputs
+          echo "new_version=v$new_version" >> $GITHUB_OUTPUT
+          echo "new_version_raw=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Debug & Release APKs
+        run: ./gradlew assembleDebug assembleRelease
+        env:
+          RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+
+      - name: Commit and Push Version Bump
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/build.gradle.kts
+          git commit -m "chore: bump version to ${{ steps.versioning.outputs.new_version }}"
+          git push origin main
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versioning.outputs.new_version }}
+          name: Release ${{ steps.versioning.outputs.new_version }}
+          body: |
+            Automated release for version ${{ steps.versioning.outputs.new_version }}.
+            
+            This release contains the latest changes pushed to the main branch. The package is signed and ready to install on Android TV.
+          draft: false
+          prerelease: false
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            app/build/outputs/apk/debug/app-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

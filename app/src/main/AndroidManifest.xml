@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ─── Permissions ─────────────────────────────────────────────────── -->
+
+    <!-- Required for all HTTP/HTTPS traffic (Retrofit + OkHttp + ExoPlayer) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Required to start DownloadService as a foreground service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Android 14+: explicit type required for foreground services -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <!-- Android 13+: required to show the download progress notification -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- Required to prompt package installation for in-app updates -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- ─── TV Feature Declaration ──────────────────────────────────────── -->
+    <!-- Declares this as a TV app; required for the Leanback launcher icon  -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <!-- Touchscreen is not available on TV — mark as NOT required           -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- ─── Application ─────────────────────────────────────────────────── -->
+    <application
+        android:label="IPXtream TV"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.IpxTream"
+        android:supportsRtl="true"
+        android:allowBackup="false"
+        android:networkSecurityConfig="@xml/network_security_config">
+
+        <!-- ── Login Activity (Entry Point) ──────────────────────────────── -->
+        <!--
+             This is the LEANBACK_LAUNCHER entry point — Android TV uses this
+             category instead of LAUNCHER to identify TV apps.
+        -->
+        <activity
+            android:name=".ui.login.LoginActivity"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <!-- TV launcher icon — required for the app to appear on the TV home screen -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- ── Dashboard Activity (Main Screen after Login) ──────────────── -->
+        <!--
+             Not exported — only launched from LoginActivity via explicit Intent.
+             configChanges keeps the Activity alive on Focus/Input changes
+             (common on TV when switching HDMI sources).
+        -->
+        <activity
+            android:name=".ui.dashboard.DashboardActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation" />
+
+        <!-- ── Download Service ───────────────────────────────────────────── -->
+        <!--
+             foregroundServiceType="dataSync" is required on Android 14+ for
+             services that perform background file I/O.
+             NOT exported — only started via explicit Intent from DownloadController.
+        -->
+        <service
+            android:name=".data.download.DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

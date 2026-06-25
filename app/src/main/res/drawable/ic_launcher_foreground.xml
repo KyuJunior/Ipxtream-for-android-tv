@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Launcher icon foreground — a cyan diamond / play-button mark.
+  Used by the adaptive icon (API 26+).
+  The safe zone is the inner 72dp of the 108dp canvas.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer diamond -->
+    <path
+        android:fillColor="#00D4FF"
+        android:pathData="M54,18 L90,54 L54,90 L18,54 Z" />
+
+    <!-- Inner ring cutout (dark) -->
+    <path
+        android:fillColor="#0B1520"
+        android:pathData="M54,32 L76,54 L54,76 L32,54 Z" />
+
+    <!-- Centre dot (cyan fill — looks like a play triangle when small) -->
+    <path
+        android:fillColor="#00D4FF"
+        android:pathData="M54,44 L66,54 L54,64 L42,54 Z" />
+
+</vector>

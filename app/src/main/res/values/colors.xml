@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches Color.kt SlateDeep = 0xFF0B1520 — used by the Activity windowBackground -->
+    <color name="slate_deep">#FF0B1520</color>
+</resources>

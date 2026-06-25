@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      Base application theme.
+      The app uses Jetpack Compose for all UI, so this theme only needs to
+      satisfy the Activity window — it is NOT used for any XML layouts.
+
+      NoActionBar is required: Compose manages its own top bar / HUD.
+      The background colour matches SlateDeep (0xFF0B1520) so there is no
+      white flash during Activity launch before Compose draws its first frame.
+    -->
+    <style name="Theme.IpxTream" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Match Compose SlateDeep background to prevent white flash on start -->
+        <item name="android:windowBackground">@color/slate_deep</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowAnimationStyle">@null</item>
+
+        <!-- Leanback / TV status bar -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+</resources>
