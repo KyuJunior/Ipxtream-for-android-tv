@@ -49,7 +49,7 @@ android {
         val keyPass = System.getenv("RELEASE_KEY_PASSWORD")
         val keyAl = System.getenv("RELEASE_KEY_ALIAS")
 
-        if (storePass != null && keyPass != null && keyAl != null) {
+        if (!storePass.isNullOrEmpty() && !keyPass.isNullOrEmpty() && !keyAl.isNullOrEmpty()) {
             create("release") {
                 storeFile = file("../ipxtream_keystore.jks")
                 storePassword = storePass
@@ -64,12 +64,13 @@ android {
             isMinifyEnabled = false
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                // Fallback to debug keys if production secrets are not available
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
         debug {
-            if (signingConfigs.findByName("release") != null) {
-                signingConfig = signingConfigs.getByName("release")
-            }
+            // Debug builds should always fall back to default debug signing
         }
     }
 }
