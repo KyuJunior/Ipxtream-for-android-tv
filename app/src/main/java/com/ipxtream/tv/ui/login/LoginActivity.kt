@@ -50,6 +50,8 @@ class LoginActivity : ComponentActivity() {
             LoginViewModelFactory(credentialStore)
         )[LoginViewModel::class.java]
 
+        val isAddAccountMode = intent.getBooleanExtra(EXTRA_ADD_ACCOUNT, false)
+
         // ── Observe success → navigate to Dashboard ───────────────────────────
         lifecycleScope.launch {
             viewModel.uiState.collectLatest { state ->
@@ -60,15 +62,17 @@ class LoginActivity : ComponentActivity() {
         }
 
         // ── Try auto-login from saved credentials ─────────────────────────────
-        viewModel.tryAutoLogin()
+        if (!isAddAccountMode) {
+            viewModel.tryAutoLogin()
+        }
 
         // ── Compose UI ────────────────────────────────────────────────────────
         setContent {
             IpxTvTheme {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-                // Pre-fill fields with saved credentials if available
-                val saved = credentialStore.loadCredentials()
+                // Pre-fill fields with saved credentials if available (not in add account mode)
+                val saved = if (isAddAccountMode) null else credentialStore.loadCredentials()
 
                 LoginScreen(
                     uiState       = uiState,
@@ -106,5 +110,9 @@ class LoginActivity : ComponentActivity() {
             @Suppress("DEPRECATION")
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         }
+    }
+
+    companion object {
+        const val EXTRA_ADD_ACCOUNT = "extra_add_account"
     }
 }

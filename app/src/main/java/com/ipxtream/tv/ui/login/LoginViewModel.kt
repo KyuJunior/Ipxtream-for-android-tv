@@ -75,6 +75,7 @@ class LoginViewModel(
 
                 if (response.userInfo.auth == 1) {
                     // Save ONLY after a confirmed successful authentication.
+                    credentialStore.saveAccount(credentials)
                     credentialStore.saveCredentials(credentials)
                     _uiState.value = LoginUiState.Success(response)
                 } else {
@@ -113,7 +114,8 @@ class LoginViewModel(
      * transition all the way to [LoginUiState.Success] without any user input.
      */
     fun tryAutoLogin() {
-        val saved = credentialStore.loadCredentials() ?: return
+        val saved = credentialStore.getDefaultAccount() ?: credentialStore.loadCredentials() ?: return
+        credentialStore.saveCredentials(saved)
         login(saved.server, saved.username, saved.password)
     }
 

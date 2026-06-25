@@ -45,6 +45,7 @@ class DashboardViewModel(
 ) : ViewModel() {
 
     private val updateManager = com.ipxtream.tv.data.api.UpdateManager(context)
+    private val credentialStore = com.ipxtream.tv.data.local.CredentialStore(context)
 
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
@@ -68,6 +69,15 @@ class DashboardViewModel(
     init {
         // Load the default section on first creation.
         loadSectionData(ContentSection.LIVE)
+        refreshAccountsState()
+    }
+
+    fun refreshAccountsState() {
+        _uiState.update { it.copy(
+            accounts = credentialStore.getAccounts(),
+            defaultAccount = credentialStore.getDefaultAccount(),
+            activeAccount = credentialStore.loadCredentials()
+        ) }
     }
 
     // =========================================================================
@@ -385,6 +395,55 @@ class DashboardViewModel(
 
     fun dismissUpdate() {
         _uiState.update { it.copy(updateRelease = null, updateErrorMessage = null) }
+    }
+
+    // =========================================================================
+    //  Multi-Account management
+    // =========================================================================
+
+    fun switchAccount(server: String, username: String) {
+        if (credentialStore.setActiveAccount(server, username)) {
+            val intent = android.content.Intent(context, DashboardActivity::class.java).apply {
+                val activeCreds = credentialStore.loadCredentials()
+                if (activeCreds != null) {
+                    putExtra(DashboardActivity.EXTRA_SERVER, activeCreds.server)
+                    putExtra(DashboardActivity.EXTRA_USERNAME, activeCreds.username)
+                    putExtra(DashboardActivity.EXTRA_PASSWORD, activeCreds.password)
+                }
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            context.startActivity(intent)
+        }
+    }
+
+    fun setDefaultAccount(server: String, username: String) {
+        credentialStore.setDefaultAccount(server, username)
+        refreshAccountsState()
+    }
+
+    fun removeAccount(server: String, username: String) {
+        val active = credentialStore.loadCredentials()
+        val isActiveRemoved = active != null && 
+                active.server.equals(server, ignoreCase = true) && 
+                active.username.equals(username, ignoreCase = true)
+
+        credentialStore.removeAccount(server, username)
+        refreshAccountsState()
+
+        if (isActiveRemoved || credentialStore.getAccounts().isEmpty()) {
+            val intent = android.content.Intent(context, com.ipxtream.tv.ui.login.LoginActivity::class.java).apply {
+                flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            context.startActivity(intent)
+        }
+    }
+
+    fun addAccount() {
+        val intent = android.content.Intent(context, com.ipxtream.tv.ui.login.LoginActivity::class.java).apply {
+            putExtra(com.ipxtream.tv.ui.login.LoginActivity.EXTRA_ADD_ACCOUNT, true)
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        context.startActivity(intent)
     }
 
     // =========================================================================

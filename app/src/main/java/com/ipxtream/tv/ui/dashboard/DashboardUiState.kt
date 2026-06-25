@@ -73,6 +73,11 @@ data class DashboardUiState(
     val updateDownloadProgress: Float? = null, // null means not downloading, 0.0-1.0 progress
     val updateErrorMessage:  String? = null,
 
+    // ─── Multi-Account State ───
+    val accounts:            List<com.ipxtream.tv.data.model.AuthCredentials> = emptyList(),
+    val defaultAccount:      com.ipxtream.tv.data.model.AuthCredentials? = null,
+    val activeAccount:       com.ipxtream.tv.data.model.AuthCredentials? = null,
+
     // ─── Pagination ───
     val currentPage:         Int = 0
 ) {

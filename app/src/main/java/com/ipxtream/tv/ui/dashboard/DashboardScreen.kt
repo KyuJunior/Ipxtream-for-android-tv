@@ -152,7 +152,11 @@ fun DashboardScreen(
     onDownloadUpdate:   () -> Unit,
     onDismissUpdate:    () -> Unit,
     onNextPage:         () -> Unit,
-    onPrevPage:         () -> Unit
+    onPrevPage:         () -> Unit,
+    onSwitchAccount:    (String, String) -> Unit = { _, _ -> },
+    onSetDefaultAccount: (String, String) -> Unit = { _, _ -> },
+    onRemoveAccount:    (String, String) -> Unit = { _, _ -> },
+    onAddAccount:       () -> Unit = {}
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
@@ -197,6 +201,10 @@ fun DashboardScreen(
                         onCheckForUpdates = onCheckForUpdates,
                         onDownloadUpdate = onDownloadUpdate,
                         onDismissUpdate = onDismissUpdate,
+                        onSwitchAccount = onSwitchAccount,
+                        onSetDefaultAccount = onSetDefaultAccount,
+                        onRemoveAccount = onRemoveAccount,
+                        onAddAccount = onAddAccount,
                         modifier = Modifier.fillMaxSize()
                     )
                 } else if (uiState.activeSection == ContentSection.DOWNLOADS) {

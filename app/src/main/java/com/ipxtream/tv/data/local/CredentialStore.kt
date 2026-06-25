@@ -3,6 +3,8 @@ package com.ipxtream.tv.data.local
 import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.ipxtream.tv.data.model.AuthCredentials
 
 /**
@@ -36,6 +38,8 @@ class CredentialStore(context: Context) {
         EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
     )
 
+    private val gson = Gson()
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -68,7 +72,11 @@ class CredentialStore(context: Context) {
      * Removes all stored credentials (e.g., on logout or account switch).
      */
     fun clearCredentials() {
-        prefs.edit().clear().apply()
+        prefs.edit()
+            .remove(KEY_SERVER)
+            .remove(KEY_USERNAME)
+            .remove(KEY_PASSWORD)
+            .apply()
     }
 
     /**
@@ -77,6 +85,121 @@ class CredentialStore(context: Context) {
      * the home screen on app launch.
      */
     fun hasCredentials(): Boolean = loadCredentials() != null
+
+    // ─── Multi-Account API ────────────────────────────────────────────────────
+
+    /**
+     * Retrieves the list of all saved accounts.
+     */
+    fun getAccounts(): List<AuthCredentials> {
+        val json = prefs.getString(KEY_ACCOUNTS_JSON, null) ?: return emptyList()
+        return try {
+            val type = object : TypeToken<List<AuthCredentials>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Saves or updates an account in the multi-account list.
+     */
+    fun saveAccount(credentials: AuthCredentials) {
+        val currentList = getAccounts().toMutableList()
+        val index = currentList.indexOfFirst { 
+            it.username.equals(credentials.username, ignoreCase = true) && 
+            it.server.equals(credentials.server, ignoreCase = true) 
+        }
+        if (index >= 0) {
+            currentList[index] = credentials
+        } else {
+            currentList.add(credentials)
+        }
+        
+        prefs.edit()
+            .putString(KEY_ACCOUNTS_JSON, gson.toJson(currentList))
+            .apply()
+
+        // If no default is configured, make this the default account
+        if (getDefaultAccount() == null) {
+            setDefaultAccount(credentials.server, credentials.username)
+        }
+    }
+
+    /**
+     * Sets the default account to auto-login.
+     */
+    fun setDefaultAccount(server: String, username: String) {
+        prefs.edit()
+            .putString(KEY_DEFAULT_ACCOUNT, "$username@$server")
+            .apply()
+    }
+
+    /**
+     * Retrieves the configured default account, or null.
+     */
+    fun getDefaultAccount(): AuthCredentials? {
+        val identifier = prefs.getString(KEY_DEFAULT_ACCOUNT, null) ?: return null
+        val parts = identifier.split("@", limit = 2)
+        if (parts.size < 2) return null
+        val username = parts[0]
+        val server = parts[1]
+        return getAccounts().firstOrNull { 
+            it.username.equals(username, ignoreCase = true) && 
+            it.server.equals(server, ignoreCase = true) 
+        }
+    }
+
+    /**
+     * Switches the active session to the selected credentials.
+     */
+    fun setActiveAccount(server: String, username: String): Boolean {
+        val target = getAccounts().firstOrNull { 
+            it.username.equals(username, ignoreCase = true) && 
+            it.server.equals(server, ignoreCase = true) 
+        } ?: return false
+        saveCredentials(target)
+        return true
+    }
+
+    /**
+     * Removes an account from the multi-account list.
+     */
+    fun removeAccount(server: String, username: String) {
+        val currentList = getAccounts().toMutableList()
+        currentList.removeAll { 
+            it.username.equals(username, ignoreCase = true) && 
+            it.server.equals(server, ignoreCase = true) 
+        }
+        
+        val edit = prefs.edit()
+        edit.putString(KEY_ACCOUNTS_JSON, gson.toJson(currentList))
+
+        // Clean default account if deleted
+        val defaultAccount = getDefaultAccount()
+        if (defaultAccount != null && 
+            defaultAccount.username.equals(username, ignoreCase = true) && 
+            defaultAccount.server.equals(server, ignoreCase = true)) {
+            if (currentList.isNotEmpty()) {
+                val newDefault = currentList.first()
+                edit.putString(KEY_DEFAULT_ACCOUNT, "${newDefault.username}@${newDefault.server}")
+            } else {
+                edit.remove(KEY_DEFAULT_ACCOUNT)
+            }
+        }
+
+        // Clean active account if deleted
+        val activeAccount = loadCredentials()
+        if (activeAccount != null && 
+            activeAccount.username.equals(username, ignoreCase = true) && 
+            activeAccount.server.equals(server, ignoreCase = true)) {
+            edit.remove(KEY_SERVER)
+                .remove(KEY_USERNAME)
+                .remove(KEY_PASSWORD)
+        }
+
+        edit.apply()
+    }
 
     // -------------------------------------------------------------------------
     // Constants
@@ -87,5 +210,8 @@ class CredentialStore(context: Context) {
         private const val KEY_SERVER      = "server_url"
         private const val KEY_USERNAME    = "username"
         private const val KEY_PASSWORD    = "password"
+        
+        private const val KEY_ACCOUNTS_JSON    = "accounts_json"
+        private const val KEY_DEFAULT_ACCOUNT  = "default_account_id"
     }
 }

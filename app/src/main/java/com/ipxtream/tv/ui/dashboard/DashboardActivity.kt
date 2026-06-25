@@ -109,7 +109,11 @@ class DashboardActivity : ComponentActivity() {
                     onDownloadUpdate   = dashboardViewModel::downloadAndInstallUpdate,
                     onDismissUpdate    = dashboardViewModel::dismissUpdate,
                     onNextPage         = dashboardViewModel::nextPage,
-                    onPrevPage         = dashboardViewModel::prevPage
+                    onPrevPage         = dashboardViewModel::prevPage,
+                    onSwitchAccount    = dashboardViewModel::switchAccount,
+                    onSetDefaultAccount = dashboardViewModel::setDefaultAccount,
+                    onRemoveAccount    = dashboardViewModel::removeAccount,
+                    onAddAccount       = dashboardViewModel::addAccount
                 )
             }
         }
