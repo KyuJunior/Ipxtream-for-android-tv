@@ -161,6 +161,7 @@ fun DashboardScreen(
     onEpisodeDownload:  (EpisodeItem) -> Unit = {}
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
+    val updateDialogFocusRequester = remember { FocusRequester() }
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
@@ -170,11 +171,17 @@ fun DashboardScreen(
         }
     }
 
+    LaunchedEffect(uiState.updateRelease) {
+        if (uiState.updateRelease != null) {
+            runCatching { updateDialogFocusRequester.requestFocus() }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep)) {
         val showSplitPlayer      = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
         val showFullScreenPlayer = uiState.hasActivePlayback && !playerUiState.isLive && exoPlayer != null
 
-        val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
+        val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
 
         Row(
             modifier = Modifier
@@ -458,7 +465,10 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            androidx.tv.material3.Button(onClick = onDownloadUpdate) {
+                            androidx.tv.material3.Button(
+                                onClick = onDownloadUpdate,
+                                modifier = Modifier.focusRequester(updateDialogFocusRequester)
+                            ) {
                                 Text("Install Now")
                             }
                             androidx.tv.material3.Button(onClick = onDismissUpdate) {
