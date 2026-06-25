@@ -328,6 +328,25 @@ class DashboardViewModel(
         DownloadController.enqueue(context, spec)
     }
 
+    /**
+     * Enqueues a series episode download in the background downloader.
+     */
+    fun downloadEpisode(
+        context:     android.content.Context,
+        episode:     EpisodeItem,
+        credentials: com.ipxtream.tv.data.model.AuthCredentials
+    ) {
+        val spec = DownloadController.buildSpec(
+            context     = context,
+            streamId    = episode.id.toIntOrNull() ?: 0,
+            title       = episode.title,
+            url         = StreamUrlBuilder.buildForEpisode(credentials, episode),
+            extension   = episode.containerExtension ?: "mp4",
+            contentType = com.ipxtream.tv.data.download.DownloadContentType.SERIES_EPISODE
+        )
+        DownloadController.enqueue(context, spec)
+    }
+
     /** Pauses the download with [downloadId]. Preserves the partial file. */
     fun pauseDownload(context: android.content.Context, downloadId: String) =
         DownloadController.pause(context, downloadId)

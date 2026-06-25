@@ -156,7 +156,9 @@ fun DashboardScreen(
     onSwitchAccount:    (String, String) -> Unit = { _, _ -> },
     onSetDefaultAccount: (String, String) -> Unit = { _, _ -> },
     onRemoveAccount:    (String, String) -> Unit = { _, _ -> },
-    onAddAccount:       () -> Unit = {}
+    onAddAccount:       () -> Unit = {},
+    onVodDownload:      (StreamItem) -> Unit = {},
+    onEpisodeDownload:  (EpisodeItem) -> Unit = {}
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
@@ -357,7 +359,7 @@ fun DashboardScreen(
             com.ipxtream.tv.ui.dashboard.components.VodDetailScreen(
                 streamItem    = uiState.detailVodItem,
                 onPlay        = { onVodPlay(uiState.detailVodItem) },
-                onDownload    = { /* TODO: Hook to download component next */ },
+                onDownload    = { onVodDownload(uiState.detailVodItem) },
                 onClose       = onCloseDetails,
                 isFavorite    = isStreamFavorite(uiState.detailVodItem.streamId, "movie"),
                 onToggleFavorite = { onToggleFavoriteStream(uiState.detailVodItem) }
@@ -368,7 +370,7 @@ fun DashboardScreen(
                 seriesInfo          = uiState.seriesInfo,
                 isLoadingSeriesInfo = uiState.isLoadingSeriesInfo,
                 onEpisodePlay       = { episode -> onEpisodePlay(uiState.detailSeriesItem, episode) },
-                onEpisodeDownload   = { /* TODO: Hook to download component next */ },
+                onEpisodeDownload   = onEpisodeDownload,
                 onClose             = onCloseDetails,
                 isFavorite    = isSeriesFavorite(uiState.detailSeriesItem.seriesId),
                 onToggleFavorite = { onToggleFavoriteSeries(uiState.detailSeriesItem) }
