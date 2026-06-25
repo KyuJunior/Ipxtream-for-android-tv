@@ -33,7 +33,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Icon
 
-@OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.focus.ExperimentalFocus::class)
+@OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun VodDetailScreen(
     streamItem: StreamItem,
