@@ -45,6 +45,14 @@ android {
     }
 
     signingConfigs {
+        // Shared consistent signing configuration for CI and local development testing
+        create("debugCI") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+
         val storePass = System.getenv("RELEASE_STORE_PASSWORD")
         val keyPass = System.getenv("RELEASE_KEY_PASSWORD")
         val keyAl = System.getenv("RELEASE_KEY_ALIAS")
@@ -65,12 +73,13 @@ android {
             if (signingConfigs.findByName("release") != null) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
-                // Fallback to debug keys if production secrets are not available
-                signingConfig = signingConfigs.getByName("debug")
+                // Fallback to custom consistent debug keys if production secrets are not available
+                signingConfig = signingConfigs.getByName("debugCI")
             }
         }
         debug {
-            // Debug builds should always fall back to default debug signing
+            // Force debug builds to also use the consistent debugCI keystore so they match
+            signingConfig = signingConfigs.getByName("debugCI")
         }
     }
 }
