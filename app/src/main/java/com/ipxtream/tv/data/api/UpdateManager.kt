@@ -26,6 +26,7 @@ class UpdateManager(private val context: Context) {
         val request = Request.Builder()
             .url("https://api.github.com/repos/KyuJunior/Ipxtream-for-android-tv/releases/latest")
             .header("Accept", "application/vnd.github.v3+json")
+            .header("User-Agent", "IPXtream-TV-Android")
             .build()
 
         try {
@@ -39,6 +40,8 @@ class UpdateManager(private val context: Context) {
                 
                 val currentVersion = BuildConfig.VERSION_NAME
                 val latestVersion = release.tagName
+                
+                Log.d(tag, "Comparing versions - Current: $currentVersion, Latest: $latestVersion")
                 
                 if (isNewerVersion(currentVersion, latestVersion)) {
                     return@withContext release
