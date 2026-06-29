@@ -23,33 +23,81 @@ class UpdateManager(private val context: Context) {
     private val tag = "UpdateManager"
 
     suspend fun checkForUpdates(): GitHubRelease? = withContext(Dispatchers.IO) {
+        val noRedirectsClient = client.newBuilder()
+            .followRedirects(false)
+            .followSslRedirects(false)
+            .build()
+
         val request = Request.Builder()
+            .url("https://github.com/KyuJunior/Ipxtream-for-android-tv/releases/latest")
+            .header("User-Agent", "IPXtream-TV-Android")
+            .build()
+
+        try {
+            noRedirectsClient.newCall(request).execute().use { response ->
+                val code = response.code
+                val location = response.header("Location")
+                Log.d(tag, "Checked latest release redirect: HTTP $code, Location: $location")
+
+                if ((code == 301 || code == 302 || code == 307 || code == 308) && location != null) {
+                    val tagName = location.substringAfterLast("/").trim()
+                    if (tagName.isNotEmpty()) {
+                        val currentVersion = BuildConfig.VERSION_NAME
+                        Log.d(tag, "Comparing versions - Current: $currentVersion, Latest: $tagName")
+
+                        if (isNewerVersion(currentVersion, tagName)) {
+                            val assets = listOf(
+                                com.ipxtream.tv.data.model.GitHubAsset(
+                                    name = "app-debug.apk",
+                                    downloadUrl = "https://github.com/KyuJunior/Ipxtream-for-android-tv/releases/download/$tagName/app-debug.apk",
+                                    size = 0L
+                                ),
+                                com.ipxtream.tv.data.model.GitHubAsset(
+                                    name = "app-release.apk",
+                                    downloadUrl = "https://github.com/KyuJunior/Ipxtream-for-android-tv/releases/download/$tagName/app-release.apk",
+                                    size = 0L
+                                )
+                            )
+                            return@withContext com.ipxtream.tv.data.model.GitHubRelease(
+                                tagName = tagName,
+                                name = "Release $tagName",
+                                body = "New release version $tagName is available.",
+                                assets = assets
+                            )
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(tag, "Error checking update via HTML redirect, falling back to API: ${e.message}")
+        }
+
+        // FALLBACK: original API call (in case GitHub changes redirect behavior)
+        val apiRequest = Request.Builder()
             .url("https://api.github.com/repos/KyuJunior/Ipxtream-for-android-tv/releases/latest")
             .header("Accept", "application/vnd.github.v3+json")
             .header("User-Agent", "IPXtream-TV-Android")
             .build()
 
         try {
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    Log.e(tag, "Failed to fetch latest release: HTTP ${response.code}")
-                    return@withContext null
-                }
-                val bodyString = response.body?.string() ?: return@withContext null
-                val release = gson.fromJson(bodyString, GitHubRelease::class.java)
-                
-                val currentVersion = BuildConfig.VERSION_NAME
-                val latestVersion = release.tagName
-                
-                Log.d(tag, "Comparing versions - Current: $currentVersion, Latest: $latestVersion")
-                
-                if (isNewerVersion(currentVersion, latestVersion)) {
-                    return@withContext release
+            client.newCall(apiRequest).execute().use { response ->
+                if (response.isSuccessful) {
+                    val bodyString = response.body?.string() ?: return@withContext null
+                    val release = gson.fromJson(bodyString, GitHubRelease::class.java)
+                    val currentVersion = BuildConfig.VERSION_NAME
+                    val latestVersion = release.tagName
+                    Log.d(tag, "Comparing versions (API fallback) - Current: $currentVersion, Latest: $latestVersion")
+                    if (isNewerVersion(currentVersion, latestVersion)) {
+                        return@withContext release
+                    }
+                } else {
+                    Log.e(tag, "API fallback failed: HTTP ${response.code}")
                 }
             }
         } catch (e: Exception) {
-            Log.e(tag, "Error checking for updates: ${e.message}", e)
+            Log.e(tag, "API fallback error: ${e.message}", e)
         }
+
         return@withContext null
     }
 
