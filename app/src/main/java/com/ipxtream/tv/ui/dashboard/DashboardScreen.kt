@@ -174,6 +174,14 @@ fun DashboardScreen(
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
+    val sideNavFocusRequester = remember { FocusRequester() }
+    var isSideNavFocused by remember { mutableStateOf(false) }
+
+    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
+    androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && !isSideNavFocused) {
+        runCatching { sideNavFocusRequester.requestFocus() }
+    }
+
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
@@ -453,6 +461,8 @@ fun DashboardScreen(
             activeSection     = uiState.activeSection,
             onSectionSelected = onSectionSelected,
             onRefresh         = onRefresh,
+            sideNavFocusRequester = sideNavFocusRequester,
+            onFocusChanged    = { isSideNavFocused = it },
             modifier          = Modifier
                 .align(Alignment.CenterStart)
                 .focusProperties { canFocus = !isOverlayOpen }
