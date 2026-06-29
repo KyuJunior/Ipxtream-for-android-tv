@@ -100,6 +100,8 @@ class DashboardViewModel(
                 categories         = emptyList(),
                 streams            = emptyList(),
                 seriesList         = emptyList(),
+                searchResultsMovies = emptyList(),
+                searchResultsSeries = emptyList(),
                 error              = null,
                 currentPage        = 0
             )
@@ -222,8 +224,40 @@ class DashboardViewModel(
     //  Search management
     // =========================================================================
 
+    private var searchJob: Job? = null
+
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query, currentPage = 0) }
+        if (_uiState.value.activeSection == ContentSection.HOME && query.isNotBlank()) {
+            performHomeSearch(query)
+        }
+    }
+
+    private fun performHomeSearch(query: String) {
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            _uiState.update { it.copy(isSearchingHome = true) }
+            
+            val vodResult = repository.getVodStreams(categoryId = null, forceRefresh = false)
+            val seriesResult = repository.getSeries(categoryId = null, forceRefresh = false)
+            
+            var movies = emptyList<StreamItem>()
+            var series = emptyList<SeriesItem>()
+            
+            vodResult.onSuccess { allMovies ->
+                movies = allMovies.filter { it.name.contains(query, ignoreCase = true) }
+            }
+            
+            seriesResult.onSuccess { allSeries ->
+                series = allSeries.filter { it.name.contains(query, ignoreCase = true) }
+            }
+            
+            _uiState.update { it.copy(
+                searchResultsMovies = movies,
+                searchResultsSeries = series,
+                isSearchingHome = false
+            ) }
+        }
     }
 
     // =========================================================================

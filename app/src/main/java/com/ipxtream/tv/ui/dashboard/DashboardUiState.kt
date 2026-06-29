@@ -82,6 +82,9 @@ data class DashboardUiState(
     val homeHotMovies:       List<StreamItem>  = emptyList(),
     val homePopularSeries:   List<SeriesItem>  = emptyList(),
     val showAccountManager:  Boolean           = false,
+    val searchResultsMovies: List<StreamItem>  = emptyList(),
+    val searchResultsSeries: List<SeriesItem>  = emptyList(),
+    val isSearchingHome:     Boolean           = false,
 
     // ─── Multi-Account State ───
     val accounts:            List<com.ipxtream.tv.data.model.AuthCredentials> = emptyList(),
@@ -135,8 +138,32 @@ data class DashboardUiState(
     val itemCount: Int get() = if (activeSection == ContentSection.SERIES)
         paginatedSeries.size else paginatedStreams.size
 
+    val paginatedSearchMovies: List<StreamItem> get() {
+        val start = currentPage * 10
+        val end = ((currentPage + 1) * 10).coerceAtMost(searchResultsMovies.size)
+        if (start >= searchResultsMovies.size) return emptyList()
+        return searchResultsMovies.subList(start, end)
+    }
+
+    val paginatedSearchSeries: List<SeriesItem> get() {
+        val start = currentPage * 10
+        val end = ((currentPage + 1) * 10).coerceAtMost(searchResultsSeries.size)
+        if (start >= searchResultsSeries.size) return emptyList()
+        return searchResultsSeries.subList(start, end)
+    }
+
+    val totalSearchPages: Int get() {
+        val totalMovies = searchResultsMovies.size
+        val totalSeries = searchResultsSeries.size
+        val maxTotal = maxOf(totalMovies, totalSeries)
+        return if (maxTotal == 0) 1 else (maxTotal + 9) / 10
+    }
+
     /** Total number of pages. */
     val totalPages: Int get() {
+        if (activeSection == ContentSection.HOME && searchQuery.isNotBlank()) {
+            return totalSearchPages
+        }
         val total = totalItemCount
         return if (total == 0) 1 else (total + PAGE_SIZE - 1) / PAGE_SIZE
     }

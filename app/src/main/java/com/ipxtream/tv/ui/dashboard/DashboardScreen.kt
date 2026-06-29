@@ -88,6 +88,7 @@ import com.ipxtream.tv.data.local.LibraryItem
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.focusable
@@ -250,84 +251,196 @@ fun DashboardScreen(
                         val recentHistory = remember(uiState.historyList) {
                             uiState.historyList.take(10)
                         }
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(bottom = 120.dp)
-                        ) {
-                            item {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    QuickAccessCard(
-                                        title = "LIVE TV",
-                                        subtitle = "Stream live broadcasts & channels",
-                                        icon = Icons.Rounded.Tv,
-                                        themeColor = Color(0xFFE50914),
-                                        onClick = { onSectionSelected(ContentSection.LIVE) },
+                        if (uiState.searchQuery.isNotBlank()) {
+                            // Search Results Mode
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(bottom = 120.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                item {
+                                    Text(
+                                        text = "Search Results for \"${uiState.searchQuery}\"",
+                                        style = IpxTypography.TitleLarge.copy(fontWeight = FontWeight.Bold),
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+
+                                if (uiState.isSearchingHome) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier.fillMaxWidth().padding(48.dp),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            LoadingIndicator()
+                                        }
+                                    }
+                                } else {
+                                    // Movies Results Row
+                                    item {
+                                        Column {
+                                            Text(
+                                                text = "Movies (${uiState.searchResultsMovies.size} found)",
+                                                style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                            Spacer(Modifier.height(8.dp))
+                                            if (uiState.paginatedSearchMovies.isEmpty()) {
+                                                Text(
+                                                    text = "No movies match your search.",
+                                                    style = IpxTypography.BodyMedium,
+                                                    color = TextMuted,
+                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                                )
+                                            } else {
+                                                LazyRow(
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                                ) {
+                                                    items(uiState.paginatedSearchMovies.size) { index ->
+                                                        val movie = uiState.paginatedSearchMovies[index]
+                                                        com.ipxtream.tv.ui.dashboard.components.VodPosterCard(
+                                                            stream = movie,
+                                                            onClick = { onStreamSelected(movie) }
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Series Results Row
+                                    item {
+                                        Column {
+                                            Text(
+                                                text = "TV Series (${uiState.searchResultsSeries.size} found)",
+                                                style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                            Spacer(Modifier.height(8.dp))
+                                            if (uiState.paginatedSearchSeries.isEmpty()) {
+                                                Text(
+                                                    text = "No series match your search.",
+                                                    style = IpxTypography.BodyMedium,
+                                                    color = TextMuted,
+                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                                )
+                                            } else {
+                                                LazyRow(
+                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                                                ) {
+                                                    items(uiState.paginatedSearchSeries.size) { index ->
+                                                        val series = uiState.paginatedSearchSeries[index]
+                                                        com.ipxtream.tv.ui.dashboard.components.SeriesPosterCard(
+                                                            series = series,
+                                                            onClick = { onSeriesSelected(series) }
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    // Pagination Bar
+                                    if (uiState.totalSearchPages > 1) {
+                                        item {
+                                            PaginationBar(
+                                                hasPrevPage = uiState.hasPrevPage,
+                                                hasNextPage = uiState.hasNextPage,
+                                                currentPage = uiState.currentPage,
+                                                totalPages = uiState.totalSearchPages,
+                                                onPrevPage = onPrevPage,
+                                                onNextPage = onNextPage
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            // Normal Home Layout
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(bottom = 120.dp)
+                            ) {
+                                item {
+                                    Row(
                                         modifier = Modifier
-                                            .weight(1f)
-                                            .focusRequester(firstItemFocusRequester)
-                                    )
-                                    QuickAccessCard(
-                                        title = "MOVIES",
-                                        subtitle = "Watch blockbuster movies on demand",
-                                        icon = Icons.Rounded.Movie,
-                                        themeColor = Color(0xFF007DFE),
-                                        onClick = { onSectionSelected(ContentSection.VOD) },
-                                        modifier = Modifier.weight(1f)
-                                    )
-                                    QuickAccessCard(
-                                        title = "TV SERIES",
-                                        subtitle = "Binge-watch episodic shows",
-                                        icon = Icons.Rounded.Slideshow,
-                                        themeColor = Color(0xFF9D3FE7),
-                                        onClick = { onSectionSelected(ContentSection.SERIES) },
-                                        modifier = Modifier.weight(1f)
-                                    )
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        QuickAccessCard(
+                                            title = "LIVE TV",
+                                            subtitle = "Stream live broadcasts & channels",
+                                            icon = Icons.Rounded.Tv,
+                                            themeColor = Color(0xFFE50914),
+                                            onClick = { onSectionSelected(ContentSection.LIVE) },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .focusRequester(firstItemFocusRequester)
+                                        )
+                                        QuickAccessCard(
+                                            title = "MOVIES",
+                                            subtitle = "Watch blockbuster movies on demand",
+                                            icon = Icons.Rounded.Movie,
+                                            themeColor = Color(0xFF007DFE),
+                                            onClick = { onSectionSelected(ContentSection.VOD) },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        QuickAccessCard(
+                                            title = "TV SERIES",
+                                            subtitle = "Binge-watch episodic shows",
+                                            icon = Icons.Rounded.Slideshow,
+                                            themeColor = Color(0xFF9D3FE7),
+                                            onClick = { onSectionSelected(ContentSection.SERIES) },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
                                 }
-                            }
 
-                            if (recentHistory.isNotEmpty()) {
-                                item {
-                                    ContinueWatchingRow(
-                                        items = recentHistory,
-                                        onStreamSelected = onStreamSelected,
-                                        onSeriesSelected = onSeriesSelected,
-                                        onEpisodePlay = onEpisodePlay
-                                    )
+                                if (recentHistory.isNotEmpty()) {
+                                    item {
+                                        ContinueWatchingRow(
+                                            items = recentHistory,
+                                            onStreamSelected = onStreamSelected,
+                                            onSeriesSelected = onSeriesSelected,
+                                            onEpisodePlay = onEpisodePlay
+                                        )
+                                    }
                                 }
-                            }
 
-                            if (uiState.homeLiveHighlights.isNotEmpty()) {
-                                item {
-                                    HomeHighlightsRow(
-                                        title = "Live TV Highlights",
-                                        items = uiState.homeLiveHighlights,
-                                        onStreamSelected = onStreamSelected
-                                    )
+                                if (uiState.homeLiveHighlights.isNotEmpty()) {
+                                    item {
+                                        HomeHighlightsRow(
+                                            title = "Live TV Highlights",
+                                            items = uiState.homeLiveHighlights,
+                                            onStreamSelected = onStreamSelected
+                                        )
+                                    }
                                 }
-                            }
 
-                            if (uiState.homeHotMovies.isNotEmpty()) {
-                                item {
-                                    HomeMoviesRow(
-                                        title = "Hot Movies",
-                                        items = uiState.homeHotMovies,
-                                        onStreamSelected = onStreamSelected
-                                    )
+                                if (uiState.homeHotMovies.isNotEmpty()) {
+                                    item {
+                                        HomeMoviesRow(
+                                            title = "Hot Movies",
+                                            items = uiState.homeHotMovies,
+                                            onStreamSelected = onStreamSelected
+                                        )
+                                    }
                                 }
-                            }
 
-                            if (uiState.homePopularSeries.isNotEmpty()) {
-                                item {
-                                    HomeSeriesRow(
-                                        title = "Popular TV Series",
-                                        items = uiState.homePopularSeries,
-                                        onSeriesSelected = onSeriesSelected
-                                    )
+                                if (uiState.homePopularSeries.isNotEmpty()) {
+                                    item {
+                                        HomeSeriesRow(
+                                            title = "Popular TV Series",
+                                            items = uiState.homePopularSeries,
+                                            onSeriesSelected = onSeriesSelected
+                                        )
+                                    }
                                 }
                             }
                         }
