@@ -78,6 +78,9 @@ data class DashboardUiState(
     // ─── New Home & Cache State ───
     val isCachingAll:        Boolean           = false,
     val whatsNewItems:       List<LibraryItem> = emptyList(),
+    val homeLiveHighlights:  List<StreamItem>  = emptyList(),
+    val homeHotMovies:       List<StreamItem>  = emptyList(),
+    val homePopularSeries:   List<SeriesItem>  = emptyList(),
     val showAccountManager:  Boolean           = false,
 
     // ─── Multi-Account State ───

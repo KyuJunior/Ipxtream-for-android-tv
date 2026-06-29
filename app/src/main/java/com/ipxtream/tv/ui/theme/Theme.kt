@@ -3,6 +3,7 @@ package com.ipxtream.tv.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -60,22 +61,34 @@ private val IpxDarkColors = darkColorScheme(
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun IpxTvTheme(content: @Composable () -> Unit) {
-    // Standard M3 theme (for non-TV composables like TextField, SnackBar)
-    MaterialTheme(
-        colorScheme = IpxDarkColors
-    ) {
-        // TV M3 theme (for Card, Surface focus states, etc.)
-        TvMaterialTheme(
-            colorScheme = androidx.tv.material3.darkColorScheme(
-                primary          = AccentCyan,
-                onPrimary        = TextOnAccent,
-                background       = SlateDeep,
-                surface          = SlatePrimary,
-                onBackground     = TextPrimary,
-                onSurface        = TextPrimary,
-                onSurfaceVariant = TextSecondary,
-            ),
-            content = content
+    val currentDensity = androidx.compose.ui.platform.LocalDensity.current
+    val scaledDensity = remember(currentDensity) {
+        androidx.compose.ui.unit.Density(
+            density = currentDensity.density * 0.85f,
+            fontScale = currentDensity.fontScale * 0.85f
         )
+    }
+
+    androidx.compose.runtime.CompositionLocalProvider(
+        androidx.compose.ui.platform.LocalDensity provides scaledDensity
+    ) {
+        // Standard M3 theme (for non-TV composables like TextField, SnackBar)
+        MaterialTheme(
+            colorScheme = IpxDarkColors
+        ) {
+            // TV M3 theme (for Card, Surface focus states, etc.)
+            TvMaterialTheme(
+                colorScheme = androidx.tv.material3.darkColorScheme(
+                    primary          = AccentCyan,
+                    onPrimary        = TextOnAccent,
+                    background       = SlateDeep,
+                    surface          = SlatePrimary,
+                    onBackground     = TextPrimary,
+                    onSurface        = TextPrimary,
+                    onSurfaceVariant = TextSecondary,
+                ),
+                content = content
+            )
+        }
     }
 }

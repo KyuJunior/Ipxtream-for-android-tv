@@ -508,3 +508,81 @@ fun ContinueWatchingRow(
         }
     }
 }
+
+@Composable
+fun HomeHighlightsRow(
+    title: String,
+    items: List<com.ipxtream.tv.data.model.StreamItem>,
+    onStreamSelected: (com.ipxtream.tv.data.model.StreamItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(vertical = 12.dp)) {
+        Text(
+            text = title,
+            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(Modifier.height(10.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            items(items) { item ->
+                LiveChannelCard(stream = item, onClick = { onStreamSelected(item) })
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeMoviesRow(
+    title: String,
+    items: List<com.ipxtream.tv.data.model.StreamItem>,
+    onStreamSelected: (com.ipxtream.tv.data.model.StreamItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(vertical = 12.dp)) {
+        Text(
+            text = title,
+            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(Modifier.height(10.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            items(items) { item ->
+                VodPosterCard(stream = item, onClick = { onStreamSelected(item) })
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeSeriesRow(
+    title: String,
+    items: List<com.ipxtream.tv.data.model.SeriesItem>,
+    onSeriesSelected: (com.ipxtream.tv.data.model.SeriesItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.padding(vertical = 12.dp)) {
+        Text(
+            text = title,
+            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(Modifier.height(10.dp))
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            items(items) { item ->
+                SeriesPosterCard(series = item, onClick = { onSeriesSelected(item) })
+            }
+        }
+    }
+}

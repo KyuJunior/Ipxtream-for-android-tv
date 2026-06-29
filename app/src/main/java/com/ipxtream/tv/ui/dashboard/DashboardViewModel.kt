@@ -70,6 +70,7 @@ class DashboardViewModel(
         // Load the default section on first creation.
         selectSection(ContentSection.HOME)
         refreshAccountsState()
+        loadHomeData()
     }
 
     fun refreshAccountsState() {
@@ -105,6 +106,7 @@ class DashboardViewModel(
         }
         if (section == ContentSection.HOME) {
             refreshLibraryLists()
+            loadHomeData()
         } else if (section == ContentSection.MY_LIBRARY) {
             refreshLibraryLists()
         } else if (section == ContentSection.WHATS_NEW) {
@@ -436,7 +438,8 @@ class DashboardViewModel(
             vodResult.onSuccess { movies ->
                 movies.forEach { movie ->
                     val ratingVal = movie.rating?.toDoubleOrNull() ?: 0.0
-                    if (ratingVal >= 7.0) {
+                    val title = movie.name ?: ""
+                    if (ratingVal >= 7.0 && title.contains("(2026)")) {
                         val addedTime = movie.added?.toLongOrNull() ?: movie.streamId.toLong()
                         newItems.add(
                             LibraryItem(
@@ -457,15 +460,14 @@ class DashboardViewModel(
             seriesResult.onSuccess { seriesList ->
                 seriesList.forEach { series ->
                     val ratingVal = series.rating?.toDoubleOrNull() ?: 0.0
-                    if (ratingVal >= 7.0) {
+                    val yearSuffix = series.releaseDate?.trim()
+                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !series.name.contains(yearSuffix)) {
+                        "${series.name} ($yearSuffix)"
+                    } else {
+                        series.name
+                    }
+                    if (ratingVal >= 7.0 && formattedName.contains("(2026)")) {
                         val modifiedTime = series.lastModified?.toLongOrNull() ?: series.seriesId.toLong()
-                        val yearSuffix = series.releaseDate?.trim()
-                        val formattedName = if (!yearSuffix.isNullOrEmpty() && !series.name.contains(yearSuffix)) {
-                            "${series.name} ($yearSuffix)"
-                        } else {
-                            series.name
-                        }
-                        
                         newItems.add(
                             LibraryItem(
                                 id = series.seriesId.toString(),
@@ -487,6 +489,41 @@ class DashboardViewModel(
                 isLoadingContent = false,
                 whatsNewItems = sortedNewItems
             ) }
+        }
+    }
+
+    fun loadHomeData() {
+        viewModelScope.launch {
+            // Load Live Highlights (Alwan channels)
+            repository.getLiveStreams(categoryId = null, forceRefresh = false).onSuccess { channels ->
+                val alwan = channels.filter { it.name != null && it.name.contains("Alwan", ignoreCase = true) }
+                _uiState.update { it.copy(homeLiveHighlights = alwan) }
+            }
+
+            // Load Hot Movies (2026, 7+ rating)
+            repository.getVodStreams(categoryId = null, forceRefresh = false).onSuccess { movies ->
+                val hot = movies.filter {
+                    val ratingVal = it.rating?.toDoubleOrNull() ?: 0.0
+                    val nameStr = it.name ?: ""
+                    ratingVal >= 7.0 && nameStr.contains("(2026)")
+                }
+                _uiState.update { it.copy(homeHotMovies = hot) }
+            }
+
+            // Load Popular TV Series (2026, 7+ rating)
+            repository.getSeries(categoryId = null, forceRefresh = false).onSuccess { seriesList ->
+                val popular = seriesList.filter {
+                    val ratingVal = it.rating?.toDoubleOrNull() ?: 0.0
+                    val yearSuffix = it.releaseDate?.trim()
+                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !it.name.contains(yearSuffix)) {
+                        "${it.name} ($yearSuffix)"
+                    } else {
+                        it.name
+                    }
+                    ratingVal >= 7.0 && formattedName.contains("(2026)")
+                }
+                _uiState.update { it.copy(homePopularSeries = popular) }
+            }
         }
     }
 

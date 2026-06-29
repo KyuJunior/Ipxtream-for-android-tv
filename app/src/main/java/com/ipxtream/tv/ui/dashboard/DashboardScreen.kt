@@ -13,6 +13,9 @@ import com.ipxtream.tv.ui.dashboard.components.TopHeader
 import com.ipxtream.tv.ui.dashboard.components.QuickAccessCard
 import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingRow
 import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingCard
+import com.ipxtream.tv.ui.dashboard.components.HomeHighlightsRow
+import com.ipxtream.tv.ui.dashboard.components.HomeMoviesRow
+import com.ipxtream.tv.ui.dashboard.components.HomeSeriesRow
 import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.foundation.layout.Box
@@ -91,7 +94,7 @@ import androidx.compose.ui.unit.sp
 import com.ipxtream.tv.ui.theme.SlateGlass
 
 private val GRID_COLUMNS_LIVE   = GridCells.Fixed(3)          // narrower when player is visible
-private val GRID_COLUMNS_POSTER = GridCells.Adaptive(minSize = 170.dp)
+private val GRID_COLUMNS_POSTER = GridCells.Adaptive(minSize = 140.dp)
 
 /**
  * Root composable for the Dashboard screen.
@@ -290,19 +293,32 @@ fun DashboardScreen(
                                     onSeriesSelected = onSeriesSelected,
                                     onEpisodePlay = onEpisodePlay
                                 )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(32.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "No watch history yet. Start watching to continue where you left off!",
-                                        style = IpxTypography.BodyMedium,
-                                        color = TextMuted
-                                    )
-                                }
+                            }
+                            
+                            Spacer(Modifier.height(8.dp))
+                            
+                            if (uiState.homeLiveHighlights.isNotEmpty()) {
+                                HomeHighlightsRow(
+                                    title = "Live TV Highlights",
+                                    items = uiState.homeLiveHighlights,
+                                    onStreamSelected = onStreamSelected
+                                )
+                            }
+                            
+                            if (uiState.homeHotMovies.isNotEmpty()) {
+                                HomeMoviesRow(
+                                    title = "Hot Movies",
+                                    items = uiState.homeHotMovies,
+                                    onStreamSelected = onStreamSelected
+                                )
+                            }
+                            
+                            if (uiState.homePopularSeries.isNotEmpty()) {
+                                HomeSeriesRow(
+                                    title = "Popular TV Series",
+                                    items = uiState.homePopularSeries,
+                                    onSeriesSelected = onSeriesSelected
+                                )
                             }
                         }
                     }
@@ -1058,7 +1074,7 @@ private fun WhatsNewGrid(
     modifier: Modifier = Modifier
 ) {
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 170.dp),
+        columns = GridCells.Adaptive(minSize = 140.dp),
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
