@@ -39,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -88,6 +89,7 @@ fun SideNavBar(
     onSectionSelected: (ContentSection) -> Unit,
     onRefresh:         () -> Unit,
     sideNavFocusRequester: FocusRequester = remember { FocusRequester() },
+    firstItemFocusRequester: FocusRequester? = null,
     onFocusChanged:    (Boolean) -> Unit = {},
     modifier:          Modifier = Modifier
 ) {
@@ -176,7 +178,10 @@ fun SideNavBar(
                     isExpanded     = isExpanded,
                     isActive       = isActive,
                     onSelected     = { onSectionSelected(section) },
-                    modifier       = if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier
+                    modifier       = (if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier)
+                        .focusProperties {
+                            right = firstItemFocusRequester ?: FocusRequester.Default
+                        }
                 )
             }
 

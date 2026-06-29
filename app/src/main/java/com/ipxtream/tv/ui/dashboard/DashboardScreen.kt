@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -188,8 +189,8 @@ fun DashboardScreen(
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
-    LaunchedEffect(uiState.itemCount) {
-        if (uiState.itemCount > 0 && !uiState.isLoading) {
+    LaunchedEffect(uiState.activeSection, uiState.isLoading) {
+        if (!uiState.isLoading && uiState.itemCount > 0 && !isSideNavFocused) {
             runCatching { firstItemFocusRequester.requestFocus() }
         }
     }
@@ -210,7 +211,10 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = 66.dp) // Margin for the collapsed side nav
-                .focusProperties { canFocus = !isOverlayOpen }
+                .focusProperties {
+                    canFocus = !isOverlayOpen
+                    left = sideNavFocusRequester
+                }
         ) {
         // ─── Centre: Category row + content grid + download tray ───────────────
         Box(
@@ -243,82 +247,86 @@ fun DashboardScreen(
 
                 when (uiState.activeSection) {
                     ContentSection.HOME -> {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(bottom = 120.dp)
+                        val recentHistory = remember(uiState.historyList) {
+                            uiState.historyList.take(10)
+                        }
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(bottom = 120.dp)
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                QuickAccessCard(
-                                    title = "LIVE TV",
-                                    subtitle = "Stream live broadcasts & channels",
-                                    icon = Icons.Rounded.Tv,
-                                    themeColor = Color(0xFFE50914),
-                                    onClick = { onSectionSelected(ContentSection.LIVE) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                QuickAccessCard(
-                                    title = "MOVIES",
-                                    subtitle = "Watch blockbuster movies on demand",
-                                    icon = Icons.Rounded.Movie,
-                                    themeColor = Color(0xFF007DFE),
-                                    onClick = { onSectionSelected(ContentSection.VOD) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                                QuickAccessCard(
-                                    title = "TV SERIES",
-                                    subtitle = "Binge-watch episodic shows",
-                                    icon = Icons.Rounded.Slideshow,
-                                    themeColor = Color(0xFF9D3FE7),
-                                    onClick = { onSectionSelected(ContentSection.SERIES) },
-                                    modifier = Modifier.weight(1f)
-                                )
+                            item {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    QuickAccessCard(
+                                        title = "LIVE TV",
+                                        subtitle = "Stream live broadcasts & channels",
+                                        icon = Icons.Rounded.Tv,
+                                        themeColor = Color(0xFFE50914),
+                                        onClick = { onSectionSelected(ContentSection.LIVE) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    QuickAccessCard(
+                                        title = "MOVIES",
+                                        subtitle = "Watch blockbuster movies on demand",
+                                        icon = Icons.Rounded.Movie,
+                                        themeColor = Color(0xFF007DFE),
+                                        onClick = { onSectionSelected(ContentSection.VOD) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    QuickAccessCard(
+                                        title = "TV SERIES",
+                                        subtitle = "Binge-watch episodic shows",
+                                        icon = Icons.Rounded.Slideshow,
+                                        themeColor = Color(0xFF9D3FE7),
+                                        onClick = { onSectionSelected(ContentSection.SERIES) },
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
                             }
-                            
-                            Spacer(Modifier.height(16.dp))
-                            
-                            val recentHistory = remember(uiState.historyList) {
-                                uiState.historyList.take(10)
-                            }
+
                             if (recentHistory.isNotEmpty()) {
-                                ContinueWatchingRow(
-                                    items = recentHistory,
-                                    onStreamSelected = onStreamSelected,
-                                    onSeriesSelected = onSeriesSelected,
-                                    onEpisodePlay = onEpisodePlay
-                                )
+                                item {
+                                    ContinueWatchingRow(
+                                        items = recentHistory,
+                                        onStreamSelected = onStreamSelected,
+                                        onSeriesSelected = onSeriesSelected,
+                                        onEpisodePlay = onEpisodePlay
+                                    )
+                                }
                             }
-                            
-                            Spacer(Modifier.height(8.dp))
-                            
+
                             if (uiState.homeLiveHighlights.isNotEmpty()) {
-                                HomeHighlightsRow(
-                                    title = "Live TV Highlights",
-                                    items = uiState.homeLiveHighlights,
-                                    onStreamSelected = onStreamSelected
-                                )
+                                item {
+                                    HomeHighlightsRow(
+                                        title = "Live TV Highlights",
+                                        items = uiState.homeLiveHighlights,
+                                        onStreamSelected = onStreamSelected
+                                    )
+                                }
                             }
-                            
+
                             if (uiState.homeHotMovies.isNotEmpty()) {
-                                HomeMoviesRow(
-                                    title = "Hot Movies",
-                                    items = uiState.homeHotMovies,
-                                    onStreamSelected = onStreamSelected
-                                )
+                                item {
+                                    HomeMoviesRow(
+                                        title = "Hot Movies",
+                                        items = uiState.homeHotMovies,
+                                        onStreamSelected = onStreamSelected
+                                    )
+                                }
                             }
-                            
+
                             if (uiState.homePopularSeries.isNotEmpty()) {
-                                HomeSeriesRow(
-                                    title = "Popular TV Series",
-                                    items = uiState.homePopularSeries,
-                                    onSeriesSelected = onSeriesSelected
-                                )
+                                item {
+                                    HomeSeriesRow(
+                                        title = "Popular TV Series",
+                                        items = uiState.homePopularSeries,
+                                        onSeriesSelected = onSeriesSelected
+                                    )
+                                }
                             }
                         }
                     }
@@ -478,6 +486,7 @@ fun DashboardScreen(
             onSectionSelected = onSectionSelected,
             onRefresh         = onRefresh,
             sideNavFocusRequester = sideNavFocusRequester,
+            firstItemFocusRequester = firstItemFocusRequester,
             onFocusChanged    = { isSideNavFocused = it },
             modifier          = Modifier
                 .align(Alignment.CenterStart)
