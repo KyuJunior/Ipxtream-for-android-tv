@@ -190,7 +190,7 @@ fun DashboardScreen(
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
     LaunchedEffect(uiState.activeSection, uiState.isLoading) {
-        if (!uiState.isLoading && uiState.itemCount > 0 && !isSideNavFocused) {
+        if (!uiState.isLoading && !isSideNavFocused) {
             runCatching { firstItemFocusRequester.requestFocus() }
         }
     }
@@ -267,7 +267,9 @@ fun DashboardScreen(
                                         icon = Icons.Rounded.Tv,
                                         themeColor = Color(0xFFE50914),
                                         onClick = { onSectionSelected(ContentSection.LIVE) },
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .focusRequester(firstItemFocusRequester)
                                     )
                                     QuickAccessCard(
                                         title = "MOVIES",

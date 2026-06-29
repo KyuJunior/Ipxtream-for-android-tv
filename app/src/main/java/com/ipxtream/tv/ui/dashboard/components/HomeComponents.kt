@@ -132,12 +132,12 @@ fun HeaderIconButton(
     Surface(
         onClick = onClick,
         modifier = modifier
+            .onFocusChanged { isFocused = it.isFocused }
             .size(40.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-            }
-            .onFocusChanged { isFocused = it.isFocused },
+            },
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.04f),
             focusedContainerColor = Color.White.copy(alpha = 0.15f)
@@ -273,13 +273,13 @@ fun QuickAccessCard(
     Surface(
         onClick = onClick,
         modifier = modifier
+            .onFocusChanged { isFocused = it.isFocused }
             .height(180.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
-            .border(glowWidth, glowColor, RoundedCornerShape(16.dp))
-            .onFocusChanged { isFocused = it.isFocused },
+            .border(glowWidth, glowColor, RoundedCornerShape(16.dp)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.03f),
             focusedContainerColor = Color.White.copy(alpha = 0.08f)
