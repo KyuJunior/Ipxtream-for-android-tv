@@ -115,7 +115,9 @@ class DashboardActivity : ComponentActivity() {
                     onRemoveAccount    = dashboardViewModel::removeAccount,
                     onAddAccount       = dashboardViewModel::addAccount,
                     onVodDownload      = { stream -> dashboardViewModel.downloadStream(this, stream, credentials) },
-                    onEpisodeDownload  = { episode -> dashboardViewModel.downloadEpisode(this, episode, credentials) }
+                    onEpisodeDownload  = { episode -> dashboardViewModel.downloadEpisode(this, episode, credentials) },
+                    onCacheAll         = dashboardViewModel::cacheAllContent,
+                    onLogout           = dashboardViewModel::logout
                 )
             }
         }

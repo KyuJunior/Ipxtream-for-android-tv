@@ -68,7 +68,7 @@ class DashboardViewModel(
 
     init {
         // Load the default section on first creation.
-        loadSectionData(ContentSection.LIVE)
+        selectSection(ContentSection.HOME)
         refreshAccountsState()
     }
 
@@ -103,8 +103,12 @@ class DashboardViewModel(
                 currentPage        = 0
             )
         }
-        if (section == ContentSection.MY_LIBRARY) {
+        if (section == ContentSection.HOME) {
             refreshLibraryLists()
+        } else if (section == ContentSection.MY_LIBRARY) {
+            refreshLibraryLists()
+        } else if (section == ContentSection.WHATS_NEW) {
+            loadWhatsNew()
         } else if (section == ContentSection.SETTINGS || section == ContentSection.DOWNLOADS) {
             // No data loading needed for Settings or Downloads
         } else {
@@ -416,6 +420,107 @@ class DashboardViewModel(
         _uiState.update { it.copy(updateRelease = null, updateErrorMessage = null) }
     }
 
+    // ─── New Home & Cache Logic ───
+
+    fun loadWhatsNew() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingContent = true, error = null, whatsNewItems = emptyList()) }
+            
+            // Fetch VOD movies
+            val vodResult = repository.getVodStreams(categoryId = null, forceRefresh = false)
+            // Fetch TV Series
+            val seriesResult = repository.getSeries(categoryId = null, forceRefresh = false)
+            
+            val newItems = mutableListOf<LibraryItem>()
+            
+            vodResult.onSuccess { movies ->
+                movies.forEach { movie ->
+                    val ratingVal = movie.rating?.toDoubleOrNull() ?: 0.0
+                    if (ratingVal >= 7.0) {
+                        val addedTime = movie.added?.toLongOrNull() ?: movie.streamId.toLong()
+                        newItems.add(
+                            LibraryItem(
+                                id = movie.streamId.toString(),
+                                name = movie.name,
+                                type = "movie",
+                                iconUrl = movie.streamIcon,
+                                categoryId = movie.categoryId,
+                                rating = movie.rating,
+                                containerExtension = movie.containerExtension,
+                                timestamp = addedTime * 1000L
+                            )
+                        )
+                    }
+                }
+            }
+            
+            seriesResult.onSuccess { seriesList ->
+                seriesList.forEach { series ->
+                    val ratingVal = series.rating?.toDoubleOrNull() ?: 0.0
+                    if (ratingVal >= 7.0) {
+                        val modifiedTime = series.lastModified?.toLongOrNull() ?: series.seriesId.toLong()
+                        val yearSuffix = series.releaseDate?.trim()
+                        val formattedName = if (!yearSuffix.isNullOrEmpty() && !series.name.contains(yearSuffix)) {
+                            "${series.name} ($yearSuffix)"
+                        } else {
+                            series.name
+                        }
+                        
+                        newItems.add(
+                            LibraryItem(
+                                id = series.seriesId.toString(),
+                                name = formattedName,
+                                type = "series",
+                                iconUrl = series.cover,
+                                categoryId = series.categoryId,
+                                rating = series.rating,
+                                timestamp = modifiedTime * 1000L
+                            )
+                        )
+                    }
+                }
+            }
+            
+            val sortedNewItems = newItems.sortedByDescending { it.timestamp }.take(20)
+            
+            _uiState.update { it.copy(
+                isLoadingContent = false,
+                whatsNewItems = sortedNewItems
+            ) }
+        }
+    }
+
+    fun cacheAllContent() {
+        if (_uiState.value.isCachingAll) return
+        _uiState.update { it.copy(isCachingAll = true) }
+        viewModelScope.launch {
+            try {
+                // Prefetch Live
+                repository.getLiveCategories(forceRefresh = true)
+                repository.getLiveStreams(categoryId = null, forceRefresh = true)
+                
+                // Prefetch Movies (VOD)
+                repository.getVodCategories(forceRefresh = true)
+                repository.getVodStreams(categoryId = null, forceRefresh = true)
+                
+                // Prefetch TV Series
+                repository.getSeriesCategories(forceRefresh = true)
+                repository.getSeries(categoryId = null, forceRefresh = true)
+                
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "All content cached successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: java.lang.Exception) {
+                android.util.Log.e("DashboardViewModel", "Error prefetching cache: ${e.message}", e)
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    android.widget.Toast.makeText(context, "Error caching content: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                _uiState.update { it.copy(isCachingAll = false) }
+            }
+        }
+    }
+
     // =========================================================================
     //  Multi-Account management
     // =========================================================================
@@ -465,6 +570,14 @@ class DashboardViewModel(
         context.startActivity(intent)
     }
 
+    fun logout() {
+        credentialStore.clearCredentials()
+        val intent = android.content.Intent(context, com.ipxtream.tv.ui.login.LoginActivity::class.java).apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        context.startActivity(intent)
+    }
+
     // =========================================================================
     //  Private loading logic
     // =========================================================================
@@ -487,6 +600,8 @@ class DashboardViewModel(
                 ContentSection.MY_LIBRARY -> return@launch // handled by refreshLibraryLists()
                 ContentSection.SETTINGS -> return@launch
                 ContentSection.DOWNLOADS -> return@launch
+                ContentSection.HOME -> return@launch
+                ContentSection.WHATS_NEW -> return@launch
             }
 
             result
@@ -554,8 +669,10 @@ class DashboardViewModel(
                         .onFailure(::handleContentError)
                 }
                 ContentSection.MY_LIBRARY -> { /* handled by refreshLibraryLists() */ }
-                ContentSection.SETTINGS -> { /* no content */ }
-                ContentSection.DOWNLOADS -> { /* no content */ }
+                ContentSection.SETTINGS -> { /* no-op */ }
+                ContentSection.DOWNLOADS -> { /* no-op */ }
+                ContentSection.HOME -> { /* no-op */ }
+                ContentSection.WHATS_NEW -> { /* no-op */ }
             }
         }
     }

@@ -14,10 +14,12 @@ import com.ipxtream.tv.data.local.LibraryItem
  * Drives which API endpoints are called and which card layout is rendered.
  */
 enum class ContentSection(val displayName: String, val iconRes: String) {
+    HOME("Home", "ic_home"),
     LIVE("Live TV",   "ic_live_tv"),
     VOD("Movies",    "ic_movie"),
     SERIES("Series", "ic_series"),
     MY_LIBRARY("My Library", "ic_library"),
+    WHATS_NEW("What's New", "ic_whats_new"),
     SETTINGS("Settings", "ic_settings"),
     DOWNLOADS("Downloads", "ic_downloads")
 }
@@ -41,7 +43,7 @@ enum class ContentSection(val displayName: String, val iconRes: String) {
  * @param isFromCache         True if the current content was served from disk cache.
  */
 data class DashboardUiState(
-    val activeSection:       ContentSection  = ContentSection.LIVE,
+    val activeSection:       ContentSection  = ContentSection.HOME,
     val categories:          List<Category>  = emptyList(),
     val selectedCategoryId:  String?         = null,
     val streams:             List<StreamItem> = emptyList(),
@@ -72,6 +74,11 @@ data class DashboardUiState(
     val updateRelease:       com.ipxtream.tv.data.model.GitHubRelease? = null,
     val updateDownloadProgress: Float? = null, // null means not downloading, 0.0-1.0 progress
     val updateErrorMessage:  String? = null,
+
+    // ─── New Home & Cache State ───
+    val isCachingAll:        Boolean           = false,
+    val whatsNewItems:       List<LibraryItem> = emptyList(),
+    val showAccountManager:  Boolean           = false,
 
     // ─── Multi-Account State ───
     val accounts:            List<com.ipxtream.tv.data.model.AuthCredentials> = emptyList(),

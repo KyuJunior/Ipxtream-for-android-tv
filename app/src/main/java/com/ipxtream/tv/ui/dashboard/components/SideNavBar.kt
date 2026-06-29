@@ -138,34 +138,41 @@ fun SideNavBar(
             Spacer(Modifier.height(24.dp))
 
             // ── Section items ─────────────────────────────────────────────────────
-            ContentSection.entries.forEach { section ->
+            // ── Section items ─────────────────────────────────────────────────────
+            val navSections = listOf(
+                ContentSection.HOME,
+                ContentSection.WHATS_NEW,
+                ContentSection.MY_LIBRARY,
+                ContentSection.DOWNLOADS
+            )
+
+            navSections.forEach { section ->
                 val icon = when(section) {
-                    ContentSection.LIVE -> Icons.Rounded.Home
-                    ContentSection.VOD -> Icons.Rounded.PlayArrow
-                    ContentSection.SERIES -> Icons.Rounded.List
+                    ContentSection.HOME -> Icons.Rounded.Home
+                    ContentSection.WHATS_NEW -> Icons.Rounded.PlayArrow
                     ContentSection.MY_LIBRARY -> Icons.Rounded.Favorite
-                    ContentSection.SETTINGS -> Icons.Rounded.Settings
                     ContentSection.DOWNLOADS -> Icons.Rounded.ArrowDownward
+                    else -> Icons.Rounded.Home
+                }
+                
+                val isActive = when (section) {
+                    ContentSection.HOME -> activeSection == ContentSection.HOME || 
+                                           activeSection == ContentSection.LIVE || 
+                                           activeSection == ContentSection.VOD || 
+                                           activeSection == ContentSection.SERIES
+                    else -> section == activeSection
                 }
                 
                 NavItem(
                     title          = section.displayName,
                     icon           = icon,
                     isExpanded     = isExpanded,
-                    isActive       = section == activeSection,
+                    isActive       = isActive,
                     onSelected     = { onSectionSelected(section) }
                 )
             }
 
             Spacer(Modifier.weight(1f))
-
-            NavItem(
-                title      = "Refresh Server",
-                icon       = Icons.Rounded.Refresh,
-                isExpanded = isExpanded,
-                isActive   = false,
-                onSelected = onRefresh
-            )
         }
     }
 }

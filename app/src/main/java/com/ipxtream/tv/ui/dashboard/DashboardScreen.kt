@@ -5,6 +5,16 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Movie
+import com.ipxtream.tv.ui.dashboard.components.TopHeader
+import com.ipxtream.tv.ui.dashboard.components.QuickAccessCard
+import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingRow
+import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingCard
+import androidx.compose.material.icons.rounded.Slideshow
+import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
@@ -158,7 +168,9 @@ fun DashboardScreen(
     onRemoveAccount:    (String, String) -> Unit = { _, _ -> },
     onAddAccount:       () -> Unit = {},
     onVodDownload:      (StreamItem) -> Unit = {},
-    onEpisodeDownload:  (EpisodeItem) -> Unit = {}
+    onEpisodeDownload:  (EpisodeItem) -> Unit = {},
+    onCacheAll:         () -> Unit = {},
+    onLogout:           () -> Unit = {}
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
@@ -204,100 +216,185 @@ fun DashboardScreen(
 
             // Content area grows to fill space above the tray
             Column(modifier = Modifier.fillMaxSize()) {
-                if (uiState.activeSection == ContentSection.SETTINGS) {
-                    com.ipxtream.tv.ui.dashboard.components.SettingsScreen(
-                        uiState = uiState,
-                        onCheckForUpdates = onCheckForUpdates,
-                        onDownloadUpdate = onDownloadUpdate,
-                        onDismissUpdate = onDismissUpdate,
-                        onSwitchAccount = onSwitchAccount,
-                        onSetDefaultAccount = onSetDefaultAccount,
-                        onRemoveAccount = onRemoveAccount,
-                        onAddAccount = onAddAccount,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else if (uiState.activeSection == ContentSection.DOWNLOADS) {
-                    com.ipxtream.tv.ui.dashboard.components.DownloadsScreen(
-                        downloads = downloadItems,
-                        onPause = onDownloadPause,
-                        onResume = onDownloadResume,
-                        onCancel = onDownloadCancel,
-                        onRetry = onDownloadRetry,
-                        onClearDone = onDownloadClearDone,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    SectionHeader(
-                        title       = uiState.activeSection.displayName,
-                        itemCount   = uiState.totalItemCount,
-                        isFromCache = uiState.isFromCache,
-                        currentPage = uiState.currentPage,
-                        totalPages  = uiState.totalPages
-                    )
+                TopHeader(
+                    query = uiState.searchQuery,
+                    onQueryChange = onSearchQueryChange,
+                    activeAccount = uiState.activeAccount,
+                    isCheckingForUpdate = uiState.isCheckingForUpdate,
+                    isCachingAll = uiState.isCachingAll,
+                    onCacheAll = onCacheAll,
+                    onRefresh = onRefresh,
+                    onSettings = { onSectionSelected(ContentSection.SETTINGS) },
+                    onSwitchAccount = onAddAccount,
+                    onLogout = onLogout,
+                    onCheckForUpdates = onCheckForUpdates
+                )
 
-                    SearchBar(
-                        query         = uiState.searchQuery,
-                        onQueryChange = onSearchQueryChange,
-                        modifier      = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
-
-                    if (uiState.categories.isNotEmpty()) {
-                        CategoryRow(
-                            categories         = uiState.categories,
-                            selectedCategoryId = uiState.selectedCategoryId,
-                            onCategorySelected = onCategorySelected,
-                            modifier           = Modifier.fillMaxWidth()
-                        )
-                        Spacer(Modifier.height(8.dp))
-                    }
-
-                    Box(
-                        modifier         = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        when {
-                            uiState.isLoadingContent -> LoadingIndicator()
-                            uiState.error != null && uiState.itemCount == 0 ->
-                                ErrorMessage(message = uiState.error, onRetry = onRefresh)
-                            uiState.activeSection == ContentSection.MY_LIBRARY ->
-                                LibrarySection(
-                                    uiState = uiState,
+                when (uiState.activeSection) {
+                    ContentSection.HOME -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(bottom = 120.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                QuickAccessCard(
+                                    title = "LIVE TV",
+                                    subtitle = "Stream live broadcasts & channels",
+                                    icon = Icons.Rounded.Tv,
+                                    themeColor = Color(0xFFE50914),
+                                    onClick = { onSectionSelected(ContentSection.LIVE) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                QuickAccessCard(
+                                    title = "MOVIES",
+                                    subtitle = "Watch blockbuster movies on demand",
+                                    icon = Icons.Rounded.Movie,
+                                    themeColor = Color(0xFF007DFE),
+                                    onClick = { onSectionSelected(ContentSection.VOD) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                QuickAccessCard(
+                                    title = "TV SERIES",
+                                    subtitle = "Binge-watch episodic shows",
+                                    icon = Icons.Rounded.Slideshow,
+                                    themeColor = Color(0xFF9D3FE7),
+                                    onClick = { onSectionSelected(ContentSection.SERIES) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            
+                            Spacer(Modifier.height(16.dp))
+                            
+                            val recentHistory = remember(uiState.historyList) {
+                                uiState.historyList.take(10)
+                            }
+                            if (recentHistory.isNotEmpty()) {
+                                ContinueWatchingRow(
+                                    items = recentHistory,
                                     onStreamSelected = onStreamSelected,
                                     onSeriesSelected = onSeriesSelected,
-                                    onEpisodePlay = onEpisodePlay,
-                                    onCheckForUpdates = onCheckForUpdates,
-                                    onDownloadUpdate = onDownloadUpdate,
-                                    onRefresh = onRefresh
+                                    onEpisodePlay = onEpisodePlay
                                 )
-                            uiState.selectedCategoryId == null && uiState.searchQuery.isBlank() ->
-                                EmptyPromptMessage("Use the search bar above to find content, or select a category.")
-                            uiState.activeSection == ContentSection.SERIES ->
-                                SeriesGrid(
-                                    seriesList              = uiState.paginatedSeries,
-                                    onSeriesSelected        = onSeriesSelected,
-                                    firstItemFocusRequester = firstItemFocusRequester,
-                                    onItemFocused           = { focusedSeriesItem = it; focusedStreamItem = null },
-                                    hasPrevPage             = uiState.hasPrevPage,
-                                    hasNextPage             = uiState.hasNextPage,
-                                    currentPage             = uiState.currentPage,
-                                    totalPages              = uiState.totalPages,
-                                    onPrevPage              = onPrevPage,
-                                    onNextPage              = onNextPage
-                                )
-                            else ->
-                                StreamGrid(
-                                    streams                 = uiState.paginatedStreams,
-                                    section                 = uiState.activeSection,
-                                    onStreamSelected        = onStreamSelected,
-                                    firstItemFocusRequester = firstItemFocusRequester,
-                                    onItemFocused           = { focusedStreamItem = it; focusedSeriesItem = null },
-                                    hasPrevPage             = uiState.hasPrevPage,
-                                    hasNextPage             = uiState.hasNextPage,
-                                    currentPage             = uiState.currentPage,
-                                    totalPages              = uiState.totalPages,
-                                    onPrevPage              = onPrevPage,
-                                    onNextPage              = onNextPage
-                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(32.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "No watch history yet. Start watching to continue where you left off!",
+                                        style = IpxTypography.BodyMedium,
+                                        color = TextMuted
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    ContentSection.WHATS_NEW -> {
+                        if (uiState.isLoadingContent) {
+                            LoadingIndicator()
+                        } else if (uiState.whatsNewItems.isEmpty()) {
+                            EmptyPromptMessage("No new high-rated releases found.")
+                        } else {
+                            WhatsNewGrid(
+                                items = uiState.whatsNewItems,
+                                onStreamSelected = onStreamSelected,
+                                onSeriesSelected = onSeriesSelected,
+                                onEpisodePlay = onEpisodePlay
+                            )
+                        }
+                    }
+                    ContentSection.SETTINGS -> {
+                        com.ipxtream.tv.ui.dashboard.components.SettingsScreen(
+                            uiState = uiState,
+                            onCheckForUpdates = onCheckForUpdates,
+                            onDownloadUpdate = onDownloadUpdate,
+                            onDismissUpdate = onDismissUpdate,
+                            onSwitchAccount = onSwitchAccount,
+                            onSetDefaultAccount = onSetDefaultAccount,
+                            onRemoveAccount = onRemoveAccount,
+                            onAddAccount = onAddAccount,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    ContentSection.DOWNLOADS -> {
+                        com.ipxtream.tv.ui.dashboard.components.DownloadsScreen(
+                            downloads = downloadItems,
+                            onPause = onDownloadPause,
+                            onResume = onDownloadResume,
+                            onCancel = onDownloadCancel,
+                            onRetry = onDownloadRetry,
+                            onClearDone = onDownloadClearDone,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    else -> {
+                        if (uiState.categories.isNotEmpty()) {
+                            CategoryRow(
+                                categories         = uiState.categories,
+                                selectedCategoryId = uiState.selectedCategoryId,
+                                onCategorySelected = onCategorySelected,
+                                modifier           = Modifier.fillMaxWidth()
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
+
+                        Box(
+                            modifier         = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            when {
+                                uiState.isLoadingContent -> LoadingIndicator()
+                                uiState.error != null && uiState.itemCount == 0 ->
+                                    ErrorMessage(message = uiState.error, onRetry = onRefresh)
+                                uiState.activeSection == ContentSection.MY_LIBRARY ->
+                                    LibrarySection(
+                                        uiState = uiState,
+                                        onStreamSelected = onStreamSelected,
+                                        onSeriesSelected = onSeriesSelected,
+                                        onEpisodePlay = onEpisodePlay,
+                                        onCheckForUpdates = onCheckForUpdates,
+                                        onDownloadUpdate = onDownloadUpdate,
+                                        onRefresh = onRefresh
+                                    )
+                                uiState.selectedCategoryId == null && uiState.searchQuery.isBlank() ->
+                                    EmptyPromptMessage("Use the search bar above to find content, or select a category.")
+                                uiState.activeSection == ContentSection.SERIES ->
+                                    SeriesGrid(
+                                        seriesList              = uiState.paginatedSeries,
+                                        onSeriesSelected        = onSeriesSelected,
+                                        firstItemFocusRequester = firstItemFocusRequester,
+                                        onItemFocused           = { focusedSeriesItem = it; focusedStreamItem = null },
+                                        hasPrevPage             = uiState.hasPrevPage,
+                                        hasNextPage             = uiState.hasNextPage,
+                                        currentPage             = uiState.currentPage,
+                                        totalPages              = uiState.totalPages,
+                                        onPrevPage              = onPrevPage,
+                                        onNextPage              = onNextPage
+                                    )
+                                else ->
+                                    StreamGrid(
+                                        streams                 = uiState.paginatedStreams,
+                                        section                 = uiState.activeSection,
+                                        onStreamSelected        = onStreamSelected,
+                                        firstItemFocusRequester = firstItemFocusRequester,
+                                        onItemFocused           = { focusedStreamItem = it; focusedSeriesItem = null },
+                                        hasPrevPage             = uiState.hasPrevPage,
+                                        hasNextPage             = uiState.hasNextPage,
+                                        currentPage             = uiState.currentPage,
+                                        totalPages              = uiState.totalPages,
+                                        onPrevPage              = onPrevPage,
+                                        onNextPage              = onNextPage
+                                    )
+                            }
                         }
                     }
                 }
@@ -938,6 +1035,33 @@ private fun PaginationBar(
         ) {
             androidx.tv.material3.Text("Next")
             androidx.tv.material3.Text("▶", modifier = Modifier.padding(start = 4.dp))
+        }
+    }
+}
+
+@Composable
+private fun WhatsNewGrid(
+    items: List<LibraryItem>,
+    onStreamSelected: (StreamItem) -> Unit,
+    onSeriesSelected: (SeriesItem) -> Unit,
+    onEpisodePlay: (SeriesItem, EpisodeItem) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 170.dp),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(items.size) { index ->
+            val item = items[index]
+            ContinueWatchingCard(
+                item = item,
+                onStreamSelected = onStreamSelected,
+                onSeriesSelected = onSeriesSelected,
+                onEpisodePlay = onEpisodePlay
+            )
         }
     }
 }
