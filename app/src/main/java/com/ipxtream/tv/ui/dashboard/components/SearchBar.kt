@@ -1,5 +1,13 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.KeyEventType
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -50,6 +58,7 @@ fun SearchBar(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
 
     val bgColor by animateColorAsState(
         targetValue = if (isFocused) SlateGlass else SlateCard,
@@ -82,7 +91,32 @@ fun SearchBar(
                 color = borderColor,
                 shape = RoundedCornerShape(26.dp)
             )
-            .onFocusChanged { state -> isFocused = state.isFocused },
+            .onFocusChanged { state -> isFocused = state.isFocused }
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    when (keyEvent.key) {
+                        Key.DirectionDown -> {
+                            focusManager.moveFocus(FocusDirection.Down)
+                            true
+                        }
+                        Key.DirectionRight -> {
+                            focusManager.moveFocus(FocusDirection.Right)
+                            true
+                        }
+                        Key.DirectionLeft -> {
+                            focusManager.moveFocus(FocusDirection.Left)
+                            true
+                        }
+                        Key.DirectionUp -> {
+                            focusManager.moveFocus(FocusDirection.Up)
+                            true
+                        }
+                        else -> false
+                    }
+                } else {
+                    false
+                }
+            },
         textStyle = IpxTypography.BodyMedium.copy(color = TextPrimary),
         singleLine = true,
         keyboardOptions = KeyboardOptions(

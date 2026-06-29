@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Movie
 import com.ipxtream.tv.ui.dashboard.components.TopHeader
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import com.ipxtream.tv.ui.dashboard.components.QuickAccessCard
 import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingRow
 import com.ipxtream.tv.ui.dashboard.components.ContinueWatchingCard
@@ -183,7 +184,11 @@ fun DashboardScreen(
     var isSideNavFocused by remember { mutableStateOf(false) }
 
     val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
-    androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && !isSideNavFocused) {
+    androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && uiState.searchQuery.isNotBlank()) {
+        onSearchQueryChange("")
+    }
+
+    androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && !isSideNavFocused && uiState.searchQuery.isBlank()) {
         runCatching { sideNavFocusRequester.requestFocus() }
     }
 
@@ -259,12 +264,22 @@ fun DashboardScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 item {
-                                    Text(
-                                        text = "Search Results for \"${uiState.searchQuery}\"",
-                                        style = IpxTypography.TitleLarge.copy(fontWeight = FontWeight.Bold),
-                                        color = Color.White,
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                    )
+                                    ) {
+                                        com.ipxtream.tv.ui.dashboard.components.HeaderIconButton(
+                                            onClick = { onSearchQueryChange("") },
+                                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
+                                            contentDescription = "Go Back"
+                                        )
+                                        Spacer(Modifier.width(16.dp))
+                                        Text(
+                                            text = "Search Results for \"${uiState.searchQuery}\"",
+                                            style = IpxTypography.TitleLarge.copy(fontWeight = FontWeight.Bold),
+                                            color = Color.White
+                                        )
+                                    }
                                 }
 
                                 if (uiState.isSearchingHome) {
