@@ -195,7 +195,7 @@ fun DashboardScreen(
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
-    LaunchedEffect(uiState.activeSection, uiState.isLoading) {
+    LaunchedEffect(uiState.activeSection, uiState.isLoading, uiState.searchQuery.isBlank()) {
         if (!uiState.isLoading && !isSideNavFocused) {
             runCatching { firstItemFocusRequester.requestFocus() }
         }
