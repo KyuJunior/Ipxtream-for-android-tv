@@ -439,7 +439,10 @@ class DashboardViewModel(
 
     fun downloadAndInstallUpdate() {
         val release = _uiState.value.updateRelease ?: return
-        val apkAsset = release.assets.firstOrNull { it.name.endsWith(".apk") } ?: return
+        val targetApk = if (com.ipxtream.tv.BuildConfig.DEBUG) "app-debug.apk" else "app-release.apk"
+        val apkAsset = release.assets.firstOrNull { it.name.equals(targetApk, ignoreCase = true) }
+            ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
+            ?: return
 
         _uiState.update { it.copy(updateDownloadProgress = 0f, updateErrorMessage = null) }
 
