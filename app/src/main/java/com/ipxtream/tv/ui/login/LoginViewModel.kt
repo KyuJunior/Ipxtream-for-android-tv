@@ -21,7 +21,7 @@ import java.io.IOException
  * 3. Persists credentials to [CredentialStore] on success.
  * 4. Exposes all UI state through [uiState] (a cold StateFlow).
  *
- * The ViewModel itself holds no Android framework references — it receives
+ * The ViewModel itself holds no Android framework references - it receives
  * [CredentialStore] via constructor injection, which makes it trivially testable.
  *
  * @param credentialStore Encrypted credential persistence layer.
@@ -81,7 +81,7 @@ class LoginViewModel(
                 } else {
                     // The server responded but rejected the credentials.
                     _uiState.value = LoginUiState.Error(
-                        "Authentication failed — please check your username and password."
+                        "Authentication failed. Please check your username and password."
                     )
                 }
 
@@ -96,7 +96,7 @@ class LoginViewModel(
             } catch (e: IOException) {
                 // Covers: no network, DNS failure, socket timeout, malformed URL.
                 _uiState.value = LoginUiState.Error(
-                    "Network error — check the server URL and your internet connection."
+                    "Network error. Check the server URL and your internet connection."
                 )
             } catch (e: Exception) {
                 _uiState.value = LoginUiState.Error(

@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -9,7 +10,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +42,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val checkUpdatesFocusRequester = remember { FocusRequester() }
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showPrivacyDialog by remember { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(Unit) {
         runCatching { checkUpdatesFocusRequester.requestFocus() }
@@ -97,6 +103,32 @@ fun SettingsScreen(
                             Text("Version: v${BuildConfig.VERSION_NAME}", style = IpxTypography.BodyMedium, color = TextSecondary)
                             Text("Build Type: ${BuildConfig.BUILD_TYPE}", style = IpxTypography.BodyMedium, color = TextMuted)
                             Text("Target Device: Android TV", style = IpxTypography.BodyMedium, color = TextMuted)
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { showTermsDialog = true },
+                            modifier = Modifier.fillMaxWidth().height(36.dp),
+                            shape = ButtonDefaults.shape(RoundedCornerShape(8.dp)),
+                            colors = ButtonDefaults.colors(
+                                containerColor = SlateCard,
+                                focusedContainerColor = AccentCyan
+                            )
+                        ) {
+                            Text("Terms & Conditions", style = IpxTypography.BodySmall)
+                        }
+
+                        Button(
+                            onClick = { showPrivacyDialog = true },
+                            modifier = Modifier.fillMaxWidth().height(36.dp),
+                            shape = ButtonDefaults.shape(RoundedCornerShape(8.dp)),
+                            colors = ButtonDefaults.colors(
+                                containerColor = SlateCard,
+                                focusedContainerColor = AccentCyan
+                            )
+                        ) {
+                            Text("Privacy Policy", style = IpxTypography.BodySmall)
                         }
                     }
                 }
@@ -390,6 +422,148 @@ fun SettingsScreen(
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        if (showTermsDialog) {
+            LegalInfoDialog(
+                title = "Terms and Conditions",
+                content = """IPXtream TV Terms and Conditions
+
+1. Acceptance of Terms
+By installing and using IPXtream TV, you agree to these terms. If you do not agree, uninstall and do not use the application.
+
+2. Purpose and Nature of the Software
+IPXtream TV is an independent client media player. It does not provide, host, sell, or index any video streams, television channels, or playlists. The application is strictly a playback tool.
+
+3. User Responsibilities
+You are solely responsible for the playlists and credentials you load. You must ensure you have the legal right or license to access your content. You must not use the application to infringe upon copyright or intellectual property rights.
+
+4. Third-Party Services
+Connections are established directly from your device to the IPTV server you specify. The developers have no affiliation with any streaming service or provider.
+
+5. Disclaimer of Warranties
+The software is provided "as is" without warranty of any kind. The developers are not liable for any damages resulting from the use of this software or content accessed through it.""",
+                onDismiss = { showTermsDialog = false }
+            )
+        }
+
+        if (showPrivacyDialog) {
+            LegalInfoDialog(
+                title = "Privacy Policy",
+                content = """IPXtream TV Privacy Policy
+
+1. Zero Data Collection
+IPXtream TV does not collect, transmit, store, or sell your personal data. There are no tracking scripts, analytics SDKs, or background telemetry.
+
+2. Local Storage
+All credentials, playlists, stream caches, and download history are saved exclusively on your local device within sandboxed application storage. This information is deleted if you clear app data or uninstall the application.
+
+3. Outgoing Connections
+The application connects directly to the IPTV provider address you provide to load streams, and queries the public GitHub Releases API to check for software updates. No personal data is transmitted in these requests.
+
+4. Contact
+For questions or inquiries, visit the official repository at github.com/KyuJunior/Ipxtream-for-android-tv.""",
+                onDismiss = { showPrivacyDialog = false }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LegalInfoDialog(
+    title: String,
+    content: String,
+    onDismiss: () -> Unit
+) {
+    val closeFocusRequester = remember { FocusRequester() }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        runCatching { closeFocusRequester.requestFocus() }
+    }
+
+    BackHandler { onDismiss() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xE608080C))
+            .padding(32.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Card(
+            onClick = { /* No-op */ },
+            modifier = Modifier
+                .fillMaxWidth(0.85f)
+                .fillMaxHeight(0.9f),
+            shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
+            colors = CardDefaults.colors(
+                containerColor = SlatePrimary,
+                focusedContainerColor = SlatePrimary
+            ),
+            border = CardDefaults.border(
+                border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp)),
+                focusedBorder = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp))
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                ) {
+                    Text(
+                        text = title,
+                        style = IpxTypography.TitleLarge.copy(fontSize = 24.sp),
+                        color = AccentCyan
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        Text(
+                            text = content,
+                            style = IpxTypography.BodyMedium,
+                            color = TextSecondary,
+                            lineHeight = 22.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .height(38.dp)
+                            .focusRequester(closeFocusRequester),
+                        shape = ButtonDefaults.shape(RoundedCornerShape(8.dp)),
+                        colors = ButtonDefaults.colors(
+                            containerColor = AccentCyan,
+                            focusedContainerColor = AccentCyan
+                        )
+                    ) {
+                        Text(
+                            text = "Close",
+                            style = IpxTypography.BodyMedium,
+                            color = Color.Black,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
                     }
                 }
             }

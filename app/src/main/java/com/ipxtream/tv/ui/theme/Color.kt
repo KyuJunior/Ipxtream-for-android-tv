@@ -2,18 +2,18 @@ package com.ipxtream.tv.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─── Slate & Glass Palette (Netflix/Prime Pitch Black) ─────────────────────────
+// ─── Slate & Glass Palette (Pure OLED Pitch Black) ───────────────────────────
 
-/** Pure Black — primary background of every screen. */
+/** Pure OLED Black — primary background of every screen. */
 val SlateDeep        = Color(0xFF000000)
-/** Main surface background for content areas — deep charcoal. */
-val SlatePrimary     = Color(0xFF0F0F0F)
-/** Slightly lighter — used as card/surface background. */
-val SlateCard        = Color(0xFF1C1C1C)
+/** Main surface background for content areas — pure OLED black. */
+val SlatePrimary     = Color(0xFF000000)
+/** Subtle dark card surface on pure black background. */
+val SlateCard        = Color(0xFF101010)
 /** Glass card tint — dark charcoal for highlighted surfaces. */
 val SlateGlass       = Color(0xEE141414)
-/** Sidebar / nav panel background. */
-val SlateNav         = Color(0xDD000000)
+/** Sidebar / nav panel background — pure OLED black. */
+val SlateNav         = Color(0xFF000000)
 
 // ─── Accent ───────────────────────────────────────────────────────────────────
 

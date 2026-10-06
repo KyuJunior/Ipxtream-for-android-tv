@@ -286,12 +286,12 @@ class DownloadService : Service() {
                         totalBytes       = result.totalBytesWritten
                     )
                 }
-                updateNotification(item.title, "Complete ✓")
+                updateNotification(item.title, "Download Complete")
             }
 
             is HttpDownloader.DownloadResult.Error -> {
                 if (result.isRangeUnsupported) {
-                    // Server doesn't support Range — delete partial and let the
+                    // Server doesn't support Range - delete partial and let the
                     // service auto-retry from zero via a recursive call.
                     partFile.delete()
                     DownloadRepository.update(item.id) { it.copy(downloadedBytes = 0L) }

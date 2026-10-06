@@ -312,7 +312,7 @@ private fun formatInfo(item: DownloadItem): String {
         return item.errorMessage
     }
 
-    return parts.joinToString("  •  ").ifBlank { "—" }
+    return parts.joinToString("  •  ").ifBlank { "-" }
 }
 
 private fun formatSize(bytes: Long): String = when {

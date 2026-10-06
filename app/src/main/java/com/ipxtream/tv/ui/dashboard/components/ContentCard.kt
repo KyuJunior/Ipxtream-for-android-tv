@@ -7,7 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,15 +95,12 @@ fun LiveChannelCard(
         modifier = modifier.size(CardWidthLive, CardHeightLive),
         shape    = CardDefaults.shape(CardShape),
         colors   = CardDefaults.colors(
-            containerColor        = SlatePrimary,
+            containerColor        = SlateCard,
             focusedContainerColor = SlateGlass
         ),
         scale  = CardDefaults.scale(focusedScale = FocusScale),
         border = CardDefaults.border(
             focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
-        ),
-        glow   = CardDefaults.glow(
-            focusedGlow = Glow(elevationColor = Color.Black, elevation = 24.dp)
         )
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -173,9 +173,6 @@ fun VodPosterCard(
         scale  = CardDefaults.scale(focusedScale = FocusScale),
         border = CardDefaults.border(
             focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
-        ),
-        glow   = CardDefaults.glow(
-            focusedGlow = Glow(elevationColor = Color.Black, elevation = 24.dp)
         )
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -226,9 +223,6 @@ fun SeriesPosterCard(
         scale  = CardDefaults.scale(focusedScale = FocusScale),
         border = CardDefaults.border(
             focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
-        ),
-        glow   = CardDefaults.glow(
-            focusedGlow = Glow(elevationColor = Color.Black, elevation = 24.dp)
         )
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -263,7 +257,7 @@ private fun LiveBadge(modifier: Modifier = Modifier) {
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text  = "● LIVE",
+            text  = "LIVE",
             style = IpxTypography.LabelSmall,
             color = Color(0xFF0B1520),
             fontWeight = FontWeight.Bold,
@@ -284,12 +278,23 @@ private fun RatingBadge(
             .background(Color(0xE6000000))
             .padding(horizontal = 6.dp, vertical = 3.dp)
     ) {
-        Text(
-            text  = "★ $rating",
-            style = IpxTypography.LabelSmall,
-            color = AccentAmber,
-            fontWeight = FontWeight.Bold,
-            fontSize = 11.sp
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                tint = AccentAmber,
+                modifier = Modifier.size(11.dp)
+            )
+            Spacer(Modifier.size(3.dp))
+            Text(
+                text  = rating,
+                style = IpxTypography.LabelSmall,
+                color = AccentAmber,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp
+            )
+        }
     }
 }

@@ -21,6 +21,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -75,11 +79,22 @@ fun HomeSearchResultsView(
                 .padding(48.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = "🔍 No movies or TV series matched \"$searchQuery\"",
-                style = IpxTypography.TitleMedium,
-                color = TextSecondary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "No movies or TV series matched \"$searchQuery\"",
+                    style = IpxTypography.TitleMedium,
+                    color = TextSecondary
+                )
+            }
         }
         return
     }

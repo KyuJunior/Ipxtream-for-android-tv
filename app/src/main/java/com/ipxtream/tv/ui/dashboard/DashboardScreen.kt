@@ -480,7 +480,7 @@ fun DashboardScreen(
                 }
             }
 
-            // ── Download tray — docked at bottom of centre box ───────────
+            // -- Download tray: docked at bottom of centre box -----------
             if (uiState.activeSection != ContentSection.DOWNLOADS) {
                 DownloadTray(
                     downloads    = downloadItems,
@@ -792,7 +792,7 @@ private fun LoadingIndicator() {
 @Composable
 private fun ErrorMessage(message: String, onRetry: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        androidx.tv.material3.Text("⚠ $message", style = IpxTypography.BodyMedium, color = TextSecondary)
+        androidx.tv.material3.Text(message, style = IpxTypography.BodyMedium, color = TextSecondary)
         Spacer(Modifier.height(12.dp))
         androidx.tv.material3.Button(onClick = onRetry) { androidx.tv.material3.Text("Retry") }
     }
@@ -802,7 +802,7 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit) {
 @Composable
 private fun EmptyPromptMessage(message: String) {
     androidx.tv.material3.Text(
-        text = "🔍 $message",
+        text = message,
         style = IpxTypography.TitleMedium,
         color = TextSecondary,
         modifier = Modifier.wrapContentSize()
@@ -866,7 +866,11 @@ private fun LibrarySection(
                     }
                     Spacer(Modifier.width(16.dp))
                     if (uiState.isCheckingForUpdate) {
-                        Text("⏳", style = IpxTypography.TitleMedium)
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = AccentCyan,
+                            strokeWidth = 2.dp
+                        )
                     } else if (uiState.updateRelease != null) {
                         androidx.tv.material3.Button(onClick = onDownloadUpdate) {
                             Text("Download Update")
@@ -893,7 +897,7 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        items(uiState.historyList) { item ->
+                        items(uiState.historyList, key = { it.id }) { item ->
                             LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
                         }
                     }
@@ -908,7 +912,7 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        items(uiState.favoritesList) { item ->
+                        items(uiState.favoritesList, key = { it.id }) { item ->
                             LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
                         }
                     }
@@ -990,7 +994,7 @@ private fun LibraryCard(
                 modifier = Modifier.size(240.dp, 135.dp),
                 shape = androidx.tv.material3.CardDefaults.shape(RoundedCornerShape(12.dp)),
                 colors = androidx.tv.material3.CardDefaults.colors(
-                    containerColor = SlatePrimary,
+                    containerColor = com.ipxtream.tv.ui.theme.SlateCard,
                     focusedContainerColor = SlateGlass
                 ),
                 border = androidx.tv.material3.CardDefaults.border(

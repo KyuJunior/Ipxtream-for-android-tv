@@ -73,10 +73,10 @@ import com.ipxtream.tv.ui.theme.TextSecondary
  *
  * @param exoPlayer   The live [ExoPlayer] instance from [PlayerViewModel].
  * @param uiState     Reactive state from [PlayerViewModel.uiState].
- * @param viewModel   The [PlayerViewModel] — passed directly so key events can
+ * @param viewModel   The [PlayerViewModel] - passed directly so key events can
  *                    call VM methods without lambda parameter explosion.
  * @param onStop      Called when the user closes the panel (BACK when HUD hidden,
- *                    or ✕ button press).
+ *                    or Close button press).
  */
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -90,11 +90,11 @@ fun PlayerPanel(
     val context        = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // ── PlayerView — created ONCE, never recreated ────────────────────────────
+    // -- PlayerView: created ONCE, never recreated ----------------------------
     val playerView = remember {
         PlayerView(context).apply {
             player                  = exoPlayer
-            useController           = false   // ← custom HUD replaces built-in controls
+            useController           = false   // custom HUD replaces built-in controls
             layoutParams            = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -317,7 +317,7 @@ private fun ErrorOverlay(message: String, onRetry: () -> Unit, onClose: () -> Un
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
     ) {
-        Text("⚠ $message", style = IpxTypography.BodyMedium, color = TextSecondary)
+        Text(message, style = IpxTypography.BodyMedium, color = TextSecondary)
         androidx.compose.foundation.layout.Row(
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
         ) {
@@ -333,7 +333,7 @@ private fun EndedOverlay(onReplay: () -> Unit, onClose: () -> Unit) {
     androidx.compose.foundation.layout.Row(
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
     ) {
-        Button(onClick = onReplay) { Text("↺ Replay") }
-        Button(onClick = onClose)  { Text("✕ Close")  }
+        Button(onClick = onReplay) { Text("Replay") }
+        Button(onClick = onClose)  { Text("Close")  }
     }
 }

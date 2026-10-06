@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -35,8 +34,10 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -95,9 +96,8 @@ fun SeriesDetailScreen(
             model = seriesItem.backdropPath?.firstOrNull() ?: seriesItem.cover,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(radius = 24.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded)
+            alpha = 0.25f,
+            modifier = Modifier.fillMaxSize()
         )
 
         // ─── Heavy Gradients for Readability ────────────────────────────────
@@ -142,7 +142,16 @@ fun SeriesDetailScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         seriesItem.rating?.takeIf { it.isNotBlank() }?.let { rating ->
-                            Text("⭐ $rating/10", style = IpxTypography.TitleLarge, color = AccentAmber, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.Star,
+                                    contentDescription = null,
+                                    tint = AccentAmber,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text("$rating/10", style = IpxTypography.TitleLarge, color = AccentAmber, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            }
                         }
                         Spacer(Modifier.width(8.dp))
                         Button(
@@ -184,12 +193,23 @@ fun SeriesDetailScreen(
                             ),
                             shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
                         ) {
-                            Text(
-                                text = "◀ Back",
+                            Row(
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                                style = IpxTypography.BodyMedium,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                            )
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "Back",
+                                    style = IpxTypography.BodyMedium,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                )
+                            }
                         }
                     }
                     
@@ -220,7 +240,7 @@ fun SeriesDetailScreen(
                 // Seasons Row
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(seasons) { season ->
+                        items(seasons, key = { it.seasonNumber }) { season ->
                             val isSelected = selectedSeason == season
                             
                             FilterChip(
@@ -240,7 +260,7 @@ fun SeriesDetailScreen(
                 val currentEpisodes = selectedSeason?.episodes ?: emptyList()
                 val chunkedEpisodes = currentEpisodes.chunked(3)
                 
-                itemsIndexed(chunkedEpisodes) { rowIndex, rowEpisodes ->
+                itemsIndexed(chunkedEpisodes, key = { index, row -> row.firstOrNull()?.id ?: index.toString() }) { rowIndex, rowEpisodes ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)

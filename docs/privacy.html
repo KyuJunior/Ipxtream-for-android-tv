@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - IPXtream TV</title>
+  <meta name="description" content="Privacy policy for IPXtream TV. Transparent, local-first data practices with zero telemetry.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <div class="nav-row">
+        <a href="index.html" class="brand-link">
+          <svg class="brand-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="64" height="64" rx="12" fill="#08080C"/>
+            <rect x="2" y="2" width="60" height="60" rx="10" stroke="#00A8E1" stroke-width="2" stroke-opacity="0.3"/>
+            <path d="M18 16H46C48.2 16 50 17.8 50 20V40C50 42.2 48.2 44 46 44H18C15.8 44 14 42.2 14 40V20C14 17.8 15.8 16 18 16Z" stroke="#00A8E1" stroke-width="3"/>
+            <path d="M28 24L38 30L28 36V24Z" fill="#00A8E1"/>
+            <path d="M24 48H40" stroke="#00A8E1" stroke-width="3" stroke-linecap="round"/>
+            <path d="M32 44V48" stroke="#00A8E1" stroke-width="3"/>
+          </svg>
+          <span>IPXtream TV</span>
+        </a>
+        <nav>
+          <ul class="nav-links">
+            <li><a href="index.html#features">Features</a></li>
+            <li><a href="index.html#install">Installation</a></li>
+            <li><a href="terms.html">Terms</a></li>
+            <li><a href="privacy.html" class="active">Privacy</a></li>
+            <li>
+              <a href="https://github.com/KyuJunior/Ipxtream-for-android-tv" target="_blank" rel="noopener noreferrer">
+                GitHub
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="doc-section">
+    <div class="container">
+      <div class="doc-box">
+        <div class="doc-header">
+          <h1>Privacy Policy</h1>
+          <p class="doc-date">Last updated: October 2026</p>
+        </div>
+
+        <div class="doc-body">
+          <div class="doc-callout">
+            <p><strong>Core Principle:</strong> IPXtream TV does not collect, transmit, store, or sell your personal data. Everything runs locally on your television device.</p>
+          </div>
+
+          <section>
+            <h2>1. Information We Do Not Collect</h2>
+            <p>We believe private viewing should stay private. IPXtream TV does not gather:</p>
+            <ul>
+              <li>Personal identity details (such as your name, email address, or phone number).</li>
+              <li>Viewing history, watch time, or channel selections.</li>
+              <li>Device location data or GPS coordinates.</li>
+              <li>Advertising identifiers or cross-app tracking identifiers.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>2. Information Stored Locally on Your Device</h2>
+            <p>
+              To function properly as an IPTV player, the app saves certain configuration items locally in private Android storage (EncryptedSharedPreferences and Room Database):
+            </p>
+            <ul>
+              <li><strong>Provider Credentials:</strong> The server URL, username, and password you provide to access your IPTV service.</li>
+              <li><strong>Playlists and EPG Data:</strong> Downloaded category lists, channel indexes, and electronic program guide caches to enable fast local search and browsing.</li>
+              <li><strong>Favorites and Playback History:</strong> Channels or movies you mark as favorites, along with resume positions for video playback.</li>
+              <li><strong>Application Preferences:</strong> Player buffer sizes, stream format preferences, and UI settings.</li>
+            </ul>
+            <p>
+              This data never leaves your device. It is stored strictly within the private sandboxed storage of the application and is deleted when you uninstall the app or clear app data in Android settings.
+            </p>
+          </section>
+
+          <section>
+            <h2>3. Network Connections and Outgoing Requests</h2>
+            <p>The application initiates outgoing network connections in only two situations:</p>
+            <ul>
+              <li><strong>Connecting to Your IPTV Provider:</strong> When loading playlists, EPG schedules, or video streams, the app communicates directly with the server address you entered. We do not proxy, inspect, or intercept these connections.</li>
+              <li><strong>Checking for Application Updates:</strong> To notify you of new software releases, the app queries the public GitHub Releases API. This request only fetches public version metadata and transmits no personal information.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>4. Third-Party Libraries and SDKs</h2>
+            <p>
+              IPXtream TV does not include any third-party analytics SDKs, advertising frameworks, or telemetry packages (such as Google Analytics, Firebase Analytics, or Facebook SDK).
+            </p>
+          </section>
+
+          <section>
+            <h2>5. Children's Privacy</h2>
+            <p>
+              The application does not collect information from any user, including children under the age of 13. Parental controls can be set directly within the player settings to restrict access to specific categories.
+            </p>
+          </section>
+
+          <section>
+            <h2>6. Security of Your Data</h2>
+            <p>
+              Because your credentials and stream data remain exclusively on your local hardware, their security depends on the security of your local Android TV device and network. We recommend using secure Wi-Fi networks and strong provider passwords.
+            </p>
+          </section>
+
+          <section>
+            <h2>7. Contact and Inquiries</h2>
+            <p>
+              If you have any questions or concerns regarding this Privacy Policy, you can open an issue or discussion on the official GitHub repository at <a href="https://github.com/KyuJunior/Ipxtream-for-android-tv" target="_blank" rel="noopener noreferrer">github.com/KyuJunior/Ipxtream-for-android-tv</a>.
+            </p>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <h4>IPXtream TV</h4>
+          <p>An open media player client designed specifically for television devices. It does not provide, host, or distribute any media content.</p>
+        </div>
+        <ul class="footer-links">
+          <li><a href="terms.html">Terms and Conditions</a></li>
+          <li><a href="privacy.html">Privacy Policy</a></li>
+          <li><a href="https://github.com/KyuJunior/Ipxtream-for-android-tv/releases" target="_blank" rel="noopener noreferrer">Releases</a></li>
+          <li><a href="https://github.com/KyuJunior/Ipxtream-for-android-tv" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-disclaimer">
+        <p>
+          Disclaimer: IPXtream TV does not collect personal data or transmit viewing statistics. All user credentials and playlists remain on the local television device.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

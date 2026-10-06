@@ -18,10 +18,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -167,7 +171,7 @@ fun TrackSelectionMenu(
                             track == tracks.firstOrNull()
                         TrackMenuItem(
                             label          = track.label,
-                            sublabel       = if (!track.isSupported) "⚠ Not supported" else null,
+                            sublabel       = if (!track.isSupported) "Not supported" else null,
                             isSelected     = track.isSelected,
                             isSupported    = track.isSupported,
                             isFocusTarget  = isFirstAudioItem,
@@ -229,13 +233,20 @@ private fun TrackMenuItem(
             modifier          = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Selection indicator dot
-            Text(
-                text      = if (isSelected) "●" else "○",
-                style     = IpxTypography.BodyMedium,
-                color     = if (isSelected) AccentCyan else TextMuted,
-                modifier  = Modifier.width(20.dp)
-            )
+            // Selection indicator
+            Box(
+                modifier = Modifier.width(20.dp),
+                contentAlignment = Alignment.CenterStart
+            ) {
+                if (isSelected) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Selected",
+                        tint = AccentCyan,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
             Spacer(Modifier.width(10.dp))
 
             Column {

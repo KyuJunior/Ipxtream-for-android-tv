@@ -251,7 +251,7 @@ private fun HudTopBar(
                         .background(AccentGreen)
                         .padding(horizontal = 6.dp, vertical = 2.dp)
                 ) {
-                    Text("● LIVE", color = Color(0xFF0B1520), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("LIVE", color = Color(0xFF0B1520), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.width(8.dp))
             }
@@ -372,7 +372,7 @@ private fun HudBottomBar(
 
             // Time display
             Text(
-                text  = if (isLive) "● LIVE"
+                text  = if (isLive) "LIVE"
                         else "${formatTime(currentPositionMs)} / ${formatTime(durationMs)}",
                 style = IpxTypography.BodyMedium,
                 color = if (isLive) AccentGreen else TextSecondary

@@ -112,70 +112,13 @@ import com.ipxtream.tv.ui.theme.TextSecondary
  * @param savedServer   Pre-filled server from [CredentialStore], if any.
  * @param savedUsername Pre-filled username from [CredentialStore], if any.
  */
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun AmbientBackground(modifier: Modifier = Modifier) {
-    val infiniteTransition = rememberInfiniteTransition(label = "ambient")
-    
-    val pulse1 by infiniteTransition.animateFloat(
-        initialValue = 0.35f,
-        targetValue = 0.55f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(10000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse1"
-    )
-    
-    val pulse2 by infiniteTransition.animateFloat(
-        initialValue = 0.25f,
-        targetValue = 0.45f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(15000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse2"
-    )
-    
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SlateDeep)
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val width = size.width
-            val height = size.height
-            
-            // Draw a deep cyan/blue ambient orb at top-left
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(AccentCyan.copy(alpha = pulse1), Color.Transparent),
-                    center = androidx.compose.ui.geometry.Offset(width * 0.15f, height * 0.2f),
-                    radius = width * 0.7f
-                ),
-                radius = width * 0.7f,
-                center = androidx.compose.ui.geometry.Offset(width * 0.15f, height * 0.2f)
-            )
-            
-            // Draw a deep amber ambient orb at bottom-right
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(AccentAmber.copy(alpha = pulse2 * 0.6f), Color.Transparent),
-                    center = androidx.compose.ui.geometry.Offset(width * 0.85f, height * 0.8f),
-                    radius = width * 0.6f
-                ),
-                radius = width * 0.6f,
-                center = androidx.compose.ui.geometry.Offset(width * 0.85f, height * 0.8f)
-            )
-        }
-        
-        // Semi-transparent overlay to ensure readability
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.45f))
-        )
-    }
+            .background(Color.Black)
+    )
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)

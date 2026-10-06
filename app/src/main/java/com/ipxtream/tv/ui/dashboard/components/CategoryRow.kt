@@ -32,7 +32,7 @@ import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 
-private val ChipShape = RoundedCornerShape(50)
+private val ChipShape = RoundedCornerShape(8.dp)
 
 /**
  * Horizontal scrollable row of category filter chips.

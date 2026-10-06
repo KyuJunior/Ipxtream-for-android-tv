@@ -231,7 +231,7 @@ fun UserProfileCard(
                     )
                 } else {
                     Text(
-                        text = "✓ Up to date",
+                        text = "Up to date",
                         style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
                         color = Color(0xFF2ECC71)
                     )
@@ -499,7 +499,7 @@ fun ContinueWatchingRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items) { item ->
+            items(items, key = { it.id }, contentType = { "continue_watching" }) { item ->
                 ContinueWatchingCard(
                     item = item,
                     onStreamSelected = onStreamSelected,
@@ -530,7 +530,7 @@ fun HomeHighlightsRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items) { item ->
+            items(items, key = { it.streamId }, contentType = { "live_channel" }) { item ->
                 LiveChannelCard(stream = item, onClick = { onStreamSelected(item) })
             }
         }
@@ -556,7 +556,7 @@ fun HomeMoviesRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items) { item ->
+            items(items, key = { it.streamId }, contentType = { "vod_movie" }) { item ->
                 VodPosterCard(stream = item, onClick = { onStreamSelected(item) })
             }
         }
@@ -582,7 +582,7 @@ fun HomeSeriesRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items) { item ->
+            items(items, key = { it.seriesId }, contentType = { "tv_series" }) { item ->
                 SeriesPosterCard(series = item, onClick = { onSeriesSelected(item) })
             }
         }

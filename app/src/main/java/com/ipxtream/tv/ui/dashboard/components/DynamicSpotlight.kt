@@ -11,13 +11,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -54,39 +56,52 @@ fun DynamicSpotlight(
 
     Crossfade(
         targetState = imageUrl to title,
-        animationSpec = tween(700),
+        animationSpec = tween(250),
         label = "spotlightFade"
     ) { (currentUrl, currentTitle) ->
-        Box(modifier = modifier.fillMaxSize()) {
+        Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
             if (currentUrl.isNotEmpty()) {
-                // Background massive blurred image
+                // Background dimmed image without GPU-choking blur
                 AsyncImage(
                     model = currentUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxSize()
-                        .blur(radius = 64.dp, edgeTreatment = BlurredEdgeTreatment.Unbounded)
+                    alpha = 0.35f,
+                    modifier = Modifier.fillMaxSize()
                 )
             } else {
                 // Fallback empty solid background
-                Box(modifier = Modifier.fillMaxSize().background(SlatePrimary))
+                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
             }
 
-            // Dark gradients to blend it seamlessly into the application layout
+            // Dark gradients to blend seamlessly into OLED pitch black
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0x66000000), // Semi-transparent top
-                                Color(0xDD000000), // Darker mid
-                                Color(0xFF0F0F0F)  // Pure deep charcoal bottom to blend into Grid
+                                Color(0x55000000), // Semi-transparent top
+                                Color(0xCC000000), // Darker mid
+                                Color(0xFF000000)  // Pure OLED black bottom
                             ),
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY
+                        )
+                    )
+            )
+
+            // Horizontal gradient to ensure text readability on the left
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xEE000000),
+                                Color(0x88000000),
+                                Color.Transparent
+                            )
                         )
                     )
             )
@@ -120,7 +135,16 @@ fun DynamicSpotlight(
                             }
                             Spacer(Modifier.width(12.dp))
                         } else if (rating > 0.0) {
-                            Text("★ $rating", color = AccentAmber, style = IpxTypography.TitleMedium)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = AccentAmber,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text("$rating", color = AccentAmber, style = IpxTypography.TitleMedium)
+                            }
                             Spacer(Modifier.width(12.dp))
                         }
                         

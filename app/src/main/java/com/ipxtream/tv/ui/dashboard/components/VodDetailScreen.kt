@@ -9,7 +9,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -29,8 +28,12 @@ import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -76,9 +79,8 @@ fun VodDetailScreen(
             model              = streamItem.streamIcon,
             contentDescription = null,
             contentScale       = ContentScale.Crop,
-            modifier           = Modifier
-                .fillMaxSize()
-                .blur(radius = 24.dp, edgeTreatment = androidx.compose.ui.draw.BlurredEdgeTreatment.Unbounded)
+            alpha              = 0.25f,
+            modifier           = Modifier.fillMaxSize()
         )
 
         // ─── Heavy Gradients for Readability ────────────────────────────────
@@ -119,7 +121,21 @@ fun VodDetailScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 streamItem.rating?.takeIf { it.isNotBlank() }?.let { rating ->
-                    Text("⭐ $rating/10", style = IpxTypography.TitleLarge, color = com.ipxtream.tv.ui.theme.AccentAmber, fontWeight = FontWeight.Bold)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = null,
+                            tint = com.ipxtream.tv.ui.theme.AccentAmber,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "$rating/10",
+                            style = IpxTypography.TitleLarge,
+                            color = com.ipxtream.tv.ui.theme.AccentAmber,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 if (streamItem.containerExtension != null) {
                     Box(
@@ -135,7 +151,7 @@ fun VodDetailScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // ─── Actions ──────────────────────────────────────────────────
+            // -- Actions --------------------------------------------------
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Button(
                     onClick = onPlay,
@@ -148,12 +164,22 @@ fun VodDetailScreen(
                     ),
                     shape = androidx.tv.material3.ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
                 ) {
-                    Text(
-                        text = "▶  Play",
+                    Row(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                        style = IpxTypography.TitleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = "Play",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Play",
+                            style = IpxTypography.TitleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Button(
@@ -166,12 +192,22 @@ fun VodDetailScreen(
                     ),
                     shape = androidx.tv.material3.ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
                 ) {
-                    Text(
-                        text = "⬇  Download",
+                    Row(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                        style = IpxTypography.TitleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDownward,
+                            contentDescription = "Download",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Download",
+                            style = IpxTypography.TitleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
 
                 Button(
@@ -213,12 +249,22 @@ fun VodDetailScreen(
                     ),
                     shape = androidx.tv.material3.ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
                 ) {
-                    Text(
-                        text = "◀  Back",
+                    Row(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
-                        style = IpxTypography.TitleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "Back",
+                            style = IpxTypography.TitleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
             

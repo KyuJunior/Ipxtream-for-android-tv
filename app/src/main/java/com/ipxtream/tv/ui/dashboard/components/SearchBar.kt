@@ -19,11 +19,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -85,11 +89,11 @@ fun SearchBar(
                 scaleX = scale
                 scaleY = scale
             }
-            .background(bgColor, RoundedCornerShape(26.dp))
+            .background(bgColor, RoundedCornerShape(8.dp))
             .border(
                 width = if (isFocused) 2.dp else 0.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(26.dp)
+                shape = RoundedCornerShape(8.dp)
             )
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { keyEvent ->
@@ -124,10 +128,11 @@ fun SearchBar(
                     .padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "🔍",
-                    style = IpxTypography.TitleMedium,
-                    color = if (isFocused) AccentCyan else TextMuted
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = if (isFocused) AccentCyan else TextMuted,
+                    modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))
 

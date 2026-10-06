@@ -584,13 +584,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private fun buildErrorMessage(error: PlaybackException): String = when (error.errorCode) {
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
-            "Network error — check your connection and server URL."
+            "Network error. Check your connection and server URL."
         PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
-            "Stream unavailable — the server returned an error."
+            "Stream unavailable. The server returned an error."
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ->
             "This stream format is not supported on your device."
         PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ->
-            "Fell behind the live stream — reconnecting…"
+            "Fell behind the live stream. Reconnecting..."
         else -> error.localizedMessage ?: "Playback error (${error.errorCode})."
     }
 

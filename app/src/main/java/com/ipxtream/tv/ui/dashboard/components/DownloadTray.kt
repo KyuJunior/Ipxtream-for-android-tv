@@ -66,7 +66,7 @@ import com.ipxtream.tv.ui.theme.TextSecondary
  *
  * ## D-Pad integration
  * The tray is placed at the bottom of [DashboardScreen]'s main `Column`.
- * DPAD_DOWN from the grid does NOT focus the tray by default — the user
+ * DPAD_DOWN from the grid does NOT focus the tray by default - the user
  * must explicitly navigate to it. TV Material `Button` handles focus
  * within the tray.
  *
@@ -291,7 +291,7 @@ private fun DownloadRow(
                 }
 
                 if (!item.isFinished) {
-                    TrayIconButton("✕", onCancel)
+                    TrayIconButton("Cancel", onCancel)
                 }
             }
         }
@@ -306,11 +306,11 @@ private fun DownloadRow(
 @Composable
 private fun StatusBadge(status: DownloadStatus) {
     val (label, color) = when (status) {
-        DownloadStatus.PENDING     -> "Queued"     to TextMuted
-        DownloadStatus.DOWNLOADING -> "●  Active"  to AccentCyan
-        DownloadStatus.PAUSED      -> "⏸ Paused"  to AccentAmber
-        DownloadStatus.COMPLETED   -> "✓ Done"     to AccentGreen
-        DownloadStatus.FAILED      -> "⚠ Failed"  to AccentAmber
+        DownloadStatus.PENDING     -> "Queued" to TextMuted
+        DownloadStatus.DOWNLOADING -> "Active" to AccentCyan
+        DownloadStatus.PAUSED      -> "Paused" to AccentAmber
+        DownloadStatus.COMPLETED   -> "Done"   to AccentGreen
+        DownloadStatus.FAILED      -> "Failed" to AccentAmber
     }
     Text(label, style = IpxTypography.LabelSmall, color = color, fontSize = 10.sp)
 }
@@ -361,7 +361,7 @@ private fun buildInfoText(item: DownloadItem): String {
         return item.errorMessage
     }
 
-    return parts.joinToString("  ·  ").ifBlank { "—" }
+    return parts.joinToString("  ·  ").ifBlank { "-" }
 }
 
 private fun formatBytes(bytes: Long): String = when {
