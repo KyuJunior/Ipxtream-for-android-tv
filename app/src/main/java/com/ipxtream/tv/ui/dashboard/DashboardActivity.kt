@@ -123,6 +123,25 @@ class DashboardActivity : ComponentActivity() {
         }
     }
 
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_DOWN) {
+            val state = dashboardViewModel.uiState.value
+            if (state.detailVodItem != null || state.detailSeriesItem != null) {
+                dashboardViewModel.closeDetails()
+                return true
+            }
+            if (state.updateRelease != null) {
+                dashboardViewModel.dismissUpdate()
+                return true
+            }
+            if (state.searchQuery.isNotBlank()) {
+                dashboardViewModel.updateSearchQuery("")
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     // ─── Lifecycle ────────────────────────────────────────────────────────────
     // Pause/resume is handled inside PlayerPanel's DisposableEffect.
     // Release is handled in PlayerViewModel.onCleared().

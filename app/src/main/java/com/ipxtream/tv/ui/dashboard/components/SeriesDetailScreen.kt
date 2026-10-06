@@ -38,6 +38,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Icon
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -75,6 +80,14 @@ fun SeriesDetailScreen(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .onPreviewKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
+                    onClose()
+                    true
+                } else {
+                    false
+                }
+            }
             .focusProperties { exit = { FocusRequester.Cancel } }
     ) {
         // ─── Cinematic Bleed Background ───────────────────────────────────────
@@ -160,6 +173,23 @@ fun SeriesDetailScreen(
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                             }
+                        }
+                        Button(
+                            onClick = onClose,
+                            colors = ButtonDefaults.colors(
+                                containerColor = Color.DarkGray.copy(alpha = 0.6f),
+                                contentColor = Color.White,
+                                focusedContainerColor = Color.LightGray,
+                                focusedContentColor = Color.Black
+                            ),
+                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
+                        ) {
+                            Text(
+                                text = "◀ Back",
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                style = IpxTypography.BodyMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
                         }
                     }
                     

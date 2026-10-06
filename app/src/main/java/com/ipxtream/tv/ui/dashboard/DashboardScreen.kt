@@ -187,6 +187,8 @@ fun DashboardScreen(
     var isSideNavFocused by remember { mutableStateOf(false) }
 
     val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
+    val isDetailsOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
+
     androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && uiState.searchQuery.isNotBlank()) {
         onSearchQueryChange("")
     }
@@ -199,8 +201,18 @@ fun DashboardScreen(
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
     LaunchedEffect(uiState.activeSection, uiState.isLoading, uiState.searchQuery.isBlank()) {
-        if (!uiState.isLoading && !isSideNavFocused && uiState.searchQuery.isBlank()) {
+        if (!uiState.isLoading && !isSideNavFocused && uiState.searchQuery.isBlank() && !isOverlayOpen) {
             runCatching { firstItemFocusRequester.requestFocus() }
+        }
+    }
+
+    LaunchedEffect(isDetailsOpen) {
+        if (!isDetailsOpen && !uiState.isLoading && !isSideNavFocused) {
+            if (uiState.searchQuery.isNotBlank()) {
+                runCatching { searchFirstCardFocusRequester.requestFocus() }
+            } else {
+                runCatching { firstItemFocusRequester.requestFocus() }
+            }
         }
     }
 
