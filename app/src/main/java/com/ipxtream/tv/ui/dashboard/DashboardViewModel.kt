@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import com.ipxtream.tv.data.local.LibraryStore
 import com.ipxtream.tv.data.local.LibraryItem
 
@@ -228,18 +230,31 @@ class DashboardViewModel(
 
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query, currentPage = 0) }
-        if (_uiState.value.activeSection == ContentSection.HOME && query.isNotBlank()) {
-            performHomeSearch(query)
+        if (_uiState.value.activeSection == ContentSection.HOME) {
+            if (query.isNotBlank()) {
+                performHomeSearch(query)
+            } else {
+                searchJob?.cancel()
+                _uiState.update { it.copy(
+                    searchResultsMovies = emptyList(),
+                    searchResultsSeries = emptyList(),
+                    isSearchingHome = false
+                ) }
+            }
         }
     }
 
     private fun performHomeSearch(query: String) {
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
+            delay(300) // 300ms debounce for TV typing
             _uiState.update { it.copy(isSearchingHome = true) }
             
-            val vodResult = repository.getVodStreams(categoryId = null, forceRefresh = false)
-            val seriesResult = repository.getSeries(categoryId = null, forceRefresh = false)
+            val vodDeferred = async { repository.getVodStreams(categoryId = null, forceRefresh = false) }
+            val seriesDeferred = async { repository.getSeries(categoryId = null, forceRefresh = false) }
+            
+            val vodResult = vodDeferred.await()
+            val seriesResult = seriesDeferred.await()
             
             var movies = emptyList<StreamItem>()
             var series = emptyList<SeriesItem>()

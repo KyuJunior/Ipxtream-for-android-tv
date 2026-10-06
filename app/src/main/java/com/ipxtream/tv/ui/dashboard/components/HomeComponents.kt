@@ -48,7 +48,8 @@ fun TopHeader(
     onSwitchAccount: () -> Unit,
     onLogout: () -> Unit,
     onCheckForUpdates: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    searchModifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -61,7 +62,8 @@ fun TopHeader(
             SearchBar(
                 query = query,
                 onQueryChange = onQueryChange,
-                placeholder = "Search channels, movies, and series..."
+                placeholder = "Search channels, movies, and series...",
+                modifier = searchModifier
             )
         }
         

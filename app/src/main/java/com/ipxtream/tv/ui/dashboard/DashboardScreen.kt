@@ -65,6 +65,7 @@ import com.ipxtream.tv.ui.dashboard.components.CategoryRow
 import com.ipxtream.tv.ui.dashboard.components.DownloadTray
 import com.ipxtream.tv.ui.dashboard.components.DynamicSpotlight
 import com.ipxtream.tv.ui.dashboard.components.LiveChannelCard
+import com.ipxtream.tv.ui.dashboard.components.PaginationBar
 import com.ipxtream.tv.ui.dashboard.components.SearchBar
 import com.ipxtream.tv.ui.dashboard.components.SeriesPosterCard
 import com.ipxtream.tv.ui.dashboard.components.SideNavBar
@@ -179,6 +180,8 @@ fun DashboardScreen(
     onLogout:           () -> Unit = {}
 ) {
     val firstItemFocusRequester = remember { FocusRequester() }
+    val searchBarFocusRequester = remember { FocusRequester() }
+    val searchFirstCardFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
     val sideNavFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
@@ -196,7 +199,7 @@ fun DashboardScreen(
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
     LaunchedEffect(uiState.activeSection, uiState.isLoading, uiState.searchQuery.isBlank()) {
-        if (!uiState.isLoading && !isSideNavFocused) {
+        if (!uiState.isLoading && !isSideNavFocused && uiState.searchQuery.isBlank()) {
             runCatching { firstItemFocusRequester.requestFocus() }
         }
     }
@@ -248,7 +251,16 @@ fun DashboardScreen(
                     onSettings = { onSectionSelected(ContentSection.SETTINGS) },
                     onSwitchAccount = onAddAccount,
                     onLogout = onLogout,
-                    onCheckForUpdates = onCheckForUpdates
+                    onCheckForUpdates = onCheckForUpdates,
+                    searchModifier = Modifier
+                        .focusRequester(searchBarFocusRequester)
+                        .focusProperties {
+                            down = if (uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isNotBlank()) {
+                                searchFirstCardFocusRequester
+                            } else {
+                                firstItemFocusRequester
+                            }
+                        }
                 )
 
                 when (uiState.activeSection) {
@@ -257,124 +269,25 @@ fun DashboardScreen(
                             uiState.historyList.take(10)
                         }
                         if (uiState.searchQuery.isNotBlank()) {
-                            // Search Results Mode
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = 120.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
-                                item {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                    ) {
-                                        com.ipxtream.tv.ui.dashboard.components.HeaderIconButton(
-                                            onClick = { onSearchQueryChange("") },
-                                            icon = Icons.AutoMirrored.Rounded.ArrowBack,
-                                            contentDescription = "Go Back"
-                                        )
-                                        Spacer(Modifier.width(16.dp))
-                                        Text(
-                                            text = "Search Results for \"${uiState.searchQuery}\"",
-                                            style = IpxTypography.TitleLarge.copy(fontWeight = FontWeight.Bold),
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-
-                                if (uiState.isSearchingHome) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier.fillMaxWidth().padding(48.dp),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            LoadingIndicator()
-                                        }
-                                    }
-                                } else {
-                                    // Movies Results Row
-                                    item {
-                                        Column {
-                                            Text(
-                                                text = "Movies (${uiState.searchResultsMovies.size} found)",
-                                                style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-                                                color = Color.White,
-                                                modifier = Modifier.padding(horizontal = 16.dp)
-                                            )
-                                            Spacer(Modifier.height(8.dp))
-                                            if (uiState.paginatedSearchMovies.isEmpty()) {
-                                                Text(
-                                                    text = "No movies match your search.",
-                                                    style = IpxTypography.BodyMedium,
-                                                    color = TextMuted,
-                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                                )
-                                            } else {
-                                                LazyRow(
-                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                                                ) {
-                                                    items(uiState.paginatedSearchMovies.size) { index ->
-                                                        val movie = uiState.paginatedSearchMovies[index]
-                                                        com.ipxtream.tv.ui.dashboard.components.VodPosterCard(
-                                                            stream = movie,
-                                                            onClick = { onStreamSelected(movie) }
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Series Results Row
-                                    item {
-                                        Column {
-                                            Text(
-                                                text = "TV Series (${uiState.searchResultsSeries.size} found)",
-                                                style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-                                                color = Color.White,
-                                                modifier = Modifier.padding(horizontal = 16.dp)
-                                            )
-                                            Spacer(Modifier.height(8.dp))
-                                            if (uiState.paginatedSearchSeries.isEmpty()) {
-                                                Text(
-                                                    text = "No series match your search.",
-                                                    style = IpxTypography.BodyMedium,
-                                                    color = TextMuted,
-                                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                                )
-                                            } else {
-                                                LazyRow(
-                                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-                                                ) {
-                                                    items(uiState.paginatedSearchSeries.size) { index ->
-                                                        val series = uiState.paginatedSearchSeries[index]
-                                                        com.ipxtream.tv.ui.dashboard.components.SeriesPosterCard(
-                                                            series = series,
-                                                            onClick = { onSeriesSelected(series) }
-                                                        )
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Pagination Bar
-                                    if (uiState.totalSearchPages > 1) {
-                                        item {
-                                            PaginationBar(
-                                                hasPrevPage = uiState.hasPrevPage,
-                                                hasNextPage = uiState.hasNextPage,
-                                                currentPage = uiState.currentPage,
-                                                totalPages = uiState.totalSearchPages,
-                                                onPrevPage = onPrevPage,
-                                                onNextPage = onNextPage
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            com.ipxtream.tv.ui.dashboard.components.HomeSearchResultsView(
+                                searchQuery = uiState.searchQuery,
+                                isSearching = uiState.isSearchingHome,
+                                movies = uiState.paginatedSearchMovies,
+                                series = uiState.paginatedSearchSeries,
+                                totalMoviesCount = uiState.searchResultsMovies.size,
+                                totalSeriesCount = uiState.searchResultsSeries.size,
+                                totalSearchPages = uiState.totalSearchPages,
+                                currentPage = uiState.currentPage,
+                                hasPrevPage = uiState.hasPrevPage,
+                                hasNextPage = uiState.hasNextPage,
+                                onPrevPage = onPrevPage,
+                                onNextPage = onNextPage,
+                                onStreamSelected = onStreamSelected,
+                                onSeriesSelected = onSeriesSelected,
+                                firstCardFocusRequester = searchFirstCardFocusRequester,
+                                searchBarFocusRequester = searchBarFocusRequester,
+                                sideNavFocusRequester = sideNavFocusRequester
+                            )
                         } else {
                             // Normal Home Layout
                             LazyColumn(
@@ -1146,63 +1059,6 @@ private fun formatTime(ms: Long): String {
     return "%d:%02d".format(m, s)
 }
 
-// =============================================================================
-//  Pagination Bar
-// =============================================================================
-
-/**
- * Horizontal navigation bar with Previous / Next buttons and page indicator.
- * Only renders when [totalPages] > 1 to avoid unnecessary UI clutter.
- * Fully D-pad navigable — each button is individually focusable.
- */
-@OptIn(ExperimentalTvMaterial3Api::class)
-@Composable
-private fun PaginationBar(
-    hasPrevPage: Boolean,
-    hasNextPage: Boolean,
-    currentPage: Int,
-    totalPages:  Int,
-    onPrevPage:  () -> Unit,
-    onNextPage:  () -> Unit
-) {
-    if (totalPages <= 1) return
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment     = Alignment.CenterVertically
-    ) {
-        // ── Previous Button ──
-        androidx.tv.material3.Button(
-            onClick  = onPrevPage,
-            enabled  = hasPrevPage,
-            modifier = Modifier.padding(end = 12.dp)
-        ) {
-            androidx.tv.material3.Text("◀", modifier = Modifier.padding(end = 4.dp))
-            androidx.tv.material3.Text("Previous")
-        }
-
-        // ── Page indicator ──
-        Text(
-            text  = "Page ${currentPage + 1} of $totalPages",
-            style = IpxTypography.BodyMedium,
-            color = TextSecondary,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-
-        // ── Next Button ──
-        androidx.tv.material3.Button(
-            onClick  = onNextPage,
-            enabled  = hasNextPage,
-            modifier = Modifier.padding(start = 12.dp)
-        ) {
-            androidx.tv.material3.Text("Next")
-            androidx.tv.material3.Text("▶", modifier = Modifier.padding(start = 4.dp))
-        }
-    }
-}
 
 @Composable
 private fun WhatsNewGrid(
