@@ -9,11 +9,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
@@ -48,6 +50,7 @@ fun TopHeader(
     onSwitchAccount: () -> Unit,
     onLogout: () -> Unit,
     onCheckForUpdates: () -> Unit,
+    updateRelease: com.ipxtream.tv.data.model.GitHubRelease? = null,
     modifier: Modifier = Modifier,
     searchModifier: Modifier = Modifier
 ) {
@@ -102,7 +105,7 @@ fun TopHeader(
             // Logout
             HeaderIconButton(
                 onClick = onLogout,
-                icon = Icons.Rounded.ExitToApp,
+                icon = Icons.AutoMirrored.Rounded.ExitToApp,
                 contentDescription = "Logout",
                 tint = Color(0xFFE50914) // Red logout indicator
             )
@@ -110,10 +113,11 @@ fun TopHeader(
         
         Spacer(Modifier.weight(1f))
         
-        // 3. User Profile Card (Right)
+        // 3. User Profile & Update Card (Right)
         UserProfileCard(
             activeAccount = activeAccount,
             isCheckingForUpdate = isCheckingForUpdate,
+            updateRelease = updateRelease,
             onCheckForUpdates = onCheckForUpdates
         )
     }
@@ -142,7 +146,11 @@ fun HeaderIconButton(
             },
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.04f),
-            focusedContainerColor = Color.White.copy(alpha = 0.15f)
+            focusedContainerColor = Color.White.copy(alpha = 0.18f)
+        ),
+        border = ClickableSurfaceDefaults.border(
+            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), shape = CircleShape),
+            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = CircleShape)
         ),
         shape = ClickableSurfaceDefaults.shape(shape = CircleShape)
     ) {
@@ -162,89 +170,131 @@ fun HeaderIconButton(
 fun UserProfileCard(
     activeAccount: AuthCredentials?,
     isCheckingForUpdate: Boolean,
+    updateRelease: com.ipxtream.tv.data.model.GitHubRelease? = null,
     onCheckForUpdates: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val username = activeAccount?.username ?: "Guest"
-    val serverUrl = activeAccount?.server?.removePrefix("http://")?.removePrefix("https://")?.take(20) ?: "offline"
+    val serverUrl = activeAccount?.server?.removePrefix("http://")?.removePrefix("https://")?.take(22) ?: "offline"
     val initials = username.take(2).uppercase()
     val currentVersion = "v" + com.ipxtream.tv.BuildConfig.VERSION_NAME
     
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White.copy(alpha = 0.05f))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        onClick = onCheckForUpdates,
+        modifier = modifier,
+        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(12.dp)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Color.White.copy(alpha = 0.05f),
+            focusedContainerColor = Color.White.copy(alpha = 0.16f)
+        ),
+        border = ClickableSurfaceDefaults.border(
+            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)), shape = RoundedCornerShape(12.dp)),
+            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(12.dp))
+        ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f)
     ) {
-        // Initials Avatar
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(Brush.linearGradient(listOf(Color(0xFF9D3FE7), Color(0xFF007DFE)))),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = initials,
-                style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
-            )
-        }
-        
-        Spacer(Modifier.width(10.dp))
-        
-        // User & Server Details
-        Column {
-            Text(
-                text = username,
-                style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
-            )
-            Text(
-                text = serverUrl,
-                style = IpxTypography.BodySmall.copy(fontSize = 11.sp),
-                color = TextSecondary
-            )
-        }
-        
-        Spacer(Modifier.width(16.dp))
-        
-        // Version & Updates
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = currentVersion,
-                style = IpxTypography.BodySmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
-                color = TextSecondary
-            )
-            
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { onCheckForUpdates() }
+            // Initials Avatar: Clean, slate/cyan gradient (Zero Purple)
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Brush.linearGradient(listOf(Color(0xFF005F73), Color(0xFF00A8E1)))),
+                contentAlignment = Alignment.Center
             ) {
+                Text(
+                    text = initials,
+                    style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White
+                )
+            }
+            
+            Spacer(Modifier.width(10.dp))
+            
+            // User & Server Details
+            Column {
+                Text(
+                    text = username,
+                    style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.Bold),
+                    color = Color.White
+                )
+                Text(
+                    text = serverUrl,
+                    style = IpxTypography.BodySmall.copy(fontSize = 11.sp),
+                    color = TextSecondary
+                )
+            }
+            
+            Spacer(Modifier.width(16.dp))
+            
+            // Version & Interactive Update Status
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = currentVersion,
+                    style = IpxTypography.BodySmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(2.dp))
                 if (isCheckingForUpdate) {
-                    Text(
-                        text = "Checking...",
-                        style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
-                        color = AccentCyan
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        androidx.compose.material3.CircularProgressIndicator(
+                            modifier = Modifier.size(10.dp),
+                            color = AccentCyan,
+                            strokeWidth = 1.5.dp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Checking...",
+                            style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
+                            color = AccentCyan
+                        )
+                    }
+                } else if (updateRelease != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(AccentAmber)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Update Available",
+                            style = IpxTypography.BodySmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = AccentAmber
+                        )
+                    }
                 } else {
-                    Text(
-                        text = "Up to date",
-                        style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
-                        color = Color(0xFF2ECC71)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        text = "Check updates",
-                        style = IpxTypography.BodySmall.copy(
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
-                        ),
-                        color = AccentCyan
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF2ECC71))
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Up to date",
+                            style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
+                            color = Color(0xFF2ECC71)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "Check",
+                            style = IpxTypography.BodySmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
+                            ),
+                            color = AccentCyan
+                        )
+                    }
                 }
             }
         }
@@ -264,17 +314,18 @@ fun QuickAccessCard(
     var isFocused by remember { mutableStateOf(false) }
     
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.05f else 1.0f,
+        targetValue = if (isFocused) 1.04f else 1.0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
         label = "cardScale"
     )
     
-    val glowColor = if (isFocused) themeColor else Color.White.copy(alpha = 0.05f)
-    val glowWidth = if (isFocused) 2.dp else 1.dp
+    val glowColor = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f)
+    val glowWidth = if (isFocused) 3.dp else 1.dp
     
     Surface(
         onClick = onClick,
         modifier = modifier
+            .zIndex(if (isFocused) 2f else 1f)
             .onFocusChanged { isFocused = it.isFocused }
             .height(180.dp)
             .graphicsLayer {
@@ -284,7 +335,7 @@ fun QuickAccessCard(
             .border(glowWidth, glowColor, RoundedCornerShape(16.dp)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.03f),
-            focusedContainerColor = Color.White.copy(alpha = 0.08f)
+            focusedContainerColor = Color.White.copy(alpha = 0.10f)
         ),
         shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp))
     ) {

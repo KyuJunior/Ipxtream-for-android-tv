@@ -128,7 +128,7 @@ fun LiveChannelCard(
                     .align(Alignment.BottomCenter)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color(0xCC0B1520))
+                            colors = listOf(Color.Transparent, Color(0xEE000000))
                         )
                     )
                     .padding(horizontal = 10.dp, vertical = 8.dp)
@@ -271,6 +271,10 @@ private fun RatingBadge(
     rating:   String,
     modifier: Modifier = Modifier
 ) {
+    val formattedRating = rating.toDoubleOrNull()?.let {
+        String.format(java.util.Locale.US, "%.1f", it)
+    } ?: rating
+
     Box(
         modifier = modifier
             .padding(10.dp)
@@ -289,7 +293,7 @@ private fun RatingBadge(
             )
             Spacer(Modifier.size(3.dp))
             Text(
-                text  = rating,
+                text  = formattedRating,
                 style = IpxTypography.LabelSmall,
                 color = AccentAmber,
                 fontWeight = FontWeight.Bold,

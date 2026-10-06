@@ -265,6 +265,7 @@ fun DashboardScreen(
                     onSwitchAccount = onAddAccount,
                     onLogout = onLogout,
                     onCheckForUpdates = onCheckForUpdates,
+                    updateRelease = uiState.updateRelease,
                     searchModifier = Modifier.focusRequester(searchBarFocusRequester)
                 )
 
@@ -328,7 +329,7 @@ fun DashboardScreen(
                                             title = "TV SERIES",
                                             subtitle = "Binge-watch episodic shows",
                                             icon = Icons.Rounded.Slideshow,
-                                            themeColor = Color(0xFF9D3FE7),
+                                            themeColor = Color(0xFFFFB347),
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
                                             modifier = Modifier.weight(1f)
                                         )
