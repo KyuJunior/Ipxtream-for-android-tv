@@ -206,14 +206,16 @@ fun DashboardScreen(
         }
     }
 
+    var prevDetailsOpen by remember { mutableStateOf(false) }
     LaunchedEffect(isDetailsOpen) {
-        if (!isDetailsOpen && !uiState.isLoading && !isSideNavFocused) {
+        if (prevDetailsOpen && !isDetailsOpen && !uiState.isLoading && !isSideNavFocused) {
             if (uiState.searchQuery.isNotBlank()) {
                 runCatching { searchFirstCardFocusRequester.requestFocus() }
             } else {
                 runCatching { firstItemFocusRequester.requestFocus() }
             }
         }
+        prevDetailsOpen = isDetailsOpen
     }
 
     LaunchedEffect(uiState.updateRelease) {
@@ -234,7 +236,6 @@ fun DashboardScreen(
                 .padding(start = 66.dp) // Margin for the collapsed side nav
                 .focusProperties {
                     canFocus = !isOverlayOpen
-                    left = sideNavFocusRequester
                 }
         ) {
         // ─── Centre: Category row + content grid + download tray ───────────────
@@ -264,15 +265,7 @@ fun DashboardScreen(
                     onSwitchAccount = onAddAccount,
                     onLogout = onLogout,
                     onCheckForUpdates = onCheckForUpdates,
-                    searchModifier = Modifier
-                        .focusRequester(searchBarFocusRequester)
-                        .focusProperties {
-                            down = if (uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isNotBlank()) {
-                                searchFirstCardFocusRequester
-                            } else {
-                                firstItemFocusRequester
-                            }
-                        }
+                    searchModifier = Modifier.focusRequester(searchBarFocusRequester)
                 )
 
                 when (uiState.activeSection) {
@@ -541,7 +534,6 @@ fun DashboardScreen(
             onSectionSelected = onSectionSelected,
             onRefresh         = onRefresh,
             sideNavFocusRequester = sideNavFocusRequester,
-            firstItemFocusRequester = firstItemFocusRequester,
             onFocusChanged    = { isSideNavFocused = it },
             modifier          = Modifier
                 .align(Alignment.CenterStart)

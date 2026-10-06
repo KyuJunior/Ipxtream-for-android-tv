@@ -134,12 +134,6 @@ fun HomeSearchResultsView(
                                         if (index == 0) Modifier.focusRequester(firstCardFocusRequester)
                                         else Modifier
                                     )
-                                    .focusProperties {
-                                        up = searchBarFocusRequester
-                                        if (index == 0) {
-                                            left = sideNavFocusRequester
-                                        }
-                                    }
                             )
                         }
                     }
@@ -172,14 +166,6 @@ fun HomeSearchResultsView(
                                         if (index == 0 && movies.isEmpty()) Modifier.focusRequester(firstCardFocusRequester)
                                         else Modifier
                                     )
-                                    .focusProperties {
-                                        if (movies.isEmpty()) {
-                                            up = searchBarFocusRequester
-                                        }
-                                        if (index == 0) {
-                                            left = sideNavFocusRequester
-                                        }
-                                    }
                             )
                         }
                     }

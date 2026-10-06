@@ -94,7 +94,7 @@ fun SearchBar(
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown) {
-                    focusManager.moveFocus(FocusDirection.Down)
+                    runCatching { focusManager.moveFocus(FocusDirection.Down) }
                     true
                 } else {
                     false
@@ -109,11 +109,11 @@ fun SearchBar(
         keyboardActions = KeyboardActions(
             onSearch = {
                 keyboardController?.hide()
-                focusManager.moveFocus(FocusDirection.Down)
+                runCatching { focusManager.moveFocus(FocusDirection.Down) }
             },
             onDone = {
                 keyboardController?.hide()
-                focusManager.moveFocus(FocusDirection.Down)
+                runCatching { focusManager.moveFocus(FocusDirection.Down) }
             }
         ),
         cursorBrush = SolidColor(AccentCyan),

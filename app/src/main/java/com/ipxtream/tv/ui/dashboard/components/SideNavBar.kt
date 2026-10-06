@@ -89,7 +89,6 @@ fun SideNavBar(
     onSectionSelected: (ContentSection) -> Unit,
     onRefresh:         () -> Unit,
     sideNavFocusRequester: FocusRequester = remember { FocusRequester() },
-    firstItemFocusRequester: FocusRequester? = null,
     onFocusChanged:    (Boolean) -> Unit = {},
     modifier:          Modifier = Modifier
 ) {
@@ -147,7 +146,6 @@ fun SideNavBar(
             Spacer(Modifier.height(24.dp))
 
             // ── Section items ─────────────────────────────────────────────────────
-            // ── Section items ─────────────────────────────────────────────────────
             val navSections = listOf(
                 ContentSection.HOME,
                 ContentSection.WHATS_NEW,
@@ -178,10 +176,7 @@ fun SideNavBar(
                     isExpanded     = isExpanded,
                     isActive       = isActive,
                     onSelected     = { onSectionSelected(section) },
-                    modifier       = (if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier)
-                        .focusProperties {
-                            right = firstItemFocusRequester ?: FocusRequester.Default
-                        }
+                    modifier       = if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier
                 )
             }
 
