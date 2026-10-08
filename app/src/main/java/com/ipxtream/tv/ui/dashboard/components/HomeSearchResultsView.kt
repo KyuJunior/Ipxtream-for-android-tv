@@ -145,6 +145,12 @@ fun HomeSearchResultsView(
                                 stream = movie,
                                 onClick = { onStreamSelected(movie) },
                                 modifier = Modifier
+                                    .focusProperties {
+                                        up = searchBarFocusRequester
+                                        if (index == 0) {
+                                            left = sideNavFocusRequester
+                                        }
+                                    }
                                     .then(
                                         if (index == 0) Modifier.focusRequester(firstCardFocusRequester)
                                         else Modifier
@@ -177,6 +183,14 @@ fun HomeSearchResultsView(
                                 series = show,
                                 onClick = { onSeriesSelected(show) },
                                 modifier = Modifier
+                                    .focusProperties {
+                                        if (movies.isEmpty()) {
+                                            up = searchBarFocusRequester
+                                        }
+                                        if (index == 0) {
+                                            left = sideNavFocusRequester
+                                        }
+                                    }
                                     .then(
                                         if (index == 0 && movies.isEmpty()) Modifier.focusRequester(firstCardFocusRequester)
                                         else Modifier

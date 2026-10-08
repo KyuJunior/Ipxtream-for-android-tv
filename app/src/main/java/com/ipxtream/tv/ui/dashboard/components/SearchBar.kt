@@ -58,7 +58,8 @@ fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search..."
+    placeholder: String = "Search...",
+    onDownNavigation: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -97,8 +98,13 @@ fun SearchBar(
             )
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.DirectionDown) {
-                    runCatching { focusManager.moveFocus(FocusDirection.Down) }
+                if (keyEvent.key == Key.DirectionDown) {
+                    if (keyEvent.type == KeyEventType.KeyDown) {
+                        val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
+                        if (!moved && onDownNavigation != null) {
+                            onDownNavigation()
+                        }
+                    }
                     true
                 } else {
                     false
@@ -113,11 +119,17 @@ fun SearchBar(
         keyboardActions = KeyboardActions(
             onSearch = {
                 keyboardController?.hide()
-                runCatching { focusManager.moveFocus(FocusDirection.Down) }
+                val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
+                if (!moved && onDownNavigation != null) {
+                    onDownNavigation()
+                }
             },
             onDone = {
                 keyboardController?.hide()
-                runCatching { focusManager.moveFocus(FocusDirection.Down) }
+                val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
+                if (!moved && onDownNavigation != null) {
+                    onDownNavigation()
+                }
             }
         ),
         cursorBrush = SolidColor(AccentCyan),

@@ -260,6 +260,9 @@ fun DashboardScreen(
 
             val isHomeSection = uiState.activeSection == ContentSection.HOME
             val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY
+            val isHomeNormal = isHomeSection && uiState.searchQuery.isBlank()
+            val hasSearchResults = isHomeSection && uiState.searchQuery.isNotBlank() && !uiState.isSearchingHome &&
+                    (uiState.paginatedSearchMovies.isNotEmpty() || uiState.paginatedSearchSeries.isNotEmpty())
 
             // Content area grows to fill space above the tray
             Column(modifier = Modifier.fillMaxSize()) {
@@ -279,15 +282,19 @@ fun DashboardScreen(
                     searchModifier = Modifier
                         .focusRequester(searchBarFocusRequester)
                         .focusProperties {
-                            if (isHomeSection) {
+                            if (isHomeNormal) {
                                 down = liveTvCardFocusRequester
+                            } else if (hasSearchResults) {
+                                down = searchFirstCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
                             }
                         },
                     actionButtonsModifier = Modifier.focusProperties {
-                        if (isHomeSection) {
+                        if (isHomeNormal) {
                             down = moviesCardFocusRequester
+                        } else if (hasSearchResults) {
+                            down = searchFirstCardFocusRequester
                         } else if (isLibrarySection) {
                             down = firstItemFocusRequester
                         }
@@ -295,12 +302,23 @@ fun DashboardScreen(
                     userProfileModifier = Modifier
                         .focusRequester(userProfileFocusRequester)
                         .focusProperties {
-                            if (isHomeSection) {
+                            if (isHomeNormal) {
                                 down = seriesCardFocusRequester
+                            } else if (hasSearchResults) {
+                                down = searchFirstCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
                             }
+                        },
+                    onSearchDown = {
+                        if (hasSearchResults) {
+                            runCatching { searchFirstCardFocusRequester.requestFocus() }
+                        } else if (isHomeNormal) {
+                            runCatching { liveTvCardFocusRequester.requestFocus() }
+                        } else if (isLibrarySection) {
+                            runCatching { firstItemFocusRequester.requestFocus() }
                         }
+                    }
                 )
 
                 when (uiState.activeSection) {
