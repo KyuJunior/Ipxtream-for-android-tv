@@ -126,6 +126,13 @@ class DashboardActivity : ComponentActivity() {
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_DOWN) {
             val state = dashboardViewModel.uiState.value
+            val isFullScreenPlaying = state.selectedEpisode != null || 
+                (state.selectedStream != null && state.selectedStream.streamType == "movie")
+
+            if (isFullScreenPlaying) {
+                return super.dispatchKeyEvent(event)
+            }
+
             if (state.detailVodItem != null || state.detailSeriesItem != null) {
                 dashboardViewModel.closeDetails()
                 return true

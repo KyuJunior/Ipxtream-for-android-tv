@@ -41,6 +41,7 @@ import com.ipxtream.tv.ui.theme.AccentCyan
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 
 /**
  * Embedded player composable — the root of the Phase 4 player panel, now
@@ -114,7 +115,7 @@ fun PlayerPanel(
                     if (uiState.hasActiveMedia) exoPlayer.play()
                 }
                 Lifecycle.Event.ON_STOP -> {
-                    exoPlayer.pause()
+                    viewModel.pause()
                     playerView.player = null   // release video surface
                 }
                 else -> Unit
@@ -130,8 +131,19 @@ fun PlayerPanel(
     // ── Focus Requester to steal focus on launch ─────────────────────────────
     val focusRequester = remember { FocusRequester() }
     val playButtonFocus = remember { FocusRequester() }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
+
+    androidx.compose.runtime.LaunchedEffect(uiState.hasActiveMedia, uiState.activeEpisode, uiState.activeStream) {
+        delay(150)
         runCatching { focusRequester.requestFocus() }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(uiState.isHudVisible) {
+        if (uiState.isHudVisible) {
+            delay(50)
+            runCatching { playButtonFocus.requestFocus() }
+        } else {
+            runCatching { focusRequester.requestFocus() }
+        }
     }
 
     // ── Root Box with D-Pad interception ─────────────────────────────────────
@@ -153,13 +165,10 @@ fun PlayerPanel(
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
 
-                // Step 1: Always wake the HUD on any key.
-                viewModel.onHudInteraction()
-
-                // Step 2: Route based on current UI mode.
                 when {
                     // Track menu is open — only intercept BACK; menu list handles navigation.
                     uiState.isTrackMenuOpen -> {
+                        viewModel.onHudInteraction()
                         if (event.key == Key.Back) {
                             viewModel.dismissTrackMenu()
                             true  // consumed
@@ -168,6 +177,8 @@ fun PlayerPanel(
 
                     // HUD is visible — handle playback controls.
                     uiState.isHudVisible -> {
+                        viewModel.onHudInteraction()
+
                         // Allow D-Pad navigation/clicking inside HUD components if root isn't focused
                         val isDpadNav = event.key in listOf(
                             Key.DirectionCenter, Key.Enter, Key.DirectionLeft, 
@@ -205,18 +216,57 @@ fun PlayerPanel(
                         }
                     }
 
-                    // HUD was not visible — this key just woke it (already done in Step 1).
-                    // BACK when HUD is not visible closes the player panel.
+                    // HUD was not visible
                     else -> {
-                        if (event.key == Key.Back) {
-                            onStop()
-                            true
-                        } else {
-                            // Consume D-Pad navigation keys so focus doesn't escape before HUD is shown
-                            event.key in listOf(
-                                Key.DirectionCenter, Key.Enter, Key.DirectionLeft, 
-                                Key.DirectionRight, Key.DirectionUp, Key.DirectionDown
-                            )
+                        when (event.key) {
+                            Key.DirectionCenter,
+                            Key.Enter,
+                            Key.MediaPlayPause,
+                            Key.MediaPause -> {
+                                if (exoPlayer.isPlaying) {
+                                    viewModel.pause()
+                                }
+                                viewModel.onHudInteraction()
+                                runCatching { playButtonFocus.requestFocus() }
+                                true
+                            }
+
+                            Key.MediaPlay -> {
+                                viewModel.resume()
+                                viewModel.onHudInteraction()
+                                runCatching { playButtonFocus.requestFocus() }
+                                true
+                            }
+
+                            Key.Back -> {
+                                onStop()
+                                true
+                            }
+
+                            Key.DirectionLeft,
+                            Key.MediaRewind -> {
+                                viewModel.seekRelative(-30_000L)
+                                viewModel.onHudInteraction()
+                                runCatching { playButtonFocus.requestFocus() }
+                                true
+                            }
+
+                            Key.DirectionRight,
+                            Key.MediaFastForward -> {
+                                viewModel.seekRelative(30_000L)
+                                viewModel.onHudInteraction()
+                                runCatching { playButtonFocus.requestFocus() }
+                                true
+                            }
+
+                            Key.DirectionUp,
+                            Key.DirectionDown -> {
+                                viewModel.onHudInteraction()
+                                runCatching { playButtonFocus.requestFocus() }
+                                true
+                            }
+
+                            else -> false
                         }
                     }
                 }

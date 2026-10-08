@@ -92,7 +92,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         this.credentials = credentials
         val store = LibraryStore(getApplication(), credentials)
         this.libraryStore = store
-        val isFav = store.isFavorite(stream.streamId.toString(), stream.streamType ?: "live")
+        val streamType = stream.streamType ?: if (stream.isLive) "live" else "movie"
+        val isFav = store.isFavorite(stream.streamId.toString(), streamType)
+
+        val resumePositionMs = if (!stream.isLive) {
+            val historyItem = store.getHistory().firstOrNull { it.id == stream.streamId.toString() && it.type == streamType }
+            if (historyItem != null && historyItem.durationMs > 0L) {
+                val fraction = historyItem.lastWatchedPositionMs.toFloat() / historyItem.durationMs
+                if (fraction < 0.90f && historyItem.lastWatchedPositionMs > 3_000L) {
+                    historyItem.lastWatchedPositionMs
+                } else 0L
+            } else 0L
+        } else 0L
 
         _uiState.update { it.copy(
             playbackState    = PlaybackState.LOADING,
@@ -104,7 +115,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             activeSeries     = null,
             isCurrentFavorite = isFav
         ) }
-        prepareAndPlay(StreamUrlBuilder.buildForStream(credentials, stream))
+        prepareAndPlay(StreamUrlBuilder.buildForStream(credentials, stream), resumePositionMs)
     }
 
     fun loadEpisode(episode: EpisodeItem, series: SeriesItem, credentials: AuthCredentials) {
@@ -112,6 +123,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val store = LibraryStore(getApplication(), credentials)
         this.libraryStore = store
         val isFav = store.isFavorite(episode.id, "episode")
+
+        val historyItem = store.getHistory().firstOrNull { it.id == episode.id && it.type == "episode" }
+        val resumePositionMs = if (historyItem != null && historyItem.durationMs > 0L) {
+            val fraction = historyItem.lastWatchedPositionMs.toFloat() / historyItem.durationMs
+            if (fraction < 0.90f && historyItem.lastWatchedPositionMs > 3_000L) {
+                historyItem.lastWatchedPositionMs
+            } else 0L
+        } else 0L
 
         _uiState.update { it.copy(
             playbackState    = PlaybackState.LOADING,
@@ -123,7 +142,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             activeSeries     = series,
             isCurrentFavorite = isFav
         ) }
-        prepareAndPlay(StreamUrlBuilder.buildForEpisode(credentials, episode))
+        prepareAndPlay(StreamUrlBuilder.buildForEpisode(credentials, episode), resumePositionMs)
     }
 
     fun toggleCurrentFavorite() {
@@ -174,11 +193,20 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         onHudInteraction()
     }
 
-    fun pause()  { exoPlayer.pause() }
+    fun pause() {
+        saveCurrentProgress()
+        exoPlayer.pause()
+    }
+
     fun resume() { if (_uiState.value.hasActiveMedia) exoPlayer.play() }
 
     fun togglePlayPause() {
-        if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+        if (exoPlayer.isPlaying) {
+            saveCurrentProgress()
+            exoPlayer.pause()
+        } else {
+            exoPlayer.play()
+        }
         onHudInteraction()
     }
 
@@ -195,6 +223,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun stop() {
+        saveCurrentProgress()
         stopPositionPolling()
         stopHudTimer()
         exoPlayer.stop()
@@ -468,51 +497,65 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     bufferedPercent   = exoPlayer.bufferedPercentage
                 ) }
 
-                val currentState = _uiState.value
-                val store = libraryStore
-                if (store != null && !currentState.isLive && duration > 0L) {
-                    val progressFraction = currentPos.toFloat() / duration
-                    val id = currentState.activeStream?.streamId?.toString() ?: currentState.activeEpisode?.id
-                    val type = if (currentState.activeStream != null) (currentState.activeStream.streamType ?: "movie") else "episode"
-                    if (id != null) {
-                        if (progressFraction >= 0.90f) {
-                            store.removeFromHistory(id, type)
-                        } else {
-                            val item = if (currentState.activeStream != null) {
-                                val stream = currentState.activeStream
-                                LibraryItem(
-                                    id = id,
-                                    name = stream.name,
-                                    type = type,
-                                    iconUrl = stream.streamIcon,
-                                    categoryId = stream.categoryId,
-                                    rating = stream.rating,
-                                    containerExtension = stream.containerExtension,
-                                    lastWatchedPositionMs = currentPos,
-                                    durationMs = duration
-                                )
-                            } else {
-                                val episode = currentState.activeEpisode!!
-                                LibraryItem(
-                                    id = id,
-                                    parentId = currentState.activeSeries?.seriesId?.toString(),
-                                    name = if (currentState.activeSeries != null) "${currentState.activeSeries.name} - S${String.format("%02d", episode.season)}E${String.format("%02d", episode.episodeNum)}" else episode.title,
-                                    type = type,
-                                    iconUrl = episode.info?.movieImage ?: currentState.activeSeries?.cover,
-                                    categoryId = currentState.activeSeries?.categoryId,
-                                    rating = episode.info?.rating,
-                                    containerExtension = episode.containerExtension,
-                                    lastWatchedPositionMs = currentPos,
-                                    durationMs = duration
-                                )
-                            }
-                            store.saveHistoryItem(item)
-                        }
-                    }
-                }
+                saveCurrentProgress()
                 delay(1000)
             }
         }
+    }
+
+    private fun saveCurrentProgress() {
+        val currentState = _uiState.value
+        val store = libraryStore ?: return
+        if (currentState.isLive) return
+        val currentPos = exoPlayer.currentPosition
+        val duration = exoPlayer.duration.coerceAtLeast(0L)
+        if (duration <= 0L || currentPos <= 0L) return
+
+        val progressFraction = currentPos.toFloat() / duration
+        val id = currentState.activeStream?.streamId?.toString() ?: currentState.activeEpisode?.id ?: return
+        val type = if (currentState.activeStream != null) (currentState.activeStream.streamType ?: "movie") else "episode"
+
+        if (progressFraction >= 0.90f) {
+            store.removeFromHistory(id, type)
+        } else {
+            val item = if (currentState.activeStream != null) {
+                val stream = currentState.activeStream
+                LibraryItem(
+                    id = id,
+                    name = stream.name,
+                    type = type,
+                    iconUrl = stream.streamIcon,
+                    categoryId = stream.categoryId,
+                    rating = stream.rating,
+                    containerExtension = stream.containerExtension,
+                    lastWatchedPositionMs = currentPos,
+                    durationMs = duration
+                )
+            } else {
+                val episode = currentState.activeEpisode ?: return
+                LibraryItem(
+                    id = id,
+                    parentId = currentState.activeSeries?.seriesId?.toString(),
+                    name = if (currentState.activeSeries != null) "${currentState.activeSeries.name} - S${String.format("%02d", episode.season)}E${String.format("%02d", episode.episodeNum)}" else episode.title,
+                    type = type,
+                    iconUrl = episode.info?.movieImage ?: currentState.activeSeries?.cover,
+                    categoryId = currentState.activeSeries?.categoryId,
+                    rating = episode.info?.rating,
+                    containerExtension = episode.containerExtension,
+                    lastWatchedPositionMs = currentPos,
+                    durationMs = duration
+                )
+            }
+            store.saveHistoryItem(item)
+        }
+    }
+
+    private fun clearCurrentProgressFromHistory() {
+        val currentState = _uiState.value
+        val store = libraryStore ?: return
+        val id = currentState.activeStream?.streamId?.toString() ?: currentState.activeEpisode?.id ?: return
+        val type = if (currentState.activeStream != null) (currentState.activeStream.streamType ?: "movie") else "episode"
+        store.removeFromHistory(id, type)
     }
 
     private fun stopPositionPolling() {
@@ -524,9 +567,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  Private: prepare ExoPlayer
     // =========================================================================
 
-    private fun prepareAndPlay(url: String) {
+    private fun prepareAndPlay(url: String, startPositionMs: Long = 0L) {
         exoPlayer.stop()
-        exoPlayer.setMediaItem(MediaItem.fromUri(url))
+        if (startPositionMs > 0L) {
+            exoPlayer.setMediaItem(MediaItem.fromUri(url), startPositionMs)
+        } else {
+            exoPlayer.setMediaItem(MediaItem.fromUri(url))
+        }
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
     }
@@ -557,7 +604,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             val newState = when (state) {
                 Player.STATE_BUFFERING -> PlaybackState.LOADING
                 Player.STATE_READY     -> PlaybackState.READY
-                Player.STATE_ENDED     -> { stopPositionPolling(); PlaybackState.ENDED }
+                Player.STATE_ENDED     -> {
+                    stopPositionPolling()
+                    clearCurrentProgressFromHistory()
+                    PlaybackState.ENDED
+                }
                 else                   -> PlaybackState.IDLE
             }
             _uiState.update { it.copy(playbackState = newState) }

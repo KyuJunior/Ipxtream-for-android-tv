@@ -40,6 +40,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -50,29 +51,33 @@ fun VodDetailScreen(
     onClose: () -> Unit,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    isPlayerOpen: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val playButtonFocus = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        runCatching { playButtonFocus.requestFocus() }
+    LaunchedEffect(isPlayerOpen) {
+        if (!isPlayerOpen) {
+            delay(100)
+            runCatching { playButtonFocus.requestFocus() }
+        }
     }
 
-    BackHandler(onBack = onClose)
+    BackHandler(enabled = !isPlayerOpen, onBack = onClose)
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .focusProperties { canFocus = !isPlayerOpen }
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
+                if (!isPlayerOpen && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
                     onClose()
                     true
                 } else {
                     false
                 }
             }
-            .focusProperties { exit = { FocusRequester.Cancel } }
     ) {
         // ─── Cinematic Bleed Background ───────────────────────────────────────
         AsyncImage(

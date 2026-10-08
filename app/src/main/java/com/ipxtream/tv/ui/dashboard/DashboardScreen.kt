@@ -190,8 +190,13 @@ fun DashboardScreen(
     val userProfileFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
 
-    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
+    val showFullScreenPlayer = uiState.hasActivePlayback && !playerUiState.isLive && exoPlayer != null
+    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null || showFullScreenPlayer
     val isDetailsOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
+
+    androidx.activity.compose.BackHandler(enabled = showFullScreenPlayer) {
+        onPlayerStop()
+    }
 
     androidx.activity.compose.BackHandler(enabled = !isOverlayOpen && uiState.searchQuery.isNotBlank()) {
         onSearchQueryChange("")
@@ -229,10 +234,7 @@ fun DashboardScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep)) {
-        val showSplitPlayer      = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
-        val showFullScreenPlayer = uiState.hasActivePlayback && !playerUiState.isLive && exoPlayer != null
-
-        val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
+        val showSplitPlayer = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
 
         Row(
             modifier = Modifier
@@ -573,7 +575,8 @@ fun DashboardScreen(
                 onDownload    = { onVodDownload(uiState.detailVodItem) },
                 onClose       = onCloseDetails,
                 isFavorite    = isStreamFavorite(uiState.detailVodItem.streamId, "movie"),
-                onToggleFavorite = { onToggleFavoriteStream(uiState.detailVodItem) }
+                onToggleFavorite = { onToggleFavoriteStream(uiState.detailVodItem) },
+                isPlayerOpen  = showFullScreenPlayer
             )
         } else if (uiState.detailSeriesItem != null) {
             com.ipxtream.tv.ui.dashboard.components.SeriesDetailScreen(
@@ -584,7 +587,8 @@ fun DashboardScreen(
                 onEpisodeDownload   = onEpisodeDownload,
                 onClose             = onCloseDetails,
                 isFavorite    = isSeriesFavorite(uiState.detailSeriesItem.seriesId),
-                onToggleFavorite = { onToggleFavoriteSeries(uiState.detailSeriesItem) }
+                onToggleFavorite = { onToggleFavoriteSeries(uiState.detailSeriesItem) },
+                isPlayerOpen        = showFullScreenPlayer
             )
         }
 
