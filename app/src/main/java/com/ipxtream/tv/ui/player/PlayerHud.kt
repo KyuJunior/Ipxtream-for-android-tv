@@ -8,12 +8,14 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,12 +32,12 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ClosedCaption
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Forward10
+import androidx.compose.material.icons.filled.FastForward
+import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
-import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.runtime.Composable
@@ -64,9 +66,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.tv.material3.Border
 import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
+import androidx.tv.material3.Glow
 import androidx.tv.material3.Text
 import com.ipxtream.tv.ui.theme.AccentCyan
 import com.ipxtream.tv.ui.theme.AccentGreen
@@ -74,11 +78,11 @@ import com.ipxtream.tv.ui.theme.IpxTypography
 import java.util.Locale
 
 /**
- * Unified lower-third HUD overlay for the media player.
+ * Unified lower-third HUD overlay scaled accurately for 55"+ TV screens.
  *
  * Implements a single bottom vignette containing:
  * 1. Title & Metadata (Series/Movie title, Season/Episode subtitle, stream resolution badge).
- * 2. Primary Transport Controls (Play/Pause, SkipPrev, Rewind 10s, FastFwd 10s, SkipNext, Replay).
+ * 2. Primary Transport Controls (Play/Pause, [SkipPrev if series], FastRewind, FastFwd, [SkipNext if series], Replay).
  * 3. Progress Bar (Netflix Red with buffered indication and white thumb scrubber).
  * 4. Secondary Actions & Time (Back, CC, Audio, Favorite, Episodes menu on left; time on right).
  */
@@ -103,6 +107,7 @@ fun PlayerHud(
 ) {
     val transportFocusRequester = remember { FocusRequester() }
     val secondaryFocusRequester = remember { FocusRequester() }
+    val isSeries = uiState.activeEpisode != null
 
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -118,17 +123,17 @@ fun PlayerHud(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color(0x33000000),
+                                Color(0x44000000),
                                 Color(0xBB000000),
                                 Color(0xF2000000)
                             )
                         )
                     )
-                    .padding(start = 48.dp, end = 48.dp, top = 40.dp, bottom = 28.dp)
+                    .padding(start = 56.dp, end = 56.dp, top = 48.dp, bottom = 36.dp)
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
                     // ── 1. Title & Metadata Block ──────────────────────────────────────────
                     val mainTitle = remember(uiState.activeSeries, uiState.activeStreamName) {
@@ -152,10 +157,10 @@ fun PlayerHud(
                         }
                     }
 
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             text = mainTitle,
-                            style = IpxTypography.TitleLarge.copy(fontSize = 28.sp, fontWeight = FontWeight.Normal),
+                            style = IpxTypography.TitleLarge.copy(fontSize = 32.sp, fontWeight = FontWeight.Normal),
                             color = Color.White,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -168,7 +173,7 @@ fun PlayerHud(
                             if (subtitle.isNotBlank()) {
                                 Text(
                                     text = subtitle,
-                                    style = IpxTypography.BodyMedium.copy(fontSize = 14.sp),
+                                    style = IpxTypography.BodyMedium.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal),
                                     color = Color.White.copy(alpha = 0.75f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -179,13 +184,13 @@ fun PlayerHud(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(Color(0xFF1E293B).copy(alpha = 0.85f))
+                                        .background(Color(0xFF1E293B).copy(alpha = 0.9f))
                                         .border(0.5.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                        .padding(horizontal = 8.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         text = res,
-                                        style = IpxTypography.LabelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                                        style = IpxTypography.LabelSmall.copy(fontSize = 12.sp, fontWeight = FontWeight.SemiBold),
                                         color = AccentCyan
                                     )
                                 }
@@ -208,7 +213,7 @@ fun PlayerHud(
                                 } else false
                             },
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        horizontalArrangement = Arrangement.spacedBy(22.dp)
                     ) {
                         // Play / Pause
                         HudIconButton(
@@ -216,53 +221,57 @@ fun PlayerHud(
                             contentDescription = if (uiState.isPlaying) "Pause" else "Play",
                             onClick = onTogglePlayPause,
                             focusRequester = playButtonFocus,
-                            buttonSize = 48.dp,
-                            iconSize = 26.dp
+                            buttonSize = 54.dp,
+                            iconSize = 32.dp
                         )
 
-                        // Previous
-                        HudIconButton(
-                            icon = Icons.Default.SkipPrevious,
-                            contentDescription = "Previous",
-                            onClick = onPrev,
-                            buttonSize = 44.dp,
-                            iconSize = 22.dp
-                        )
+                        // Previous episode (|◀) - ONLY for Series
+                        if (isSeries) {
+                            HudIconButton(
+                                icon = Icons.Default.SkipPrevious,
+                                contentDescription = "Previous Episode",
+                                onClick = onPrev,
+                                buttonSize = 54.dp,
+                                iconSize = 32.dp
+                            )
+                        }
 
-                        // Rewind 10s
+                        // Rewind (◀◀)
                         HudIconButton(
-                            icon = Icons.Default.Replay10,
+                            icon = Icons.Default.FastRewind,
                             contentDescription = "Rewind 10 seconds",
                             onClick = onSeekBack10,
-                            buttonSize = 44.dp,
-                            iconSize = 22.dp
+                            buttonSize = 54.dp,
+                            iconSize = 32.dp
                         )
 
-                        // Fast Forward 10s
+                        // Fast Forward (▶▶)
                         HudIconButton(
-                            icon = Icons.Default.Forward10,
+                            icon = Icons.Default.FastForward,
                             contentDescription = "Forward 10 seconds",
                             onClick = onSeekForward10,
-                            buttonSize = 44.dp,
-                            iconSize = 22.dp
+                            buttonSize = 54.dp,
+                            iconSize = 32.dp
                         )
 
-                        // Next
-                        HudIconButton(
-                            icon = Icons.Default.SkipNext,
-                            contentDescription = "Next",
-                            onClick = onNext,
-                            buttonSize = 44.dp,
-                            iconSize = 22.dp
-                        )
+                        // Next episode (▶|) - ONLY for Series
+                        if (isSeries) {
+                            HudIconButton(
+                                icon = Icons.Default.SkipNext,
+                                contentDescription = "Next Episode",
+                                onClick = onNext,
+                                buttonSize = 54.dp,
+                                iconSize = 32.dp
+                            )
+                        }
 
-                        // Replay
+                        // Replay (↺)
                         HudIconButton(
                             icon = Icons.Default.Replay,
                             contentDescription = "Replay from start",
                             onClick = onReplay,
-                            buttonSize = 44.dp,
-                            iconSize = 22.dp
+                            buttonSize = 54.dp,
+                            iconSize = 30.dp
                         )
                     }
 
@@ -296,15 +305,15 @@ fun PlayerHud(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             // Back
                             HudIconButton(
                                 icon = Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
                                 onClick = onClose,
-                                buttonSize = 40.dp,
-                                iconSize = 20.dp
+                                buttonSize = 46.dp,
+                                iconSize = 24.dp
                             )
 
                             // Subtitles
@@ -313,8 +322,8 @@ fun PlayerHud(
                                 contentDescription = "Subtitles",
                                 onClick = onShowSubMenu,
                                 isActive = uiState.areSubtitlesEnabled,
-                                buttonSize = 40.dp,
-                                iconSize = 20.dp
+                                buttonSize = 46.dp,
+                                iconSize = 24.dp
                             )
 
                             // Audio
@@ -322,8 +331,8 @@ fun PlayerHud(
                                 icon = Icons.AutoMirrored.Filled.VolumeUp,
                                 contentDescription = "Audio Tracks",
                                 onClick = onShowAudioMenu,
-                                buttonSize = 40.dp,
-                                iconSize = 20.dp
+                                buttonSize = 46.dp,
+                                iconSize = 24.dp
                             )
 
                             // Favorite
@@ -332,18 +341,18 @@ fun PlayerHud(
                                 contentDescription = "Favorite",
                                 onClick = onToggleFavorite,
                                 isActive = uiState.isCurrentFavorite,
-                                buttonSize = 40.dp,
-                                iconSize = 20.dp
+                                buttonSize = 46.dp,
+                                iconSize = 24.dp
                             )
 
                             // Episodes Menu (if series)
-                            if (onEpisodesClick != null && uiState.activeEpisode != null) {
+                            if (onEpisodesClick != null && isSeries) {
                                 HudIconButton(
                                     icon = Icons.Default.Menu,
                                     contentDescription = "Episodes",
                                     onClick = onEpisodesClick,
-                                    buttonSize = 40.dp,
-                                    iconSize = 20.dp
+                                    buttonSize = 46.dp,
+                                    iconSize = 24.dp
                                 )
                             }
                         }
@@ -360,16 +369,15 @@ fun PlayerHud(
                                 Text(
                                     text = "LIVE",
                                     color = Color(0xFF0B1520),
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                             }
                         } else {
                             Text(
                                 text = "${formatTime(uiState.currentPositionMs)} / ${formatTime(uiState.durationMs)}",
-                                style = IpxTypography.BodyMedium.copy(fontSize = 14.sp),
-                                color = Color.White.copy(alpha = 0.85f),
-                                fontWeight = FontWeight.Medium
+                                style = IpxTypography.BodyMedium.copy(fontSize = 18.sp, fontWeight = FontWeight.Normal),
+                                color = Color.White.copy(alpha = 0.9f)
                             )
                         }
                     }
@@ -391,75 +399,58 @@ private fun HudIconButton(
     onClick:            () -> Unit,
     modifier:           Modifier = Modifier,
     focusRequester:     FocusRequester? = null,
-    buttonSize:         Dp = 44.dp,
-    iconSize:           Dp = 22.dp,
+    buttonSize:         Dp = 54.dp,
+    iconSize:           Dp = 32.dp,
     isActive:           Boolean = false
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue   = if (isFocused) 1.15f else 1.0f,
-        animationSpec = tween(180, easing = EaseInOutCubic),
+        targetValue   = if (isFocused) 1.08f else 1.0f,
+        animationSpec = tween(150, easing = EaseInOutCubic),
         label         = "btnScale"
     )
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier         = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .onFocusChanged { isFocused = it.isFocused }
+    val buttonModifier = Modifier
+        .size(buttonSize)
+        .graphicsLayer {
+            scaleX = scale
+            scaleY = scale
+        }
+        .let { if (focusRequester != null) it.focusRequester(focusRequester) else it }
+        .onFocusChanged { isFocused = it.isFocused }
+
+    val containerBgColor = when {
+        isFocused -> Color.White.copy(alpha = 0.22f)
+        isActive  -> Color.White.copy(alpha = 0.12f)
+        else      -> Color.Transparent
+    }
+    val iconColor = when {
+        isFocused -> Color.White
+        isActive  -> AccentCyan
+        else      -> Color.White.copy(alpha = 0.88f)
+    }
+
+    Button(
+        onClick        = onClick,
+        modifier       = buttonModifier,
+        shape          = ButtonDefaults.shape(shape = CircleShape),
+        contentPadding = PaddingValues(0.dp),
+        colors         = ButtonDefaults.colors(
+            containerColor        = containerBgColor,
+            focusedContainerColor = Color.White.copy(alpha = 0.22f),
+            contentColor          = iconColor,
+            focusedContentColor   = Color.White
+        ),
+        border         = ButtonDefaults.border(
+            border        = Border(border = BorderStroke(0.dp, Color.Transparent), shape = CircleShape),
+            focusedBorder = Border(border = BorderStroke(0.dp, Color.Transparent), shape = CircleShape)
+        ),
+        glow           = ButtonDefaults.glow(glow = Glow.None, focusedGlow = Glow.None),
+        scale          = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.0f)
     ) {
-        if (isFocused) {
-            Box(
-                modifier = Modifier
-                    .size(buttonSize + 8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(Color.White.copy(alpha = 0.25f), Color.Transparent),
-                            radius = (buttonSize.value + 8).coerceAtLeast(1f) * 1.5f
-                        )
-                    )
-            )
-        }
-
-        val buttonModifier = Modifier
-            .size(buttonSize)
-            .let { if (focusRequester != null) it.focusRequester(focusRequester) else it }
-
-        val containerBgColor = when {
-            isFocused -> Color.White.copy(alpha = 0.28f)
-            isActive  -> Color.White.copy(alpha = 0.15f)
-            else      -> Color.Transparent
-        }
-        val iconColor = when {
-            isFocused -> Color.White
-            isActive  -> AccentCyan
-            else      -> Color.White.copy(alpha = 0.88f)
-        }
-
-        Button(
-            onClick  = onClick,
-            modifier = buttonModifier,
-            shape    = ButtonDefaults.shape(shape = CircleShape),
-            colors   = ButtonDefaults.colors(
-                containerColor        = containerBgColor,
-                focusedContainerColor = Color.White.copy(alpha = 0.28f),
-                contentColor          = iconColor,
-                focusedContentColor   = Color.White
-            ),
-            border   = ButtonDefaults.border(
-                border = androidx.tv.material3.Border(
-                    border = androidx.compose.foundation.BorderStroke(
-                        width = 1.5.dp,
-                        color = if (isFocused) Color.White else Color.Transparent
-                    ),
-                    shape  = CircleShape
-                )
-            ),
-            scale    = ButtonDefaults.scale(focusedScale = 1.0f)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
             androidx.compose.material3.Icon(
                 imageVector        = icon,
@@ -478,7 +469,7 @@ private fun PlayerProgressBar(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier         = modifier.fillMaxWidth().height(20.dp),
+        modifier         = modifier.fillMaxWidth().height(24.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         // Track background
@@ -505,14 +496,14 @@ private fun PlayerProgressBar(
                 .clip(RoundedCornerShape(2.dp))
                 .background(Color(0xFFE50914))
         )
-        // Thumb container - white circle thumb
+        // Scrubber thumb - solid white circle
         Box(
             modifier = Modifier.fillMaxWidth(progress.coerceIn(0.001f, 1f)),
             contentAlignment = Alignment.CenterEnd
         ) {
             Box(
                 modifier = Modifier
-                    .size(12.dp)
+                    .size(14.dp)
                     .clip(CircleShape)
                     .background(Color.White)
             )
