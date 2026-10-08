@@ -17,8 +17,8 @@ android {
         applicationId = "com.ipxtream.tv"
         minSdk        = 23          // EncryptedSharedPreferences requires API 23
         targetSdk     = 35
-        versionCode   = 27
-        versionName   = "1.0.26"
+        versionCode   = 28
+        versionName   = "1.0.27"
     }
 
     buildFeatures {
