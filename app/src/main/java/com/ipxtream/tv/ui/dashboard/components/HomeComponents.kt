@@ -52,7 +52,9 @@ fun TopHeader(
     onCheckForUpdates: () -> Unit,
     updateRelease: com.ipxtream.tv.data.model.GitHubRelease? = null,
     modifier: Modifier = Modifier,
-    searchModifier: Modifier = Modifier
+    searchModifier: Modifier = Modifier,
+    actionButtonsModifier: Modifier = Modifier,
+    userProfileModifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
@@ -74,6 +76,7 @@ fun TopHeader(
         
         // 2. Action Buttons (Middle)
         Row(
+            modifier = actionButtonsModifier,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -118,7 +121,8 @@ fun TopHeader(
             activeAccount = activeAccount,
             isCheckingForUpdate = isCheckingForUpdate,
             updateRelease = updateRelease,
-            onCheckForUpdates = onCheckForUpdates
+            onCheckForUpdates = onCheckForUpdates,
+            modifier = userProfileModifier
         )
     }
 }
@@ -313,30 +317,27 @@ fun QuickAccessCard(
 ) {
     var isFocused by remember { mutableStateOf(false) }
     
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.04f else 1.0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
-        label = "cardScale"
-    )
-    
-    val glowColor = if (isFocused) Color.White else Color.White.copy(alpha = 0.08f)
-    val glowWidth = if (isFocused) 3.dp else 1.dp
-    
     Surface(
         onClick = onClick,
         modifier = modifier
             .zIndex(if (isFocused) 2f else 1f)
             .onFocusChanged { isFocused = it.isFocused }
-            .height(180.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .border(glowWidth, glowColor, RoundedCornerShape(16.dp)),
+            .height(180.dp),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.03f),
-            focusedContainerColor = Color.White.copy(alpha = 0.10f)
+            containerColor = Color.White.copy(alpha = 0.04f),
+            focusedContainerColor = Color.White.copy(alpha = 0.20f)
         ),
+        border = ClickableSurfaceDefaults.border(
+            focusedBorder = Border(
+                border = BorderStroke(3.dp, Color.White),
+                shape = RoundedCornerShape(16.dp)
+            ),
+            border = Border(
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
+                shape = RoundedCornerShape(16.dp)
+            )
+        ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.06f),
         shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp))
     ) {
         Box(
@@ -344,13 +345,28 @@ fun QuickAccessCard(
                 .fillMaxSize()
                 .padding(20.dp)
         ) {
-            // Outlined Icon top right
+            // Ambient accent glow top right
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .align(Alignment.TopEnd)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                themeColor.copy(alpha = if (isFocused) 0.45f else 0.15f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+            )
+
+            // Icon top right
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = themeColor.copy(alpha = if (isFocused) 1f else 0.6f),
+                tint = if (isFocused) Color.White else themeColor.copy(alpha = 0.85f),
                 modifier = Modifier
-                    .size(64.dp)
+                    .size(68.dp)
                     .align(Alignment.TopEnd)
             )
             
@@ -358,16 +374,26 @@ fun QuickAccessCard(
             Column(
                 modifier = Modifier.align(Alignment.BottomStart)
             ) {
+                if (isFocused) {
+                    Box(
+                        modifier = Modifier
+                            .width(36.dp)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(themeColor)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
                 Text(
                     text = title,
-                    style = IpxTypography.HeadlineMedium.copy(fontWeight = FontWeight.Bold),
+                    style = IpxTypography.HeadlineMedium.copy(fontWeight = FontWeight.ExtraBold),
                     color = Color.White
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = subtitle,
                     style = IpxTypography.BodyMedium,
-                    color = TextSecondary
+                    color = if (isFocused) Color.White.copy(alpha = 0.95f) else TextSecondary
                 )
             }
         }
@@ -384,7 +410,6 @@ fun ContinueWatchingCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(targetValue = if (isFocused) 1.05f else 1.0f, label = "cwCardScale")
     
     Card(
         onClick = {
@@ -442,19 +467,22 @@ fun ContinueWatchingCard(
         },
         modifier = modifier
             .size(180.dp, 270.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .border(
-                width = if (isFocused) 3.dp else 1.dp,
-                color = if (isFocused) AccentCyan else Color.White.copy(alpha = 0.1f),
-                shape = RoundedCornerShape(12.dp)
-            )
             .onFocusChanged { isFocused = it.isFocused },
+        shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
         colors = CardDefaults.colors(
             containerColor = Color.Transparent,
             focusedContainerColor = Color.Transparent
+        ),
+        scale = CardDefaults.scale(focusedScale = 1.12f),
+        border = CardDefaults.border(
+            focusedBorder = Border(
+                border = BorderStroke(3.dp, Color.White),
+                shape = RoundedCornerShape(12.dp)
+            ),
+            border = Border(
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+                shape = RoundedCornerShape(12.dp)
+            )
         )
     ) {
         Box(Modifier.fillMaxSize()) {

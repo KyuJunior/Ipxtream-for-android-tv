@@ -184,6 +184,10 @@ fun DashboardScreen(
     val searchFirstCardFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
     val sideNavFocusRequester = remember { FocusRequester() }
+    val liveTvCardFocusRequester = remember { FocusRequester() }
+    val moviesCardFocusRequester = remember { FocusRequester() }
+    val seriesCardFocusRequester = remember { FocusRequester() }
+    val userProfileFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
 
     val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null
@@ -251,6 +255,9 @@ fun DashboardScreen(
                 modifier   = Modifier.fillMaxWidth().fillMaxHeight(0.7f).align(Alignment.TopCenter)
             )
 
+            val isHomeSection = uiState.activeSection == ContentSection.HOME
+            val defaultDownTarget = if (isHomeSection) liveTvCardFocusRequester else firstItemFocusRequester
+
             // Content area grows to fill space above the tray
             Column(modifier = Modifier.fillMaxSize()) {
                 TopHeader(
@@ -266,7 +273,17 @@ fun DashboardScreen(
                     onLogout = onLogout,
                     onCheckForUpdates = onCheckForUpdates,
                     updateRelease = uiState.updateRelease,
-                    searchModifier = Modifier.focusRequester(searchBarFocusRequester)
+                    searchModifier = Modifier
+                        .focusRequester(searchBarFocusRequester)
+                        .focusProperties { down = defaultDownTarget },
+                    actionButtonsModifier = Modifier.focusProperties {
+                        down = defaultDownTarget
+                    },
+                    userProfileModifier = Modifier
+                        .focusRequester(userProfileFocusRequester)
+                        .focusProperties {
+                            down = if (isHomeSection) seriesCardFocusRequester else firstItemFocusRequester
+                        }
                 )
 
                 when (uiState.activeSection) {
@@ -315,7 +332,9 @@ fun DashboardScreen(
                                             onClick = { onSectionSelected(ContentSection.LIVE) },
                                             modifier = Modifier
                                                 .weight(1f)
+                                                .focusRequester(liveTvCardFocusRequester)
                                                 .focusRequester(firstItemFocusRequester)
+                                                .focusProperties { up = searchBarFocusRequester }
                                         )
                                         QuickAccessCard(
                                             title = "MOVIES",
@@ -323,7 +342,9 @@ fun DashboardScreen(
                                             icon = Icons.Rounded.Movie,
                                             themeColor = Color(0xFF007DFE),
                                             onClick = { onSectionSelected(ContentSection.VOD) },
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .focusRequester(moviesCardFocusRequester)
                                         )
                                         QuickAccessCard(
                                             title = "TV SERIES",
@@ -331,7 +352,10 @@ fun DashboardScreen(
                                             icon = Icons.Rounded.Slideshow,
                                             themeColor = Color(0xFFFFB347),
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
-                                            modifier = Modifier.weight(1f)
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .focusRequester(seriesCardFocusRequester)
+                                                .focusProperties { up = userProfileFocusRequester }
                                         )
                                     }
                                 }

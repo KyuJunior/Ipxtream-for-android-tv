@@ -119,9 +119,9 @@ private fun CategoryChip(
         ),
         border  = FilterChipDefaults.border(
             border                = Border(BorderStroke(1.dp, Color.Transparent), shape = ChipShape),
-            focusedBorder         = Border.None,
+            focusedBorder         = Border(BorderStroke(2.dp, Color.White), shape = ChipShape),
             selectedBorder        = Border(BorderStroke(1.dp, Color(0x44FFFFFF)), shape = ChipShape),
-            focusedSelectedBorder = Border.None
+            focusedSelectedBorder = Border(BorderStroke(2.dp, Color.White), shape = ChipShape)
         ),
         scale   = FilterChipDefaults.scale(focusedScale = 1.05f)
     ) {
