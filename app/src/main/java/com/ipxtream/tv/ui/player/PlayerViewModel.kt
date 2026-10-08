@@ -13,7 +13,9 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesItem
@@ -52,13 +54,32 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  ExoPlayer
     // =========================================================================
 
+    private val trackSelector = DefaultTrackSelector(application).apply {
+        setParameters(
+            buildUponParameters()
+                .setTunnelingEnabled(true)
+        )
+    }
+
+    private val loadControl = DefaultLoadControl.Builder()
+        .setBufferDurationsMs(
+            /* minBufferMs = */ 15_000,
+            /* maxBufferMs = */ 50_000,
+            /* bufferForPlaybackMs = */ 2_500,
+            /* bufferForPlaybackAfterRebufferMs = */ 5_000
+        )
+        .build()
+
     val exoPlayer: ExoPlayer = ExoPlayer.Builder(application)
+        .setTrackSelector(trackSelector)
+        .setLoadControl(loadControl)
         .build()
         .also { player ->
             player.setAudioAttributes(
                 AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
                     .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                    .setFlags(C.FLAG_AUDIBILITY_ENFORCED)
                     .build(),
                 /* handleAudioFocus = */ true
             )

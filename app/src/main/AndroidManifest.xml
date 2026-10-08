@@ -51,6 +51,7 @@
             android:name=".ui.login.LoginActivity"
             android:exported="true"
             android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -69,6 +70,7 @@
             android:name=".ui.dashboard.DashboardActivity"
             android:exported="false"
             android:screenOrientation="landscape"
+            android:windowSoftInputMode="stateAlwaysHidden"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation" />
 
         <!-- ── Download Service ───────────────────────────────────────────── -->
