@@ -12,6 +12,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
+import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.ExoPlayer
 import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
@@ -491,6 +492,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             while (isActive) {
                 val currentPos = exoPlayer.currentPosition
                 val duration = exoPlayer.duration.coerceAtLeast(0L)
+                if (_uiState.value.videoWidth <= 0 || _uiState.value.videoHeight <= 0) {
+                    checkAndExtractVideoResolution()
+                }
                 _uiState.update { it.copy(
                     currentPositionMs = currentPos,
                     durationMs        = duration,
@@ -500,6 +504,30 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 saveCurrentProgress()
                 delay(1000)
             }
+        }
+    }
+
+    private fun updateVideoResolution(width: Int, height: Int) {
+        if (width > 0 && height > 0) {
+            _uiState.update { current ->
+                if (current.videoWidth != width || current.videoHeight != height) {
+                    current.copy(videoWidth = width, videoHeight = height)
+                } else {
+                    current
+                }
+            }
+        }
+    }
+
+    private fun checkAndExtractVideoResolution() {
+        val vs = exoPlayer.videoSize
+        if (vs.width > 0 && vs.height > 0) {
+            updateVideoResolution(vs.width, vs.height)
+            return
+        }
+        val vf = exoPlayer.videoFormat
+        if (vf != null && vf.width > 0 && vf.height > 0) {
+            updateVideoResolution(vf.width, vf.height)
         }
     }
 
@@ -568,6 +596,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     // =========================================================================
 
     private fun prepareAndPlay(url: String, startPositionMs: Long = 0L) {
+        _uiState.update { it.copy(videoWidth = 0, videoHeight = 0) }
         exoPlayer.stop()
         if (startPositionMs > 0L) {
             exoPlayer.setMediaItem(MediaItem.fromUri(url), startPositionMs)
@@ -603,7 +632,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         override fun onPlaybackStateChanged(state: Int) {
             val newState = when (state) {
                 Player.STATE_BUFFERING -> PlaybackState.LOADING
-                Player.STATE_READY     -> PlaybackState.READY
+                Player.STATE_READY     -> {
+                    checkAndExtractVideoResolution()
+                    PlaybackState.READY
+                }
                 Player.STATE_ENDED     -> {
                     stopPositionPolling()
                     clearCurrentProgressFromHistory()
@@ -614,8 +646,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             _uiState.update { it.copy(playbackState = newState) }
         }
 
+        override fun onVideoSizeChanged(videoSize: VideoSize) {
+            updateVideoResolution(videoSize.width, videoSize.height)
+        }
+
         override fun onTracksChanged(tracks: Tracks) {
             updateAvailableTracks(tracks)
+            checkAndExtractVideoResolution()
         }
 
         override fun onPlayerError(error: PlaybackException) {

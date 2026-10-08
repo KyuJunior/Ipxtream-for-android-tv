@@ -146,6 +146,7 @@ fun PlayerHud(
             HudTopBar(
                 streamName          = uiState.activeStreamName ?: "",
                 mimeHint            = uiState.activeMimeHint,
+                resolutionText      = uiState.resolutionText,
                 isLive              = uiState.isLive,
                 showAudioButton     = uiState.hasMultipleAudioTracks,
                 showSubtitleButton  = uiState.hasSubtitleTracks,
@@ -178,6 +179,7 @@ fun PlayerHud(
             HudBottomBar(
                 isPlaying         = uiState.isPlaying,
                 isLive            = uiState.isLive,
+                resolutionText    = uiState.resolutionText,
                 progress          = uiState.progressFraction,
                 buffered          = uiState.bufferedPercent / 100f,
                 currentPositionMs = uiState.currentPositionMs,
@@ -210,6 +212,7 @@ fun PlayerHud(
 private fun HudTopBar(
     streamName:         String,
     mimeHint:           String?,
+    resolutionText:     String? = null,
     isLive:             Boolean,
     showAudioButton:    Boolean,
     showSubtitleButton: Boolean,
@@ -239,7 +242,7 @@ private fun HudTopBar(
             modifier = Modifier.align(Alignment.CenterStart)
         )
 
-        // Stream name + live badge — centre
+        // Stream name + live badge + actual resolution — centre
         Row(
             modifier          = Modifier.align(Alignment.Center),
             verticalAlignment = Alignment.CenterVertically
@@ -260,6 +263,21 @@ private fun HudTopBar(
             mimeHint?.let { hint ->
                 Spacer(Modifier.width(8.dp))
                 Text(hint, style = IpxTypography.LabelSmall, color = TextMuted)
+            }
+            resolutionText?.let { res ->
+                Spacer(Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF1E293B).copy(alpha = 0.85f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = res,
+                        style = IpxTypography.LabelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                        color = AccentCyan
+                    )
+                }
             }
         }
 
@@ -303,6 +321,7 @@ private fun HudTopBar(
 private fun HudBottomBar(
     isPlaying:         Boolean,
     isLive:            Boolean,
+    resolutionText:    String? = null,
     progress:          Float,
     buffered:          Float,
     currentPositionMs: Long,
@@ -370,13 +389,33 @@ private fun HudBottomBar(
 
             Spacer(Modifier.weight(1f))
 
-            // Time display
-            Text(
-                text  = if (isLive) "LIVE"
-                        else "${formatTime(currentPositionMs)} / ${formatTime(durationMs)}",
-                style = IpxTypography.BodyMedium,
-                color = if (isLive) AccentGreen else TextSecondary
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                resolutionText?.let { res ->
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0xFF1E293B).copy(alpha = 0.85f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = res,
+                            style = IpxTypography.LabelSmall.copy(fontSize = 11.sp, fontWeight = FontWeight.SemiBold),
+                            color = AccentCyan
+                        )
+                    }
+                }
+
+                // Time display
+                Text(
+                    text  = if (isLive) "LIVE"
+                            else "${formatTime(currentPositionMs)} / ${formatTime(durationMs)}",
+                    style = IpxTypography.BodyMedium,
+                    color = if (isLive) AccentGreen else TextSecondary
+                )
+            }
         }
     }
 }

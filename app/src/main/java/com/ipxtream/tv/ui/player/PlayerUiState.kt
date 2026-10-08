@@ -49,6 +49,8 @@ data class PlayerUiState(
     val activeEpisode:     EpisodeItem?  = null,
     val activeSeries:      SeriesItem?   = null,
     val isCurrentFavorite: Boolean       = false,
+    val videoWidth:        Int           = 0,
+    val videoHeight:       Int           = 0,
 
     // ── HUD ───────────────────────────────────────────────────────────────────
     val isHudVisible: Boolean = false,
@@ -59,6 +61,10 @@ data class PlayerUiState(
     val areSubtitlesEnabled:  Boolean          = false,
     val activeTrackMenu:      TrackMenuType    = TrackMenuType.NONE
 ) {
+    /** Formatted actual video resolution being streamed, e.g. "1920x1080". */
+    val resolutionText: String? get() =
+        if (videoWidth > 0 && videoHeight > 0) "${videoWidth}x${videoHeight}" else null
+
     /** True when the split player panel should be visible in the Dashboard. */
     val hasActiveMedia: Boolean get() =
         playbackState != PlaybackState.IDLE
