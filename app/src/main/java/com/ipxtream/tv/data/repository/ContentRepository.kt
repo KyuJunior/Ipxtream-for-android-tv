@@ -13,6 +13,7 @@ import com.ipxtream.tv.data.model.Category
 import com.ipxtream.tv.data.model.SeriesInfoResponse
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
+import com.ipxtream.tv.data.model.VodInfoResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -122,6 +123,20 @@ class ContentRepository(
             apiService.getVodStreams(credentials.username, credentials.password, categoryId = categoryId)
         }
     }
+
+    /**
+     * Fetches full metadata details for a specific VOD movie.
+     * Cache TTL: [CacheManager.SERIES_MAX_AGE_MS] (24 hours).
+     */
+    suspend fun getVodInfo(vodId: Int, forceRefresh: Boolean = false): Result<VodInfoResponse> =
+        fetchWithCache(
+            cacheKey = buildKey("vod_info_$vodId"),
+            maxAgeMs = CacheManager.SERIES_MAX_AGE_MS,
+            type     = VodInfoResponse::class.java,
+            forceRefresh = forceRefresh
+        ) {
+            apiService.getVodInfo(credentials.username, credentials.password, vodId = vodId)
+        }
 
     // =========================================================================
     //  Series

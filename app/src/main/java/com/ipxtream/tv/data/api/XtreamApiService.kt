@@ -4,6 +4,7 @@ import com.ipxtream.tv.data.model.Category
 import com.ipxtream.tv.data.model.SeriesInfoResponse
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
+import com.ipxtream.tv.data.model.VodInfoResponse
 import com.ipxtream.tv.data.model.XtreamAuthResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -97,6 +98,19 @@ interface XtreamApiService {
         @Query("action")      action:     String = "get_vod_streams",
         @Query("category_id") categoryId: String? = null
     ): List<StreamItem>
+
+    /**
+     * Returns full metadata details for a single VOD movie.
+     *
+     * @param vodId [StreamItem.streamId] of the movie.
+     */
+    @GET("player_api.php")
+    suspend fun getVodInfo(
+        @Query("username") username: String,
+        @Query("password") password: String,
+        @Query("action")   action:   String = "get_vod_info",
+        @Query("vod_id")   vodId:    Int
+    ): VodInfoResponse
 
     // =========================================================================
     //  Series

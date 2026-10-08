@@ -5,6 +5,7 @@ import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesInfoResponse
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
+import com.ipxtream.tv.data.model.VodInfoResponse
 import com.ipxtream.tv.data.local.LibraryItem
 
 // ─── Section Enum ────────────────────────────────────────────────────────────
@@ -56,6 +57,8 @@ data class DashboardUiState(
     
     // ─── Phase 7 Detail Overlays ───
     val detailVodItem:       StreamItem?      = null,
+    val detailVodInfo:       VodInfoResponse? = null,
+    val isLoadingVodInfo:    Boolean          = false,
     val detailSeriesItem:    SeriesItem?      = null,
     val seriesInfo:          SeriesInfoResponse? = null,
     val isLoadingSeriesInfo: Boolean          = false,

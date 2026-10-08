@@ -142,7 +142,24 @@ class DashboardViewModel(
 
     /** Displays the VOD (Movie) details full-screen overlay. */
     fun showVodDetails(stream: StreamItem) {
-        _uiState.update { it.copy(detailVodItem = stream) }
+        _uiState.update { 
+            it.copy(
+                detailVodItem = stream,
+                detailVodInfo = null,
+                isLoadingVodInfo = true
+            ) 
+        }
+        viewModelScope.launch {
+            repository.getVodInfo(stream.streamId)
+                .onSuccess { infoRes ->
+                    _uiState.update { 
+                        it.copy(detailVodInfo = infoRes, isLoadingVodInfo = false) 
+                    }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(isLoadingVodInfo = false) }
+                }
+        }
     }
 
     /** Displays the Series detail screen and fetches full season/episode metadata. */
@@ -168,6 +185,8 @@ class DashboardViewModel(
         _uiState.update { 
             it.copy(
                 detailVodItem = null,
+                detailVodInfo = null,
+                isLoadingVodInfo = false,
                 detailSeriesItem = null,
                 seriesInfo = null,
                 isLoadingSeriesInfo = false

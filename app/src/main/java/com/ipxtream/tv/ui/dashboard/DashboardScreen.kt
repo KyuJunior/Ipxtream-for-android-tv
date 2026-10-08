@@ -607,13 +607,15 @@ fun DashboardScreen(
         // ─── Overlay Phase: Detail Screens (Phase 7) ─────────────────────────
         if (uiState.detailVodItem != null) {
             com.ipxtream.tv.ui.dashboard.components.VodDetailScreen(
-                streamItem    = uiState.detailVodItem,
-                onPlay        = { onVodPlay(uiState.detailVodItem) },
-                onDownload    = { onVodDownload(uiState.detailVodItem) },
-                onClose       = onCloseDetails,
-                isFavorite    = isStreamFavorite(uiState.detailVodItem.streamId, "movie"),
+                streamItem       = uiState.detailVodItem,
+                vodInfo          = uiState.detailVodInfo,
+                isLoadingVodInfo = uiState.isLoadingVodInfo,
+                onPlay           = { onVodPlay(uiState.detailVodItem) },
+                onDownload       = { onVodDownload(uiState.detailVodItem) },
+                onClose          = onCloseDetails,
+                isFavorite       = isStreamFavorite(uiState.detailVodItem.streamId, "movie"),
                 onToggleFavorite = { onToggleFavoriteStream(uiState.detailVodItem) },
-                isPlayerOpen  = showFullScreenPlayer
+                isPlayerOpen     = showFullScreenPlayer
             )
         } else if (uiState.detailSeriesItem != null) {
             com.ipxtream.tv.ui.dashboard.components.SeriesDetailScreen(

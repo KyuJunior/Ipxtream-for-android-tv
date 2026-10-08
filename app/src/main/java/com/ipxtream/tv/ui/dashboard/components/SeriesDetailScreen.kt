@@ -1,6 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,7 +35,7 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
@@ -166,27 +167,38 @@ fun SeriesDetailScreen(
                             onClick = onToggleFavorite,
                             modifier = Modifier.focusRequester(likeButtonFocusRequester),
                             colors = ButtonDefaults.colors(
-                                containerColor = Color.DarkGray.copy(alpha = 0.6f),
+                                containerColor = Color(0xFF161E2E).copy(alpha = 0.75f),
                                 contentColor = Color.White,
-                                focusedContainerColor = Color.LightGray,
-                                focusedContentColor = Color.Black
+                                focusedContainerColor = Color.White,
+                                focusedContentColor = Color(0xFF07090E)
                             ),
-                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
+                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(12.dp)),
+                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.05f),
+                            border = ButtonDefaults.border(
+                                border = Border(
+                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
+                                focusedBorder = Border(
+                                    border = BorderStroke(2.dp, Color.White),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            )
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
                                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                     contentDescription = if (isFavorite) "Remove from Favorites" else "Add to Favorites",
-                                    tint = if (isFavorite) Color.Red else Color.White,
+                                    tint = if (isFavorite) Color.Red else Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(Modifier.width(6.dp))
+                                Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = if (isFavorite) "Liked" else "Like",
-                                    style = IpxTypography.BodyMedium,
+                                    style = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                             }
@@ -194,27 +206,38 @@ fun SeriesDetailScreen(
                         Button(
                             onClick = onClose,
                             colors = ButtonDefaults.colors(
-                                containerColor = Color.DarkGray.copy(alpha = 0.6f),
+                                containerColor = Color(0xFF161E2E).copy(alpha = 0.75f),
                                 contentColor = Color.White,
-                                focusedContainerColor = Color.LightGray,
-                                focusedContentColor = Color.Black
+                                focusedContainerColor = Color.White,
+                                focusedContentColor = Color(0xFF07090E)
                             ),
-                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(8.dp))
+                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(12.dp)),
+                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.05f),
+                            border = ButtonDefaults.border(
+                                border = Border(
+                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
+                                    shape = RoundedCornerShape(12.dp)
+                                ),
+                                focusedBorder = Border(
+                                    border = BorderStroke(2.dp, Color.White),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                            )
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.ArrowBack,
+                                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(20.dp)
                                 )
-                                Spacer(Modifier.width(6.dp))
+                                Spacer(Modifier.width(8.dp))
                                 Text(
                                     text = "Back",
-                                    style = IpxTypography.BodyMedium,
+                                    style = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
                             }
