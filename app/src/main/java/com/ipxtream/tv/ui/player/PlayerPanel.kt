@@ -135,6 +135,22 @@ fun PlayerPanel(
         }
     }
 
+    // ── Prevent TV from going to sleep or screensaver while playing ───────────
+    val activity = context as? android.app.Activity
+    DisposableEffect(uiState.isPlaying) {
+        if (uiState.isPlaying) {
+            playerView.keepScreenOn = true
+            activity?.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            playerView.keepScreenOn = false
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+        onDispose {
+            playerView.keepScreenOn = false
+            activity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     // ── Focus Requester to steal focus on launch ─────────────────────────────
     val focusRequester = remember { FocusRequester() }
     val playButtonFocus = remember { FocusRequester() }
