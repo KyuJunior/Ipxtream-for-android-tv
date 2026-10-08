@@ -140,7 +140,7 @@ fun HomeSearchResultsView(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        itemsIndexed(movies) { index, movie ->
+                        itemsIndexed(movies, key = { index, movie -> "sr_m_${movie.streamId}_$index" }) { index, movie ->
                             VodPosterCard(
                                 stream = movie,
                                 onClick = { onStreamSelected(movie) },
@@ -172,7 +172,7 @@ fun HomeSearchResultsView(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        itemsIndexed(series) { index, show ->
+                        itemsIndexed(series, key = { index, show -> "sr_s_${show.seriesId}_$index" }) { index, show ->
                             SeriesPosterCard(
                                 series = show,
                                 onClick = { onSeriesSelected(show) },

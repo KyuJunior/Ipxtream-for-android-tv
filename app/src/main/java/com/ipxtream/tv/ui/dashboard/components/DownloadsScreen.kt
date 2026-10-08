@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
@@ -118,8 +119,8 @@ fun DownloadsScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 32.dp)
                 ) {
-                    items(downloads, key = { it.id }) { item ->
-                        val isFirst = downloads.firstOrNull() == item
+                    itemsIndexed(downloads, key = { index, item -> "dl_${item.id}_$index" }) { index, item ->
+                        val isFirst = index == 0
                         DownloadManagerCard(
                             item = item,
                             onPause = { onPause(item.id) },

@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
@@ -258,7 +259,7 @@ fun DashboardScreen(
             )
 
             val isHomeSection = uiState.activeSection == ContentSection.HOME
-            val defaultDownTarget = if (isHomeSection) liveTvCardFocusRequester else firstItemFocusRequester
+            val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY
 
             // Content area grows to fill space above the tray
             Column(modifier = Modifier.fillMaxSize()) {
@@ -277,14 +278,28 @@ fun DashboardScreen(
                     updateRelease = uiState.updateRelease,
                     searchModifier = Modifier
                         .focusRequester(searchBarFocusRequester)
-                        .focusProperties { down = defaultDownTarget },
+                        .focusProperties {
+                            if (isHomeSection) {
+                                down = liveTvCardFocusRequester
+                            } else if (isLibrarySection) {
+                                down = firstItemFocusRequester
+                            }
+                        },
                     actionButtonsModifier = Modifier.focusProperties {
-                        down = defaultDownTarget
+                        if (isHomeSection) {
+                            down = moviesCardFocusRequester
+                        } else if (isLibrarySection) {
+                            down = firstItemFocusRequester
+                        }
                     },
                     userProfileModifier = Modifier
                         .focusRequester(userProfileFocusRequester)
                         .focusProperties {
-                            down = if (isHomeSection) seriesCardFocusRequester else firstItemFocusRequester
+                            if (isHomeSection) {
+                                down = seriesCardFocusRequester
+                            } else if (isLibrarySection) {
+                                down = firstItemFocusRequester
+                            }
                         }
                 )
 
@@ -347,6 +362,7 @@ fun DashboardScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .focusRequester(moviesCardFocusRequester)
+                                                .focusProperties { up = searchBarFocusRequester }
                                         )
                                         QuickAccessCard(
                                             title = "TV SERIES",
@@ -443,6 +459,19 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
+                    ContentSection.MY_LIBRARY -> {
+                        LibrarySection(
+                            uiState = uiState,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            searchBarFocusRequester = searchBarFocusRequester,
+                            onStreamSelected = onStreamSelected,
+                            onSeriesSelected = onSeriesSelected,
+                            onEpisodePlay = onEpisodePlay,
+                            onCheckForUpdates = onCheckForUpdates,
+                            onDownloadUpdate = onDownloadUpdate,
+                            onRefresh = onRefresh
+                        )
+                    }
                     else -> {
                         if (uiState.categories.isNotEmpty()) {
                             CategoryRow(
@@ -462,16 +491,6 @@ fun DashboardScreen(
                                 uiState.isLoadingContent -> LoadingIndicator()
                                 uiState.error != null && uiState.itemCount == 0 ->
                                     ErrorMessage(message = uiState.error, onRetry = onRefresh)
-                                uiState.activeSection == ContentSection.MY_LIBRARY ->
-                                    LibrarySection(
-                                        uiState = uiState,
-                                        onStreamSelected = onStreamSelected,
-                                        onSeriesSelected = onSeriesSelected,
-                                        onEpisodePlay = onEpisodePlay,
-                                        onCheckForUpdates = onCheckForUpdates,
-                                        onDownloadUpdate = onDownloadUpdate,
-                                        onRefresh = onRefresh
-                                    )
                                 uiState.selectedCategoryId == null && uiState.searchQuery.isBlank() ->
                                     EmptyPromptMessage("Use the search bar above to find content, or select a category.")
                                 uiState.activeSection == ContentSection.SERIES ->
@@ -717,7 +736,7 @@ private fun StreamGrid(
             verticalArrangement   = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            itemsIndexed(streams, key = { _, s -> s.streamId }) { index, stream ->
+            itemsIndexed(streams, key = { index, s -> "st_${s.streamId}_$index" }) { index, stream ->
                 var isFocused by remember { mutableStateOf(false) }
                 val mod = Modifier
                     .onFocusChanged { state ->
@@ -767,7 +786,7 @@ private fun SeriesGrid(
             verticalArrangement   = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            itemsIndexed(seriesList, key = { _, s -> s.seriesId }) { index, series ->
+            itemsIndexed(seriesList, key = { index, s -> "se_${s.seriesId}_$index" }) { index, series ->
                 var isFocused by remember { mutableStateOf(false) }
                 val mod = Modifier
                     .onFocusChanged { state ->
@@ -841,6 +860,8 @@ private fun EmptyPromptMessage(message: String) {
 @Composable
 private fun LibrarySection(
     uiState: DashboardUiState,
+    firstItemFocusRequester: FocusRequester,
+    searchBarFocusRequester: FocusRequester,
     onStreamSelected: (StreamItem) -> Unit,
     onSeriesSelected: (SeriesItem) -> Unit,
     onEpisodePlay: (com.ipxtream.tv.data.model.SeriesItem, EpisodeItem) -> Unit,
@@ -865,13 +886,19 @@ private fun LibrarySection(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 16.dp)
+                    .focusRequester(firstItemFocusRequester)
+                    .focusProperties {
+                        up = searchBarFocusRequester
+                    },
                 shape = androidx.tv.material3.CardDefaults.shape(RoundedCornerShape(12.dp)),
                 colors = androidx.tv.material3.CardDefaults.colors(
                     containerColor = SlatePrimary,
                     focusedContainerColor = SlateGlass
                 ),
+                scale = androidx.tv.material3.CardDefaults.scale(focusedScale = 1.02f),
                 border = androidx.tv.material3.CardDefaults.border(
+                    border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)), shape = RoundedCornerShape(12.dp)),
                     focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(12.dp))
                 )
             ) {
@@ -901,12 +928,22 @@ private fun LibrarySection(
                             strokeWidth = 2.dp
                         )
                     } else if (uiState.updateRelease != null) {
-                        androidx.tv.material3.Button(onClick = onDownloadUpdate) {
-                            Text("Download Update")
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(AccentCyan)
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text("Download Update", color = Color.Black, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else {
-                        androidx.tv.material3.Button(onClick = onCheckForUpdates) {
-                            Text("Check for Updates")
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White.copy(alpha = 0.15f))
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        ) {
+                            Text("Check for Updates", color = Color.White, style = IpxTypography.BodyMedium)
                         }
                     }
                 }
@@ -926,7 +963,7 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        items(uiState.historyList, key = { it.id }) { item ->
+                        itemsIndexed(uiState.historyList, key = { index, item -> "lib_hist_${item.type}_${item.id}_$index" }) { _, item ->
                             LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
                         }
                     }
@@ -941,7 +978,7 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        items(uiState.favoritesList, key = { it.id }) { item ->
+                        itemsIndexed(uiState.favoritesList, key = { index, item -> "lib_fav_${item.type}_${item.id}_$index" }) { _, item ->
                             LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
                         }
                     }
@@ -963,7 +1000,7 @@ private fun LibraryCard(
         "live" -> {
             val stream = remember(item) {
                 StreamItem(
-                    streamId = item.id.toInt(),
+                    streamId = item.id.toIntOrNull() ?: 0,
                     name = item.name,
                     streamType = "live",
                     streamIcon = item.iconUrl,
@@ -976,7 +1013,7 @@ private fun LibraryCard(
         "movie" -> {
             val stream = remember(item) {
                 StreamItem(
-                    streamId = item.id.toInt(),
+                    streamId = item.id.toIntOrNull() ?: 0,
                     name = item.name,
                     streamType = "movie",
                     streamIcon = item.iconUrl,
@@ -989,7 +1026,7 @@ private fun LibraryCard(
         "series" -> {
             val series = remember(item) {
                 SeriesItem(
-                    seriesId = item.id.toInt(),
+                    seriesId = item.id.toIntOrNull() ?: 0,
                     name = item.name,
                     cover = item.iconUrl,
                     plot = null, cast = null, director = null, genre = null, releaseDate = null, lastModified = null, rating = item.rating, rating5based = null, backdropPath = null, youtubeTrailer = null, episodeRunTime = null, categoryId = item.categoryId
@@ -1112,7 +1149,7 @@ private fun WhatsNewGrid(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(items.size) { index ->
+        items(items.size, key = { index -> "wn_${items[index].id}_$index" }) { index ->
             val item = items[index]
             ContinueWatchingCard(
                 item = item,

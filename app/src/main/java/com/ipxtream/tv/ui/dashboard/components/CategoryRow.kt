@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -76,7 +77,7 @@ fun CategoryRow(
         }
 
         // Per-category chips
-        items(categories, key = { it.categoryId }) { category ->
+        itemsIndexed(categories, key = { index, category -> "${category.categoryId}_$index" }) { _, category ->
             CategoryChip(
                 label      = category.categoryName,
                 isSelected = category.categoryId == selectedCategoryId,

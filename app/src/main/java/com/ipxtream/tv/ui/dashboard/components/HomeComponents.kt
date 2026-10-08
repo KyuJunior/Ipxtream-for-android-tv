@@ -6,6 +6,7 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -193,9 +194,9 @@ fun UserProfileCard(
         ),
         border = ClickableSurfaceDefaults.border(
             border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)), shape = RoundedCornerShape(12.dp)),
-            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(12.dp))
+            focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(12.dp))
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f)
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.08f)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -416,7 +417,7 @@ fun ContinueWatchingCard(
             when (item.type) {
                 "live" -> {
                     val stream = StreamItem(
-                        streamId = item.id.toInt(),
+                        streamId = item.id.toIntOrNull() ?: 0,
                         name = item.name,
                         streamType = "live",
                         streamIcon = item.iconUrl,
@@ -427,7 +428,7 @@ fun ContinueWatchingCard(
                 }
                 "movie" -> {
                     val stream = StreamItem(
-                        streamId = item.id.toInt(),
+                        streamId = item.id.toIntOrNull() ?: 0,
                         name = item.name,
                         streamType = "movie",
                         streamIcon = item.iconUrl,
@@ -438,7 +439,7 @@ fun ContinueWatchingCard(
                 }
                 "series" -> {
                     val series = SeriesItem(
-                        seriesId = item.id.toInt(),
+                        seriesId = item.id.toIntOrNull() ?: 0,
                         name = item.name,
                         cover = item.iconUrl,
                         plot = null, cast = null, director = null, genre = null, releaseDate = null, lastModified = null, rating = item.rating, rating5based = null, backdropPath = null, youtubeTrailer = null, episodeRunTime = null, categoryId = item.categoryId
@@ -578,7 +579,7 @@ fun ContinueWatchingRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items, key = { it.id }, contentType = { "continue_watching" }) { item ->
+            itemsIndexed(items, key = { index, item -> "cw_${item.type}_${item.id}_$index" }, contentType = { _, _ -> "continue_watching" }) { _, item ->
                 ContinueWatchingCard(
                     item = item,
                     onStreamSelected = onStreamSelected,
@@ -609,7 +610,7 @@ fun HomeHighlightsRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items, key = { it.streamId }, contentType = { "live_channel" }) { item ->
+            itemsIndexed(items, key = { index, item -> "hl_${item.streamId}_$index" }, contentType = { _, _ -> "live_channel" }) { _, item ->
                 LiveChannelCard(stream = item, onClick = { onStreamSelected(item) })
             }
         }
@@ -635,7 +636,7 @@ fun HomeMoviesRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items, key = { it.streamId }, contentType = { "vod_movie" }) { item ->
+            itemsIndexed(items, key = { index, item -> "hm_${item.streamId}_$index" }, contentType = { _, _ -> "vod_movie" }) { _, item ->
                 VodPosterCard(stream = item, onClick = { onStreamSelected(item) })
             }
         }
@@ -661,7 +662,7 @@ fun HomeSeriesRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            items(items, key = { it.seriesId }, contentType = { "tv_series" }) { item ->
+            itemsIndexed(items, key = { index, item -> "hs_${item.seriesId}_$index" }, contentType = { _, _ -> "tv_series" }) { _, item ->
                 SeriesPosterCard(series = item, onClick = { onSeriesSelected(item) })
             }
         }
