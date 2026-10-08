@@ -637,13 +637,40 @@ fun DashboardScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             if (exoPlayer != null) {
+                val allEpisodes = remember(uiState.seriesInfo) {
+                    uiState.seriesInfo?.allEpisodes() ?: emptyList()
+                }
+                val currentEpIndex = remember(playerUiState.activeEpisode, allEpisodes) {
+                    if (playerUiState.activeEpisode != null) {
+                        allEpisodes.indexOfFirst { it.id == playerUiState.activeEpisode.id }
+                    } else -1
+                }
+                val seriesForEpisode = playerUiState.activeSeries ?: uiState.detailSeriesItem
+
+                val nextEpAction: (() -> Unit)? = if (currentEpIndex in 0 until allEpisodes.size - 1 && seriesForEpisode != null) {
+                    val nextEp = allEpisodes[currentEpIndex + 1]
+                    { onEpisodePlay(seriesForEpisode, nextEp) }
+                } else null
+
+                val prevEpAction: (() -> Unit)? = if (currentEpIndex > 0 && seriesForEpisode != null) {
+                    val prevEp = allEpisodes[currentEpIndex - 1]
+                    { onEpisodePlay(seriesForEpisode, prevEp) }
+                } else null
+
+                val episodesClickAction: (() -> Unit)? = if (playerUiState.activeEpisode != null) {
+                    { onPlayerStop() }
+                } else null
+
                 Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black)) {
                     PlayerPanel(
-                        exoPlayer = exoPlayer,
-                        uiState   = playerUiState,
-                        viewModel = playerViewModel,
-                        onStop    = onPlayerStop,
-                        modifier  = Modifier.fillMaxSize()
+                        exoPlayer       = exoPlayer,
+                        uiState         = playerUiState,
+                        viewModel       = playerViewModel,
+                        onStop          = onPlayerStop,
+                        onNextEpisode   = nextEpAction,
+                        onPrevEpisode   = prevEpAction,
+                        onEpisodesClick = episodesClickAction,
+                        modifier        = Modifier.fillMaxSize()
                     )
                 }
             }

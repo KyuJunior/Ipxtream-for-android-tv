@@ -223,6 +223,27 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         onHudInteraction()
     }
 
+    /**
+     * Restarts playback from 0:00.
+     */
+    fun replay() {
+        if (_uiState.value.isLive) return
+        exoPlayer.seekTo(0L)
+        exoPlayer.play()
+        onHudInteraction()
+    }
+
+    /**
+     * Seeks to an absolute timestamp in milliseconds.
+     */
+    fun seekTo(positionMs: Long) {
+        if (_uiState.value.isLive) return
+        val duration = exoPlayer.duration.takeIf { it > 0L } ?: return
+        val newPos   = positionMs.coerceIn(0L, duration)
+        exoPlayer.seekTo(newPos)
+        onHudInteraction()
+    }
+
     fun stop() {
         saveCurrentProgress()
         stopPositionPolling()

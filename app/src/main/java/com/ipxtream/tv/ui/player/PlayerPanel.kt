@@ -6,8 +6,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -82,11 +86,14 @@ import kotlinx.coroutines.delay
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun PlayerPanel(
-    exoPlayer: ExoPlayer,
-    uiState:   PlayerUiState,
-    viewModel: PlayerViewModel,
-    onStop:    () -> Unit,
-    modifier:  Modifier = Modifier
+    exoPlayer:       ExoPlayer,
+    uiState:         PlayerUiState,
+    viewModel:       PlayerViewModel,
+    onStop:          () -> Unit,
+    onNextEpisode:   (() -> Unit)? = null,
+    onPrevEpisode:   (() -> Unit)? = null,
+    onEpisodesClick: (() -> Unit)? = null,
+    modifier:        Modifier = Modifier
 ) {
     val context        = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -201,10 +208,10 @@ fun PlayerPanel(
                             Key.MediaPlayPause  -> { viewModel.togglePlayPause(); true }
 
                             Key.DirectionLeft,
-                            Key.MediaRewind     -> { viewModel.seekRelative(-30_000L); true }
+                            Key.MediaRewind     -> { viewModel.seekRelative(-10_000L); true }
 
                             Key.DirectionRight,
-                            Key.MediaFastForward -> { viewModel.seekRelative(30_000L); true }
+                            Key.MediaFastForward -> { viewModel.seekRelative(10_000L); true }
 
                             Key.Back -> {
                                 viewModel.hideHud()
@@ -245,7 +252,7 @@ fun PlayerPanel(
 
                             Key.DirectionLeft,
                             Key.MediaRewind -> {
-                                viewModel.seekRelative(-30_000L)
+                                viewModel.seekRelative(-10_000L)
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
                                 true
@@ -253,7 +260,7 @@ fun PlayerPanel(
 
                             Key.DirectionRight,
                             Key.MediaFastForward -> {
-                                viewModel.seekRelative(30_000L)
+                                viewModel.seekRelative(10_000L)
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
                                 true
@@ -285,33 +292,39 @@ fun PlayerPanel(
             exit     = fadeOut(),
             modifier = Modifier.align(Alignment.Center)
         ) {
-            Text("⏳ Connecting…", style = IpxTypography.TitleMedium, color = TextSecondary)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                androidx.compose.material3.CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    color = AccentCyan,
+                    strokeWidth = 2.dp
+                )
+                Text("Connecting…", style = IpxTypography.TitleMedium, color = TextSecondary)
+            }
         }
 
-        // ── Custom HUD (top + bottom bars) ────────────────────────────────────
+        // ── Custom HUD (unified lower-third overlay) ──────────────────────────
         PlayerHud(
-            uiState           = uiState,
-            onTogglePlayPause = viewModel::togglePlayPause,
-            onSeekBack        = { viewModel.seekRelative(-30_000L) },
-            onSeekForward     = { viewModel.seekRelative(30_000L) },
-            onShowAudioMenu   = { viewModel.showTrackMenu(TrackMenuType.AUDIO) },
-            onShowSubMenu     = { viewModel.showTrackMenu(TrackMenuType.SUBTITLE) },
-            onClose           = onStop,
-            playButtonFocus   = playButtonFocus,
+            uiState            = uiState,
+            onTogglePlayPause  = viewModel::togglePlayPause,
+            onSeekBack10       = { viewModel.seekRelative(-10_000L) },
+            onSeekForward10    = { viewModel.seekRelative(10_000L) },
+            onPrev             = onPrevEpisode ?: { viewModel.seekTo(0L) },
+            onNext             = onNextEpisode ?: { viewModel.seekRelative(10_000L) },
+            onReplay           = viewModel::replay,
+            onShowAudioMenu    = { viewModel.showTrackMenu(TrackMenuType.AUDIO) },
+            onShowSubMenu      = { viewModel.showTrackMenu(TrackMenuType.SUBTITLE) },
+            onToggleFavorite   = viewModel::toggleCurrentFavorite,
+            onEpisodesClick    = onEpisodesClick,
+            onClose            = onStop,
+            playButtonFocus    = playButtonFocus,
             onHideAndFocusRoot = {
                 viewModel.hideHud()
                 runCatching { focusRequester.requestFocus() }
             },
-            onToggleFavorite  = viewModel::toggleCurrentFavorite,
-            modifier          = Modifier
-                .fillMaxSize()
-                .focusGroup()
-                .focusProperties {
-                    up = FocusRequester.Cancel
-                    down = FocusRequester.Cancel
-                    left = FocusRequester.Cancel
-                    right = FocusRequester.Cancel
-                }
+            modifier           = Modifier.fillMaxSize()
         )
 
         // ── Track selection menu (slides over the HUD from right) ─────────────
