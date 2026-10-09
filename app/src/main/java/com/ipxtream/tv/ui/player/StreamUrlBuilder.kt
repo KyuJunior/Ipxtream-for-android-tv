@@ -49,6 +49,7 @@ object StreamUrlBuilder {
         val base = credentials.server.trimEnd('/')
         val u    = credentials.username
         val p    = credentials.password
-        return "$base/series/$u/$p/${episode.id}.${episode.containerExtension}"
+        val ext  = episode.containerExtension?.ifBlank { null } ?: "mp4"
+        return "$base/series/$u/$p/${episode.id}.$ext"
     }
 }

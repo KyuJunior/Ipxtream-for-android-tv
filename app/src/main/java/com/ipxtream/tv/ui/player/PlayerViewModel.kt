@@ -157,7 +157,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(
             playbackState    = PlaybackState.LOADING,
             activeStreamName = episode.title,
-            activeMimeHint   = episode.containerExtension.uppercase(),
+            activeMimeHint   = episode.containerExtension?.uppercase() ?: "MP4",
             error            = null,
             activeStream     = null,
             activeEpisode    = episode,

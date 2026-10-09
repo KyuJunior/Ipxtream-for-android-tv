@@ -507,54 +507,74 @@ class DashboardViewModel(
             val newItems = mutableListOf<LibraryItem>()
             
             vodResult.onSuccess { movies ->
-                movies.forEach { movie ->
+                val sortedMovies = movies.sortedByDescending { it.added?.toLongOrNull() ?: 0L }
+                val filteredMovies = sortedMovies.filter { movie ->
                     val ratingVal = movie.rating?.toDoubleOrNull() ?: 0.0
                     val title = movie.name ?: ""
-                    if (ratingVal >= 7.0 && title.contains("(2026)")) {
-                        val addedTime = movie.added?.toLongOrNull() ?: movie.streamId.toLong()
-                        newItems.add(
-                            LibraryItem(
-                                id = movie.streamId.toString(),
-                                name = movie.name,
-                                type = "movie",
-                                iconUrl = movie.streamIcon,
-                                categoryId = movie.categoryId,
-                                rating = movie.rating,
-                                containerExtension = movie.containerExtension,
-                                timestamp = addedTime * 1000L
-                            )
+                    (ratingVal >= 7.0 && (title.contains("(2026)") || title.contains("(2025)"))) ||
+                    (movie.added?.toLongOrNull() ?: 0L) > 0L
+                }.take(20)
+
+                val effectiveMovies = if (filteredMovies.isNotEmpty()) filteredMovies else sortedMovies.take(20)
+
+                effectiveMovies.forEach { movie ->
+                    val addedTime = movie.added?.toLongOrNull() ?: movie.streamId.toLong()
+                    newItems.add(
+                        LibraryItem(
+                            id = movie.streamId.toString(),
+                            name = movie.name ?: "Untitled Movie",
+                            type = "movie",
+                            iconUrl = movie.streamIcon,
+                            categoryId = movie.categoryId,
+                            rating = movie.rating,
+                            containerExtension = movie.containerExtension,
+                            timestamp = addedTime * 1000L
                         )
-                    }
+                    )
                 }
             }
             
             seriesResult.onSuccess { seriesList ->
-                seriesList.forEach { series ->
+                val sortedSeries = seriesList.sortedByDescending { it.lastModified?.toLongOrNull() ?: 0L }
+                val filteredSeries = sortedSeries.filter { series ->
                     val ratingVal = series.rating?.toDoubleOrNull() ?: 0.0
+                    val seriesName = series.name ?: ""
                     val yearSuffix = series.releaseDate?.trim()
-                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !series.name.contains(yearSuffix)) {
-                        "${series.name} ($yearSuffix)"
+                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !seriesName.contains(yearSuffix)) {
+                        "$seriesName ($yearSuffix)"
                     } else {
-                        series.name
+                        seriesName
                     }
-                    if (ratingVal >= 7.0 && formattedName.contains("(2026)")) {
-                        val modifiedTime = series.lastModified?.toLongOrNull() ?: series.seriesId.toLong()
-                        newItems.add(
-                            LibraryItem(
-                                id = series.seriesId.toString(),
-                                name = formattedName,
-                                type = "series",
-                                iconUrl = series.cover,
-                                categoryId = series.categoryId,
-                                rating = series.rating,
-                                timestamp = modifiedTime * 1000L
-                            )
+                    (ratingVal >= 7.0 && (formattedName.contains("(2026)") || formattedName.contains("(2025)"))) ||
+                    (series.lastModified?.toLongOrNull() ?: 0L) > 0L
+                }.take(20)
+
+                val effectiveSeries = if (filteredSeries.isNotEmpty()) filteredSeries else sortedSeries.take(20)
+
+                effectiveSeries.forEach { series ->
+                    val seriesName = series.name ?: ""
+                    val yearSuffix = series.releaseDate?.trim()
+                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !seriesName.contains(yearSuffix)) {
+                        "$seriesName ($yearSuffix)"
+                    } else {
+                        seriesName
+                    }
+                    val modifiedTime = series.lastModified?.toLongOrNull() ?: series.seriesId.toLong()
+                    newItems.add(
+                        LibraryItem(
+                            id = series.seriesId.toString(),
+                            name = formattedName,
+                            type = "series",
+                            iconUrl = series.cover,
+                            categoryId = series.categoryId,
+                            rating = series.rating,
+                            timestamp = modifiedTime * 1000L
                         )
-                    }
+                    )
                 }
             }
             
-            val sortedNewItems = newItems.sortedByDescending { it.timestamp }.take(20)
+            val sortedNewItems = newItems.sortedByDescending { it.timestamp }.take(30)
             
             _uiState.update { it.copy(
                 isLoadingContent = false,
@@ -565,35 +585,43 @@ class DashboardViewModel(
 
     fun loadHomeData() {
         viewModelScope.launch {
-            // Load Live Highlights (Alwan channels)
+            // Load Live Highlights (Alwan channels, fallback to first 15 channels)
             repository.getLiveStreams(categoryId = null, forceRefresh = false).onSuccess { channels ->
-                val alwan = channels.filter { it.name != null && it.name.contains("Alwan", ignoreCase = true) }
-                _uiState.update { it.copy(homeLiveHighlights = alwan) }
+                val alwan = channels.filter { it.name.contains("Alwan", ignoreCase = true) }
+                val highlights = if (alwan.isNotEmpty()) alwan else channels.take(15)
+                _uiState.update { it.copy(homeLiveHighlights = highlights) }
             }
 
-            // Load Hot Movies (2026, 7+ rating)
+            // Load Hot Movies (2026, 7+ rating, fallback to newest/top movies)
             repository.getVodStreams(categoryId = null, forceRefresh = false).onSuccess { movies ->
                 val hot = movies.filter {
                     val ratingVal = it.rating?.toDoubleOrNull() ?: 0.0
                     val nameStr = it.name ?: ""
                     ratingVal >= 7.0 && nameStr.contains("(2026)")
                 }
-                _uiState.update { it.copy(homeHotMovies = hot) }
+                val finalHot = if (hot.isNotEmpty()) hot else {
+                    movies.sortedByDescending { it.added?.toLongOrNull() ?: 0L }.take(15)
+                }
+                _uiState.update { it.copy(homeHotMovies = finalHot) }
             }
 
-            // Load Popular TV Series (2026, 7+ rating)
+            // Load Popular TV Series (2026, 7+ rating, fallback to newest/top series)
             repository.getSeries(categoryId = null, forceRefresh = false).onSuccess { seriesList ->
                 val popular = seriesList.filter {
                     val ratingVal = it.rating?.toDoubleOrNull() ?: 0.0
+                    val seriesName = it.name ?: ""
                     val yearSuffix = it.releaseDate?.trim()
-                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !it.name.contains(yearSuffix)) {
-                        "${it.name} ($yearSuffix)"
+                    val formattedName = if (!yearSuffix.isNullOrEmpty() && !seriesName.contains(yearSuffix)) {
+                        "$seriesName ($yearSuffix)"
                     } else {
-                        it.name
+                        seriesName
                     }
                     ratingVal >= 7.0 && formattedName.contains("(2026)")
                 }
-                _uiState.update { it.copy(homePopularSeries = popular) }
+                val finalPopular = if (popular.isNotEmpty()) popular else {
+                    seriesList.sortedByDescending { it.lastModified?.toLongOrNull() ?: 0L }.take(15)
+                }
+                _uiState.update { it.copy(homePopularSeries = finalPopular) }
             }
         }
     }

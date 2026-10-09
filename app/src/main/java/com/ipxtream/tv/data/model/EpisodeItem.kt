@@ -25,7 +25,7 @@ data class EpisodeItem(
     @SerializedName("id")                  val id:                 String,
     @SerializedName("episode_num")         val episodeNum:         Int,
     @SerializedName("title")               val title:              String,
-    @SerializedName("container_extension") val containerExtension: String,
+    @SerializedName("container_extension") val containerExtension: String? = "mp4",
     @SerializedName("info")                val info:               EpisodeInfo?,
     @SerializedName("season")             val season:             Int,
     @SerializedName("added")              val added:              String?,

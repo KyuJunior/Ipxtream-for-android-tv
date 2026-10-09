@@ -48,10 +48,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -180,6 +182,7 @@ fun DashboardScreen(
     onCacheAll:         () -> Unit = {},
     onLogout:           () -> Unit = {}
 ) {
+    val focusManager = LocalFocusManager.current
     val firstItemFocusRequester = remember { FocusRequester() }
     val searchBarFocusRequester = remember { FocusRequester() }
     val searchFirstCardFocusRequester = remember { FocusRequester() }
@@ -284,8 +287,6 @@ fun DashboardScreen(
                         .focusProperties {
                             if (isHomeNormal) {
                                 down = liveTvCardFocusRequester
-                            } else if (hasSearchResults) {
-                                down = searchFirstCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
                             }
@@ -293,8 +294,6 @@ fun DashboardScreen(
                     actionButtonsModifier = Modifier.focusProperties {
                         if (isHomeNormal) {
                             down = moviesCardFocusRequester
-                        } else if (hasSearchResults) {
-                            down = searchFirstCardFocusRequester
                         } else if (isLibrarySection) {
                             down = firstItemFocusRequester
                         }
@@ -304,19 +303,36 @@ fun DashboardScreen(
                         .focusProperties {
                             if (isHomeNormal) {
                                 down = seriesCardFocusRequester
-                            } else if (hasSearchResults) {
-                                down = searchFirstCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
                             }
                         },
                     onSearchDown = {
-                        if (hasSearchResults) {
-                            runCatching { searchFirstCardFocusRequester.requestFocus() }
-                        } else if (isHomeNormal) {
-                            runCatching { liveTvCardFocusRequester.requestFocus() }
-                        } else if (isLibrarySection) {
-                            runCatching { firstItemFocusRequester.requestFocus() }
+                        when {
+                            hasSearchResults -> {
+                                val ok = runCatching { searchFirstCardFocusRequester.requestFocus() }.isSuccess
+                                if (!ok) {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+                            }
+                            isHomeNormal -> {
+                                val ok = runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
+                                if (!ok) {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+                            }
+                            isLibrarySection -> {
+                                val ok = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+                                if (!ok) {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+                            }
+                            else -> {
+                                val ok = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+                                if (!ok) {
+                                    focusManager.moveFocus(FocusDirection.Down)
+                                }
+                            }
                         }
                     }
                 )
@@ -1043,12 +1059,13 @@ private fun LibraryCard(
     onSeriesSelected: (SeriesItem) -> Unit,
     onEpisodePlay: (com.ipxtream.tv.data.model.SeriesItem, EpisodeItem) -> Unit
 ) {
+    val rawName = item.name ?: "Untitled"
     when (item.type) {
         "live" -> {
             val stream = remember(item) {
                 StreamItem(
                     streamId = item.id.toIntOrNull() ?: 0,
-                    name = item.name,
+                    name = rawName,
                     streamType = "live",
                     streamIcon = item.iconUrl,
                     categoryId = item.categoryId,
@@ -1061,7 +1078,7 @@ private fun LibraryCard(
             val stream = remember(item) {
                 StreamItem(
                     streamId = item.id.toIntOrNull() ?: 0,
-                    name = item.name,
+                    name = rawName,
                     streamType = "movie",
                     streamIcon = item.iconUrl,
                     categoryId = item.categoryId,
@@ -1074,7 +1091,7 @@ private fun LibraryCard(
             val series = remember(item) {
                 SeriesItem(
                     seriesId = item.id.toIntOrNull() ?: 0,
-                    name = item.name,
+                    name = rawName,
                     cover = item.iconUrl,
                     plot = null, cast = null, director = null, genre = null, releaseDate = null, lastModified = null, rating = item.rating, rating5based = null, backdropPath = null, youtubeTrailer = null, episodeRunTime = null, categoryId = item.categoryId
                 )
@@ -1082,10 +1099,12 @@ private fun LibraryCard(
             SeriesPosterCard(series = series, onClick = { onSeriesSelected(series) })
         }
         "episode" -> {
+            val seriesTitle = if (rawName.contains(" - ")) rawName.substringBefore(" - ") else rawName
+            val epTitle = if (rawName.contains(" - ")) rawName.substringAfter(" - ") else rawName
             val series = remember(item) {
                 SeriesItem(
                     seriesId = item.parentId?.toIntOrNull() ?: 0,
-                    name = item.name.substringBefore(" - "),
+                    name = seriesTitle,
                     cover = item.iconUrl,
                     plot = null, cast = null, director = null, genre = null, releaseDate = null, lastModified = null, rating = null, rating5based = null, backdropPath = null, youtubeTrailer = null, episodeRunTime = null, categoryId = null
                 )
@@ -1094,7 +1113,7 @@ private fun LibraryCard(
                 EpisodeItem(
                     id = item.id,
                     episodeNum = 1,
-                    title = item.name.substringAfter(" - ", item.name),
+                    title = epTitle,
                     containerExtension = item.containerExtension ?: "mp4",
                     info = null,
                     season = 1,
