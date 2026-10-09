@@ -20,6 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
@@ -54,10 +57,14 @@ private val ChipShape = RoundedCornerShape(8.dp)
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun CategoryRow(
-    categories:          List<Category>,
-    selectedCategoryId:  String?,
-    onCategorySelected:  (String?) -> Unit,
-    modifier:            Modifier = Modifier
+    categories:              List<Category>,
+    selectedCategoryId:      String?,
+    onCategorySelected:      (String?) -> Unit,
+    firstChipFocusRequester: FocusRequester? = null,
+    sideNavFocusRequester:   FocusRequester? = null,
+    gridFocusRequester:      FocusRequester? = null,
+    searchBarFocusRequester: FocusRequester? = null,
+    modifier:                Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
 
@@ -72,7 +79,14 @@ fun CategoryRow(
             CategoryChip(
                 label      = "All",
                 isSelected = selectedCategoryId == null,
-                onClick    = { onCategorySelected(null) }
+                onClick    = { onCategorySelected(null) },
+                modifier   = Modifier
+                    .then(if (firstChipFocusRequester != null) Modifier.focusRequester(firstChipFocusRequester) else Modifier)
+                    .focusProperties {
+                        if (sideNavFocusRequester != null) left = sideNavFocusRequester
+                        if (gridFocusRequester != null) down = gridFocusRequester
+                        if (searchBarFocusRequester != null) up = searchBarFocusRequester
+                    }
             )
         }
 
@@ -81,7 +95,11 @@ fun CategoryRow(
             CategoryChip(
                 label      = category.categoryName,
                 isSelected = category.categoryId == selectedCategoryId,
-                onClick    = { onCategorySelected(category.categoryId) }
+                onClick    = { onCategorySelected(category.categoryId) },
+                modifier   = Modifier.focusProperties {
+                    if (gridFocusRequester != null) down = gridFocusRequester
+                    if (searchBarFocusRequester != null) up = searchBarFocusRequester
+                }
             )
         }
     }

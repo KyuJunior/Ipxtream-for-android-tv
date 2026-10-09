@@ -188,11 +188,36 @@ fun DashboardScreen(
     val searchFirstCardFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
     val sideNavFocusRequester = remember { FocusRequester() }
+    val categoryRowFocusRequester = remember { FocusRequester() }
     val liveTvCardFocusRequester = remember { FocusRequester() }
     val moviesCardFocusRequester = remember { FocusRequester() }
     val seriesCardFocusRequester = remember { FocusRequester() }
     val userProfileFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
+
+    val focusContentForSection: () -> Unit = {
+        val ok: Boolean = when (uiState.activeSection) {
+            ContentSection.HOME -> {
+                if (uiState.searchQuery.isNotBlank()) {
+                    runCatching { searchFirstCardFocusRequester.requestFocus() }.isSuccess
+                } else {
+                    runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
+                }
+            }
+            ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES -> {
+                val catOk = runCatching { categoryRowFocusRequester.requestFocus() }.isSuccess
+                if (!catOk) {
+                    runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+                } else true
+            }
+            else -> {
+                runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+            }
+        }
+        if (!ok) {
+            runCatching { firstItemFocusRequester.requestFocus() }
+        }
+    }
 
     val showFullScreenPlayer = uiState.hasActivePlayback && !playerUiState.isLive && exoPlayer != null
     val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null || showFullScreenPlayer
@@ -305,6 +330,7 @@ fun DashboardScreen(
                     onLogout = onLogout,
                     onCheckForUpdates = onCheckForUpdates,
                     updateRelease = uiState.updateRelease,
+                    onSearchLeft = { runCatching { sideNavFocusRequester.requestFocus() } },
                     searchModifier = Modifier
                         .focusRequester(searchBarFocusRequester)
                         .focusProperties {
@@ -312,6 +338,8 @@ fun DashboardScreen(
                                 down = liveTvCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
+                            } else {
+                                down = categoryRowFocusRequester
                             }
                         },
                     actionButtonsModifier = Modifier.focusProperties {
@@ -319,6 +347,8 @@ fun DashboardScreen(
                             down = moviesCardFocusRequester
                         } else if (isLibrarySection) {
                             down = firstItemFocusRequester
+                        } else {
+                            down = categoryRowFocusRequester
                         }
                     },
                     userProfileModifier = Modifier
@@ -328,6 +358,8 @@ fun DashboardScreen(
                                 down = seriesCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
+                            } else {
+                                down = categoryRowFocusRequester
                             }
                         },
                     onSearchDown = {
@@ -351,9 +383,12 @@ fun DashboardScreen(
                                 }
                             }
                             else -> {
-                                val ok = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+                                val ok = runCatching { categoryRowFocusRequester.requestFocus() }.isSuccess
                                 if (!ok) {
-                                    focusManager.moveFocus(FocusDirection.Down)
+                                    val firstOk = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+                                    if (!firstOk) {
+                                        focusManager.moveFocus(FocusDirection.Down)
+                                    }
                                 }
                             }
                         }
@@ -409,7 +444,10 @@ fun DashboardScreen(
                                                 .weight(1f)
                                                 .focusRequester(liveTvCardFocusRequester)
                                                 .focusRequester(firstItemFocusRequester)
-                                                .focusProperties { up = searchBarFocusRequester }
+                                                .focusProperties {
+                                                    up = searchBarFocusRequester
+                                                    left = sideNavFocusRequester
+                                                }
                                         )
                                         QuickAccessCard(
                                             title = "MOVIES",
@@ -535,10 +573,14 @@ fun DashboardScreen(
                     else -> {
                         if (uiState.categories.isNotEmpty()) {
                             CategoryRow(
-                                categories         = uiState.categories,
-                                selectedCategoryId = uiState.selectedCategoryId,
-                                onCategorySelected = onCategorySelected,
-                                modifier           = Modifier.fillMaxWidth()
+                                categories              = uiState.categories,
+                                selectedCategoryId      = uiState.selectedCategoryId,
+                                onCategorySelected      = onCategorySelected,
+                                firstChipFocusRequester = categoryRowFocusRequester,
+                                sideNavFocusRequester   = sideNavFocusRequester,
+                                gridFocusRequester      = firstItemFocusRequester,
+                                searchBarFocusRequester = searchBarFocusRequester,
+                                modifier                = Modifier.fillMaxWidth()
                             )
                             Spacer(Modifier.height(8.dp))
                         }
@@ -551,36 +593,40 @@ fun DashboardScreen(
                                 uiState.isLoadingContent -> LoadingIndicator()
                                 uiState.error != null && uiState.itemCount == 0 ->
                                     ErrorMessage(message = uiState.error, onRetry = onRefresh)
-                                uiState.selectedCategoryId == null && uiState.searchQuery.isBlank() ->
-                                    EmptyPromptMessage("Use the search bar above to find content, or select a category.")
+                                uiState.itemCount == 0 && !uiState.isLoadingContent ->
+                                    EmptyPromptMessage("No content available in this section.")
                                 uiState.activeSection == ContentSection.SERIES ->
                                     SeriesGrid(
-                                        seriesList              = uiState.paginatedSeries,
-                                        onSeriesSelected        = onSeriesSelected,
-                                        firstItemFocusRequester = firstItemFocusRequester,
-                                        onItemFocused           = { focusedSeriesItem = it; focusedStreamItem = null },
-                                        hasPrevPage             = uiState.hasPrevPage,
-                                        hasNextPage             = uiState.hasNextPage,
-                                        currentPage             = uiState.currentPage,
-                                        totalPages              = uiState.totalPages,
-                                        onPrevPage              = onPrevPage,
-                                        onNextPage              = onNextPage,
-                                        watchProgress           = { uiState.getWatchProgress(it) }
+                                        seriesList                = uiState.paginatedSeries,
+                                        onSeriesSelected          = onSeriesSelected,
+                                        firstItemFocusRequester   = firstItemFocusRequester,
+                                        sideNavFocusRequester     = sideNavFocusRequester,
+                                        categoryRowFocusRequester = categoryRowFocusRequester,
+                                        onItemFocused             = { focusedSeriesItem = it; focusedStreamItem = null },
+                                        hasPrevPage               = uiState.hasPrevPage,
+                                        hasNextPage               = uiState.hasNextPage,
+                                        currentPage               = uiState.currentPage,
+                                        totalPages                = uiState.totalPages,
+                                        onPrevPage                = onPrevPage,
+                                        onNextPage                = onNextPage,
+                                        watchProgress             = { uiState.getWatchProgress(it) }
                                     )
                                 else ->
                                     StreamGrid(
-                                        streams                 = uiState.paginatedStreams,
-                                        section                 = uiState.activeSection,
-                                        onStreamSelected        = onStreamSelected,
-                                        firstItemFocusRequester = firstItemFocusRequester,
-                                        onItemFocused           = { focusedStreamItem = it; focusedSeriesItem = null },
-                                        hasPrevPage             = uiState.hasPrevPage,
-                                        hasNextPage             = uiState.hasNextPage,
-                                        currentPage             = uiState.currentPage,
-                                        totalPages              = uiState.totalPages,
-                                        onPrevPage              = onPrevPage,
-                                        onNextPage              = onNextPage,
-                                        watchProgress           = { uiState.getWatchProgress(it) }
+                                        streams                   = uiState.paginatedStreams,
+                                        section                   = uiState.activeSection,
+                                        onStreamSelected          = onStreamSelected,
+                                        firstItemFocusRequester   = firstItemFocusRequester,
+                                        sideNavFocusRequester     = sideNavFocusRequester,
+                                        categoryRowFocusRequester = categoryRowFocusRequester,
+                                        onItemFocused             = { focusedStreamItem = it; focusedSeriesItem = null },
+                                        hasPrevPage               = uiState.hasPrevPage,
+                                        hasNextPage               = uiState.hasNextPage,
+                                        currentPage               = uiState.currentPage,
+                                        totalPages                = uiState.totalPages,
+                                        onPrevPage                = onPrevPage,
+                                        onNextPage                = onNextPage,
+                                        watchProgress             = { uiState.getWatchProgress(it) }
                                     )
                             }
                         }
@@ -638,14 +684,29 @@ fun DashboardScreen(
         }
         } // Close Grid/Player Row
 
+        // Dimming backdrop scrim when side navigation is expanded/focused
+        androidx.compose.animation.AnimatedVisibility(
+            visible = isSideNavFocused && !isOverlayOpen,
+            enter = androidx.compose.animation.fadeIn(tween(200)),
+            exit = androidx.compose.animation.fadeOut(tween(200)),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.55f))
+            )
+        }
+
         // ─── Floating Sidebar (OVERLAYS content gracefully) ──────────────────
         SideNavBar(
-            activeSection     = uiState.activeSection,
-            onSectionSelected = onSectionSelected,
-            onRefresh         = onRefresh,
+            activeSection         = uiState.activeSection,
+            onSectionSelected     = onSectionSelected,
+            onNavigateToContent   = focusContentForSection,
+            onRefresh             = onRefresh,
             sideNavFocusRequester = sideNavFocusRequester,
-            onFocusChanged    = { isSideNavFocused = it },
-            modifier          = Modifier
+            onFocusChanged        = { isSideNavFocused = it },
+            modifier              = Modifier
                 .align(Alignment.CenterStart)
                 .focusProperties { canFocus = !isOverlayOpen }
         )
@@ -810,18 +871,20 @@ fun DashboardScreen(
 
 @Composable
 private fun StreamGrid(
-    streams:                List<StreamItem>,
-    section:                ContentSection,
-    onStreamSelected:       (StreamItem) -> Unit,
-    firstItemFocusRequester: FocusRequester,
-    onItemFocused:          (StreamItem?) -> Unit,
-    hasPrevPage:            Boolean,
-    hasNextPage:            Boolean,
-    currentPage:            Int,
-    totalPages:             Int,
-    onPrevPage:             () -> Unit,
-    onNextPage:             () -> Unit,
-    watchProgress:          (String) -> Float? = { null }
+    streams:                   List<StreamItem>,
+    section:                   ContentSection,
+    onStreamSelected:          (StreamItem) -> Unit,
+    firstItemFocusRequester:   FocusRequester,
+    sideNavFocusRequester:     FocusRequester? = null,
+    categoryRowFocusRequester: FocusRequester? = null,
+    onItemFocused:             (StreamItem?) -> Unit,
+    hasPrevPage:               Boolean,
+    hasNextPage:               Boolean,
+    currentPage:               Int,
+    totalPages:                Int,
+    onPrevPage:                () -> Unit,
+    onNextPage:                () -> Unit,
+    watchProgress:             (String) -> Float? = { null }
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -834,12 +897,23 @@ private fun StreamGrid(
         ) {
             itemsIndexed(streams, key = { index, s -> "st_${s.streamId}_$index" }) { index, stream ->
                 var isFocused by remember { mutableStateOf(false) }
+                val isLeftColumn = if (section == ContentSection.LIVE) (index % 3 == 0) else (index % 5 == 0 || index == 0)
+                val isTopRow = if (section == ContentSection.LIVE) (index < 3) else (index < 5)
+
                 val mod = Modifier
                     .onFocusChanged { state ->
                         isFocused = state.isFocused
                         if (isFocused) onItemFocused(stream)
                     }
                     .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                    .focusProperties {
+                        if (isLeftColumn && sideNavFocusRequester != null) {
+                            left = sideNavFocusRequester
+                        }
+                        if (isTopRow && categoryRowFocusRequester != null) {
+                            up = categoryRowFocusRequester
+                        }
+                    }
 
                 if (section == ContentSection.LIVE) {
                     LiveChannelCard(stream = stream, onClick = { onStreamSelected(stream) }, modifier = mod)
@@ -867,17 +941,19 @@ private fun StreamGrid(
 
 @Composable
 private fun SeriesGrid(
-    seriesList:             List<SeriesItem>,
-    onSeriesSelected:       (SeriesItem) -> Unit,
-    firstItemFocusRequester: FocusRequester,
-    onItemFocused:          (SeriesItem?) -> Unit,
-    hasPrevPage:            Boolean,
-    hasNextPage:            Boolean,
-    currentPage:            Int,
-    totalPages:             Int,
-    onPrevPage:             () -> Unit,
-    onNextPage:             () -> Unit,
-    watchProgress:          (String) -> Float? = { null }
+    seriesList:                List<SeriesItem>,
+    onSeriesSelected:          (SeriesItem) -> Unit,
+    firstItemFocusRequester:   FocusRequester,
+    sideNavFocusRequester:     FocusRequester? = null,
+    categoryRowFocusRequester: FocusRequester? = null,
+    onItemFocused:             (SeriesItem?) -> Unit,
+    hasPrevPage:               Boolean,
+    hasNextPage:               Boolean,
+    currentPage:               Int,
+    totalPages:                Int,
+    onPrevPage:                () -> Unit,
+    onNextPage:                () -> Unit,
+    watchProgress:             (String) -> Float? = { null }
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -890,12 +966,23 @@ private fun SeriesGrid(
         ) {
             itemsIndexed(seriesList, key = { index, s -> "se_${s.seriesId}_$index" }) { index, series ->
                 var isFocused by remember { mutableStateOf(false) }
+                val isLeftColumn = (index % 5 == 0 || index == 0)
+                val isTopRow = (index < 5)
+
                 val mod = Modifier
                     .onFocusChanged { state ->
                         isFocused = state.isFocused
                         if (isFocused) onItemFocused(series)
                     }
                     .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                    .focusProperties {
+                        if (isLeftColumn && sideNavFocusRequester != null) {
+                            left = sideNavFocusRequester
+                        }
+                        if (isTopRow && categoryRowFocusRequester != null) {
+                            up = categoryRowFocusRequester
+                        }
+                    }
                     
                 SeriesPosterCard(
                     series = series,

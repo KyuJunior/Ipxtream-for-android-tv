@@ -59,7 +59,8 @@ fun SearchBar(
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "Search...",
-    onDownNavigation: (() -> Unit)? = null
+    onDownNavigation: (() -> Unit)? = null,
+    onLeftNavigation: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -98,17 +99,24 @@ fun SearchBar(
             )
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { keyEvent ->
-                if (keyEvent.key == Key.DirectionDown) {
-                    if (keyEvent.type == KeyEventType.KeyDown) {
-                        val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
-                        if (!moved && onDownNavigation != null) {
-                            onDownNavigation()
+                if (keyEvent.type == KeyEventType.KeyDown) {
+                    when (keyEvent.key) {
+                        Key.DirectionDown -> {
+                            val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
+                            if (!moved && onDownNavigation != null) {
+                                onDownNavigation()
+                            }
+                            true
                         }
+                        Key.DirectionLeft -> {
+                            if (onLeftNavigation != null) {
+                                onLeftNavigation()
+                                true
+                            } else false
+                        }
+                        else -> false
                     }
-                    true
-                } else {
-                    false
-                }
+                } else false
             },
         textStyle = IpxTypography.BodyMedium.copy(color = TextPrimary),
         singleLine = true,

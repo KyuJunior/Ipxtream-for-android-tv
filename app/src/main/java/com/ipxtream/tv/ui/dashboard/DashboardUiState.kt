@@ -106,12 +106,10 @@ data class DashboardUiState(
     val isLoading: Boolean get() = isLoadingCategories || isLoadingContent
 
     val displayedStreams: List<StreamItem> get() {
-        if (selectedCategoryId == null && searchQuery.isBlank()) return emptyList()
         return if (searchQuery.isBlank()) streams else streams.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 
     val displayedSeries: List<SeriesItem> get() {
-        if (selectedCategoryId == null && searchQuery.isBlank()) return emptyList()
         return if (searchQuery.isBlank()) seriesList else seriesList.filter { it.name.contains(searchQuery, ignoreCase = true) }
     }
 

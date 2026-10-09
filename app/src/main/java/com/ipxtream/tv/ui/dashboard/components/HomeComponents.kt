@@ -56,7 +56,8 @@ fun TopHeader(
     searchModifier: Modifier = Modifier,
     actionButtonsModifier: Modifier = Modifier,
     userProfileModifier: Modifier = Modifier,
-    onSearchDown: (() -> Unit)? = null
+    onSearchDown: (() -> Unit)? = null,
+    onSearchLeft: (() -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -71,7 +72,8 @@ fun TopHeader(
                 onQueryChange = onQueryChange,
                 placeholder = "Search channels, movies, and series...",
                 modifier = searchModifier,
-                onDownNavigation = onSearchDown
+                onDownNavigation = onSearchDown,
+                onLeftNavigation = onSearchLeft
             )
         }
         
