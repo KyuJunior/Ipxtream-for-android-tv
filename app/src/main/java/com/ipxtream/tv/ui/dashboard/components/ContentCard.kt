@@ -89,6 +89,7 @@ private val FocusScale = 1.15f
 fun LiveChannelCard(
     stream:  StreamItem,
     onClick: () -> Unit,
+    showChannelNumber: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -120,6 +121,25 @@ fun LiveChannelCard(
                 LiveBadge(modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(8.dp))
+            }
+
+            // Channel number badge
+            if (showChannelNumber && stream.num != null && stream.num > 0) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color.Black.copy(alpha = 0.65f))
+                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                ) {
+                    Text(
+                        text = "#${stream.num}",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
 
             // Gradient + channel name at the bottom

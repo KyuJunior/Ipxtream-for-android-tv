@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -122,6 +123,8 @@ fun PlayerPanel(
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // -- PlayerView: created ONCE, never recreated ----------------------------
+    val appSettings by remember(context) { com.ipxtream.tv.data.local.AppSettingsStore.getInstance(context).settings }.collectAsState()
+
     val playerView = remember {
         PlayerView(context).apply {
             player                  = exoPlayer
@@ -134,6 +137,13 @@ fun PlayerPanel(
             isFocusableInTouchMode  = false
             descendantFocusability  = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         }
+    }.apply {
+        resizeMode = when (appSettings.defaultAspectRatio) {
+            com.ipxtream.tv.data.local.AspectRatioMode.FIT -> androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT
+            com.ipxtream.tv.data.local.AspectRatioMode.FILL -> androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FILL
+            com.ipxtream.tv.data.local.AspectRatioMode.ZOOM -> androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+        }
+        subtitleView?.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, appSettings.subtitleTextSize.sizeSp)
     }
 
     // ── Lifecycle: Pause on background, Resume on foreground ──────────────────
@@ -160,8 +170,9 @@ fun PlayerPanel(
 
     // ── Prevent TV from going to sleep or screensaver while playing ───────────
     val activity = context as? android.app.Activity
-    DisposableEffect(uiState.isPlaying) {
-        if (uiState.isPlaying) {
+    DisposableEffect(uiState.isPlaying, appSettings.keepScreenAwake) {
+        val keepAwake = uiState.isPlaying && appSettings.keepScreenAwake
+        if (keepAwake) {
             playerView.keepScreenOn = true
             activity?.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {

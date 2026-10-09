@@ -600,6 +600,7 @@ fun HomeHighlightsRow(
     title: String,
     items: List<com.ipxtream.tv.data.model.StreamItem>,
     onStreamSelected: (com.ipxtream.tv.data.model.StreamItem) -> Unit,
+    showChannelNumber: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
@@ -615,7 +616,7 @@ fun HomeHighlightsRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hl_${item.streamId}_$index" }, contentType = { _, _ -> "live_channel" }) { _, item ->
-                LiveChannelCard(stream = item, onClick = { onStreamSelected(item) })
+                LiveChannelCard(stream = item, onClick = { onStreamSelected(item) }, showChannelNumber = showChannelNumber)
             }
         }
     }

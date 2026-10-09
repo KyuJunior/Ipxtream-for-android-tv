@@ -40,6 +40,13 @@ class LoginActivity : ComponentActivity() {
     private lateinit var viewModel: LoginViewModel
     private lateinit var credentialStore: CredentialStore
 
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore.getInstance(newBase)
+        val langCode = appSettingsStore.settings.value.appLanguage.code
+        val localizedContext = com.ipxtream.tv.util.LocaleHelper.wrap(newBase, langCode)
+        super.attachBaseContext(localizedContext)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

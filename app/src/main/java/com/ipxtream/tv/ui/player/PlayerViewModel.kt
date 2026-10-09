@@ -55,6 +55,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  ExoPlayer
     // =========================================================================
 
+    private val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore(application)
+
     private val trackSelector = DefaultTrackSelector(application).apply {
         setParameters(
             buildUponParameters()
@@ -89,6 +91,24 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             )
             player.addListener(PlayerEventListener())
         }
+
+    init {
+        viewModelScope.launch {
+            appSettingsStore.settings.collect { settings ->
+                applySettings(settings)
+            }
+        }
+    }
+
+    private fun applySettings(settings: com.ipxtream.tv.data.local.AppSettings) {
+        val trackParamBuilder = trackSelector.buildUponParameters()
+            .setTunnelingEnabled(settings.decoderMode == com.ipxtream.tv.data.local.DecoderMode.HARDWARE_FIRST)
+            .setPreferredAudioLanguage(if (settings.preferredAudioLanguage == "default") null else settings.preferredAudioLanguage)
+            .setPreferredTextLanguage(if (settings.defaultSubtitlesEnabled) settings.preferredSubtitleLanguage else null)
+            .setSelectUndeterminedTextLanguage(false)
+
+        trackSelector.setParameters(trackParamBuilder)
+    }
 
     // =========================================================================
     //  UI State

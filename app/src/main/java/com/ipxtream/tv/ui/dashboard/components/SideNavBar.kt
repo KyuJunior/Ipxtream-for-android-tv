@@ -105,6 +105,7 @@ fun SideNavBar(
     onRefresh:             () -> Unit,
     sideNavFocusRequester: FocusRequester = remember { FocusRequester() },
     onFocusChanged:        (Boolean) -> Unit = {},
+    settings:              com.ipxtream.tv.data.local.AppSettings? = null,
     modifier:              Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -184,8 +185,19 @@ fun SideNavBar(
 
             Spacer(Modifier.height(12.dp))
 
-            // ── All 8 Content Sections ───────────────────────────────────────────
-            NAV_SECTIONS.forEach { item ->
+            // ── Dynamic Content Sections (Configured via Settings) ─────────────
+            val visibleSections = remember(settings) {
+                NAV_SECTIONS.filter { item ->
+                    when (item.section) {
+                        ContentSection.WHATS_NEW  -> settings?.showWhatsNewSection ?: true
+                        ContentSection.DOWNLOADS  -> settings?.showDownloadsSection ?: true
+                        ContentSection.MY_LIBRARY -> settings?.showLibrarySection ?: true
+                        else                      -> true
+                    }
+                }
+            }
+
+            visibleSections.forEach { item ->
                 val isActive = item.section == activeSection
 
                 NavItem(

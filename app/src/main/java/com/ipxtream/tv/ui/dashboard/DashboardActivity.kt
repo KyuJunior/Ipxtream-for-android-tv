@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import com.ipxtream.tv.data.local.AppLanguage
 import com.ipxtream.tv.data.local.CredentialStore
 import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
@@ -117,10 +118,40 @@ class DashboardActivity : ComponentActivity() {
                     onVodDownload      = { stream -> dashboardViewModel.downloadStream(this, stream, credentials) },
                     onEpisodeDownload  = { episode -> dashboardViewModel.downloadEpisode(this, episode, credentials) },
                     onCacheAll         = dashboardViewModel::cacheAllContent,
-                    onLogout           = dashboardViewModel::logout
+                    onLogout           = dashboardViewModel::logout,
+
+                    onAppLanguageChange = { lang ->
+                        dashboardViewModel.setAppLanguage(lang)
+                        com.ipxtream.tv.util.LocaleHelper.applyLocale(this, lang.code)
+                    },
+                    onToggleShowWhatsNew = dashboardViewModel::setShowWhatsNewSection,
+                    onToggleShowDownloads = dashboardViewModel::setShowDownloadsSection,
+                    onToggleShowLibrary = dashboardViewModel::setShowLibrarySection,
+                    onToggleShowSpotlight = dashboardViewModel::setShowSpotlightBackdrop,
+                    onToggleShowChannelNumbers = dashboardViewModel::setShowChannelNumbers,
+                    onToggle24HourClock = dashboardViewModel::setIs24HourClockFormat,
+                    onBufferProfileChange = dashboardViewModel::setBufferProfile,
+                    onToggleAutoPlayNextEpisode = dashboardViewModel::setAutoPlayNextEpisode,
+                    onAspectRatioChange = dashboardViewModel::setDefaultAspectRatio,
+                    onDecoderModeChange = dashboardViewModel::setDecoderMode,
+                    onToggleKeepScreenAwake = dashboardViewModel::setKeepScreenAwake,
+                    onPreferredAudioLanguageChange = dashboardViewModel::setPreferredAudioLanguage,
+                    onToggleDefaultSubtitles = dashboardViewModel::setDefaultSubtitlesEnabled,
+                    onPreferredSubtitleLanguageChange = dashboardViewModel::setPreferredSubtitleLanguage,
+                    onSubtitleTextSizeChange = dashboardViewModel::setSubtitleTextSize,
+                    onToggleAutoRefreshCache = dashboardViewModel::setAutoRefreshCacheOnStartup,
+                    onClearImageCache = dashboardViewModel::clearImageCache,
+                    onClearWatchHistory = dashboardViewModel::clearWatchHistory
                 )
             }
         }
+    }
+
+    override fun attachBaseContext(newBase: android.content.Context) {
+        val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore.getInstance(newBase)
+        val langCode = appSettingsStore.settings.value.appLanguage.code
+        val localizedContext = com.ipxtream.tv.util.LocaleHelper.wrap(newBase, langCode)
+        super.attachBaseContext(localizedContext)
     }
 
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {

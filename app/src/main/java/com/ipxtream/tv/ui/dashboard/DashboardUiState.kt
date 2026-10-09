@@ -93,6 +93,8 @@ data class DashboardUiState(
     val accounts:            List<com.ipxtream.tv.data.model.AuthCredentials> = emptyList(),
     val defaultAccount:      com.ipxtream.tv.data.model.AuthCredentials? = null,
     val activeAccount:       com.ipxtream.tv.data.model.AuthCredentials? = null,
+    // ─── App Settings ───
+    val settings:            com.ipxtream.tv.data.local.AppSettings = com.ipxtream.tv.data.local.AppSettings(),
 
     // ─── Pagination ───
     val currentPage:         Int = 0

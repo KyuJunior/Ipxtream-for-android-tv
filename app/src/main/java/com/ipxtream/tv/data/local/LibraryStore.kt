@@ -116,4 +116,9 @@ class LibraryStore(
             prefs.edit().putString(KEY_HISTORY, gson.toJson(current)).apply()
         }
     }
+
+    @Synchronized
+    fun clearHistory() {
+        prefs.edit().remove(KEY_HISTORY).apply()
+    }
 }

@@ -48,8 +48,9 @@ class DashboardViewModel(
 
     private val updateManager = com.ipxtream.tv.data.api.UpdateManager(context)
     private val credentialStore = com.ipxtream.tv.data.local.CredentialStore(context)
+    val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore(context)
 
-    private val _uiState = MutableStateFlow(DashboardUiState())
+    private val _uiState = MutableStateFlow(DashboardUiState(settings = appSettingsStore.settings.value))
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     /**
@@ -79,6 +80,11 @@ class DashboardViewModel(
     }
 
     init {
+        viewModelScope.launch {
+            appSettingsStore.settings.collect { newSettings ->
+                _uiState.update { it.copy(settings = newSettings) }
+            }
+        }
         // Load the default section on first creation.
         selectSection(ContentSection.HOME)
         refreshAccountsState()
@@ -887,5 +893,84 @@ class DashboardViewModel(
             isLoadingContent = false,
             error            = error.localizedMessage ?: "Failed to load content."
         ) }
+    }
+
+    // ─── App Settings API ─────────────────────────────────────────────────────
+
+    fun setAppLanguage(language: com.ipxtream.tv.data.local.AppLanguage) {
+        appSettingsStore.setAppLanguage(language)
+    }
+
+    fun setShowWhatsNewSection(show: Boolean) {
+        appSettingsStore.setShowWhatsNewSection(show)
+    }
+
+    fun setShowDownloadsSection(show: Boolean) {
+        appSettingsStore.setShowDownloadsSection(show)
+    }
+
+    fun setShowLibrarySection(show: Boolean) {
+        appSettingsStore.setShowLibrarySection(show)
+    }
+
+    fun setShowSpotlightBackdrop(show: Boolean) {
+        appSettingsStore.setShowSpotlightBackdrop(show)
+    }
+
+    fun setShowChannelNumbers(show: Boolean) {
+        appSettingsStore.setShowChannelNumbers(show)
+    }
+
+    fun setIs24HourClockFormat(is24: Boolean) {
+        appSettingsStore.setIs24HourClockFormat(is24)
+    }
+
+    fun setBufferProfile(profile: com.ipxtream.tv.data.local.BufferProfile) {
+        appSettingsStore.setBufferProfile(profile)
+    }
+
+    fun setAutoPlayNextEpisode(autoPlay: Boolean) {
+        appSettingsStore.setAutoPlayNextEpisode(autoPlay)
+    }
+
+    fun setDefaultAspectRatio(mode: com.ipxtream.tv.data.local.AspectRatioMode) {
+        appSettingsStore.setDefaultAspectRatio(mode)
+    }
+
+    fun setDecoderMode(mode: com.ipxtream.tv.data.local.DecoderMode) {
+        appSettingsStore.setDecoderMode(mode)
+    }
+
+    fun setKeepScreenAwake(keepAwake: Boolean) {
+        appSettingsStore.setKeepScreenAwake(keepAwake)
+    }
+
+    fun setPreferredAudioLanguage(langCode: String) {
+        appSettingsStore.setPreferredAudioLanguage(langCode)
+    }
+
+    fun setDefaultSubtitlesEnabled(enabled: Boolean) {
+        appSettingsStore.setDefaultSubtitlesEnabled(enabled)
+    }
+
+    fun setPreferredSubtitleLanguage(langCode: String) {
+        appSettingsStore.setPreferredSubtitleLanguage(langCode)
+    }
+
+    fun setSubtitleTextSize(size: com.ipxtream.tv.data.local.SubtitleTextSize) {
+        appSettingsStore.setSubtitleTextSize(size)
+    }
+
+    fun setAutoRefreshCacheOnStartup(enabled: Boolean) {
+        appSettingsStore.setAutoRefreshCacheOnStartup(enabled)
+    }
+
+    fun clearImageCache(): Long {
+        return appSettingsStore.clearImageCache()
+    }
+
+    fun clearWatchHistory() {
+        libraryStore.clearHistory()
+        _uiState.update { it.copy(historyList = emptyList()) }
     }
 }

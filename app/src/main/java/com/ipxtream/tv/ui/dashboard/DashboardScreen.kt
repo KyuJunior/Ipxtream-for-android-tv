@@ -58,6 +58,11 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
+import com.ipxtream.tv.data.local.AppLanguage
+import com.ipxtream.tv.data.local.AspectRatioMode
+import com.ipxtream.tv.data.local.BufferProfile
+import com.ipxtream.tv.data.local.DecoderMode
+import com.ipxtream.tv.data.local.SubtitleTextSize
 import com.ipxtream.tv.data.download.DownloadItem
 import com.ipxtream.tv.data.model.Category
 import com.ipxtream.tv.data.model.EpisodeItem
@@ -180,7 +185,26 @@ fun DashboardScreen(
     onVodDownload:      (StreamItem) -> Unit = {},
     onEpisodeDownload:  (EpisodeItem) -> Unit = {},
     onCacheAll:         () -> Unit = {},
-    onLogout:           () -> Unit = {}
+    onLogout:           () -> Unit = {},
+    onAppLanguageChange: (AppLanguage) -> Unit = {},
+    onToggleShowWhatsNew: (Boolean) -> Unit = {},
+    onToggleShowDownloads: (Boolean) -> Unit = {},
+    onToggleShowLibrary: (Boolean) -> Unit = {},
+    onToggleShowSpotlight: (Boolean) -> Unit = {},
+    onToggleShowChannelNumbers: (Boolean) -> Unit = {},
+    onToggle24HourClock: (Boolean) -> Unit = {},
+    onBufferProfileChange: (BufferProfile) -> Unit = {},
+    onToggleAutoPlayNextEpisode: (Boolean) -> Unit = {},
+    onAspectRatioChange: (AspectRatioMode) -> Unit = {},
+    onDecoderModeChange: (DecoderMode) -> Unit = {},
+    onToggleKeepScreenAwake: (Boolean) -> Unit = {},
+    onPreferredAudioLanguageChange: (String) -> Unit = {},
+    onToggleDefaultSubtitles: (Boolean) -> Unit = {},
+    onPreferredSubtitleLanguageChange: (String) -> Unit = {},
+    onSubtitleTextSizeChange: (SubtitleTextSize) -> Unit = {},
+    onToggleAutoRefreshCache: (Boolean) -> Unit = {},
+    onClearImageCache: () -> Unit = {},
+    onClearWatchHistory: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -303,11 +327,13 @@ fun DashboardScreen(
                 .fillMaxHeight()
         ) {
             // ─── Phase 10: Dynamic Spotlight Behind Content ───────────────
-            DynamicSpotlight(
-                streamItem = focusedStreamItem,
-                seriesItem = focusedSeriesItem,
-                modifier   = Modifier.fillMaxWidth().fillMaxHeight(0.7f).align(Alignment.TopCenter)
-            )
+            if (uiState.settings.showSpotlightBackdrop) {
+                DynamicSpotlight(
+                    streamItem = focusedStreamItem,
+                    seriesItem = focusedSeriesItem,
+                    modifier   = Modifier.fillMaxWidth().fillMaxHeight(0.7f).align(Alignment.TopCenter)
+                )
+            }
 
             val isHomeSection = uiState.activeSection == ContentSection.HOME
             val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY
@@ -490,7 +516,8 @@ fun DashboardScreen(
                                         HomeHighlightsRow(
                                             title = "Live TV Highlights",
                                             items = uiState.homeLiveHighlights,
-                                            onStreamSelected = onStreamSelected
+                                            onStreamSelected = onStreamSelected,
+                                            showChannelNumber = uiState.settings.showChannelNumbers
                                         )
                                     }
                                 }
@@ -543,6 +570,25 @@ fun DashboardScreen(
                             onSetDefaultAccount = onSetDefaultAccount,
                             onRemoveAccount = onRemoveAccount,
                             onAddAccount = onAddAccount,
+                            onAppLanguageChange = onAppLanguageChange,
+                            onToggleShowWhatsNew = onToggleShowWhatsNew,
+                            onToggleShowDownloads = onToggleShowDownloads,
+                            onToggleShowLibrary = onToggleShowLibrary,
+                            onToggleShowSpotlight = onToggleShowSpotlight,
+                            onToggleShowChannelNumbers = onToggleShowChannelNumbers,
+                            onToggle24HourClock = onToggle24HourClock,
+                            onBufferProfileChange = onBufferProfileChange,
+                            onToggleAutoPlayNextEpisode = onToggleAutoPlayNextEpisode,
+                            onAspectRatioChange = onAspectRatioChange,
+                            onDecoderModeChange = onDecoderModeChange,
+                            onToggleKeepScreenAwake = onToggleKeepScreenAwake,
+                            onPreferredAudioLanguageChange = onPreferredAudioLanguageChange,
+                            onToggleDefaultSubtitles = onToggleDefaultSubtitles,
+                            onPreferredSubtitleLanguageChange = onPreferredSubtitleLanguageChange,
+                            onSubtitleTextSizeChange = onSubtitleTextSizeChange,
+                            onToggleAutoRefreshCache = onToggleAutoRefreshCache,
+                            onClearImageCache = onClearImageCache,
+                            onClearWatchHistory = onClearWatchHistory,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -626,7 +672,8 @@ fun DashboardScreen(
                                         totalPages                = uiState.totalPages,
                                         onPrevPage                = onPrevPage,
                                         onNextPage                = onNextPage,
-                                        watchProgress             = { uiState.getWatchProgress(it) }
+                                        watchProgress             = { uiState.getWatchProgress(it) },
+                                        showChannelNumbers        = uiState.settings.showChannelNumbers
                                     )
                             }
                         }
@@ -706,6 +753,7 @@ fun DashboardScreen(
             onRefresh             = onRefresh,
             sideNavFocusRequester = sideNavFocusRequester,
             onFocusChanged        = { isSideNavFocused = it },
+            settings              = uiState.settings,
             modifier              = Modifier
                 .align(Alignment.CenterStart)
                 .focusProperties { canFocus = !isOverlayOpen }
@@ -884,7 +932,8 @@ private fun StreamGrid(
     totalPages:                Int,
     onPrevPage:                () -> Unit,
     onNextPage:                () -> Unit,
-    watchProgress:             (String) -> Float? = { null }
+    watchProgress:             (String) -> Float? = { null },
+    showChannelNumbers:        Boolean = true
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -916,7 +965,12 @@ private fun StreamGrid(
                     }
 
                 if (section == ContentSection.LIVE) {
-                    LiveChannelCard(stream = stream, onClick = { onStreamSelected(stream) }, modifier = mod)
+                    LiveChannelCard(
+                        stream = stream,
+                        onClick = { onStreamSelected(stream) },
+                        modifier = mod,
+                        showChannelNumber = showChannelNumbers
+                    )
                 } else {
                     VodPosterCard(
                         stream = stream,
