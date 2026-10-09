@@ -120,11 +120,11 @@ fun TrackSelectionMenu(
             // Panel itself
             Column(
                 modifier = Modifier
-                    .widthIn(min = 200.dp, max = 280.dp)
+                    .widthIn(min = 320.dp, max = 420.dp)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
                     .background(SlateNav)
-                    .padding(vertical = 16.dp)
+                    .padding(vertical = 24.dp)
             ) {
                 // Header
                 Text(
@@ -132,7 +132,7 @@ fun TrackSelectionMenu(
                     style    = IpxTypography.TitleMedium,
                     color    = AccentCyan,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
                 )
 
                 // Divider
@@ -140,15 +140,16 @@ fun TrackSelectionMenu(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(1.dp)
-                        .padding(horizontal = 12.dp)
+                        .padding(horizontal = 16.dp)
                         .background(BorderSubtle)
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
 
                 // Track list
                 LazyColumn(
                     state   = listState,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     if (!isAudioMenu) {
                         // "(None)" — disable subtitles option (subtitle menu only)
@@ -166,6 +167,32 @@ fun TrackSelectionMenu(
                     }
 
                     val tracks = if (isAudioMenu) audioTracks else subtitleTracks
+                    if (isAudioMenu && tracks.isEmpty()) {
+                        item(key = "audio_default") {
+                            TrackMenuItem(
+                                label       = "Default Audio",
+                                sublabel    = "Original stereo/surround stream",
+                                isSelected  = true,
+                                isSupported = true,
+                                isFocusTarget = true,
+                                focusRequester = firstFocuser,
+                                onClick     = onDismiss
+                            )
+                        }
+                    } else if (!isAudioMenu && tracks.isEmpty()) {
+                        item(key = "sub_empty") {
+                            TrackMenuItem(
+                                label       = "No Subtitles",
+                                sublabel    = "No subtitle streams detected",
+                                isSelected  = false,
+                                isSupported = false,
+                                isFocusTarget = false,
+                                focusRequester = null,
+                                onClick     = onDismiss
+                            )
+                        }
+                    }
+
                     items(tracks, key = { "${it.groupIndex}_${it.trackIndex}" }) { track ->
                         val isFirstAudioItem = isAudioMenu &&
                             track == tracks.firstOrNull()
@@ -227,7 +254,14 @@ private fun TrackMenuItem(
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused },
         colors   = ClickableSurfaceDefaults.colors(containerColor = bgColor),
-        shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(6.dp))
+        shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(8.dp)),
+        scale    = ClickableSurfaceDefaults.scale(focusedScale = 1.02f),
+        border   = ClickableSurfaceDefaults.border(
+            focusedBorder = androidx.tv.material3.Border(
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
+                shape  = RoundedCornerShape(8.dp)
+            )
+        )
     ) {
         Row(
             modifier          = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),

@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -160,7 +161,8 @@ fun LiveChannelCard(
 fun VodPosterCard(
     stream:  StreamItem,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    watchProgress: Float? = null
 ) {
     Card(
         onClick  = onClick,
@@ -191,6 +193,24 @@ fun VodPosterCard(
                         .align(Alignment.TopEnd)
                 )
             }
+
+            // Watch Progress Bar (Netflix/IPX Red)
+            if (watchProgress != null && watchProgress in 0.02f..0.98f) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(Color.Black.copy(alpha = 0.65f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(watchProgress)
+                            .background(Color(0xFFE50914))
+                    )
+                }
+            }
         }
     }
 }
@@ -210,7 +230,8 @@ fun VodPosterCard(
 fun SeriesPosterCard(
     series:  SeriesItem,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    watchProgress: Float? = null
 ) {
     Card(
         onClick  = onClick,
@@ -239,6 +260,24 @@ fun SeriesPosterCard(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                 )
+            }
+
+            // Watch Progress Bar (Netflix/IPX Red)
+            if (watchProgress != null && watchProgress in 0.02f..0.98f) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(4.dp)
+                        .background(Color.Black.copy(alpha = 0.65f))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(watchProgress)
+                            .background(Color(0xFFE50914))
+                    )
+                }
             }
         }
     }

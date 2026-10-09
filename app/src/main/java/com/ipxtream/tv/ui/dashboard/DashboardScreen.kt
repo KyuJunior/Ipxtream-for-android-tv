@@ -237,6 +237,29 @@ fun DashboardScreen(
         }
     }
 
+    val liveChannelList = remember(uiState.displayedStreams, uiState.streams) {
+        if (uiState.displayedStreams.isNotEmpty()) uiState.displayedStreams else uiState.streams
+    }
+    val currentLiveIndex = remember(playerUiState.activeStream, uiState.selectedStream, liveChannelList) {
+        val activeId = playerUiState.activeStream?.streamId ?: uiState.selectedStream?.streamId
+        if (activeId != null) {
+            liveChannelList.indexOfFirst { it.streamId == activeId }
+        } else -1
+    }
+    val nextChannelAction: (() -> Unit)? = if (playerUiState.isLive && liveChannelList.isNotEmpty()) {
+        {
+            val nextIdx = if (currentLiveIndex >= 0) (currentLiveIndex + 1) % liveChannelList.size else 0
+            onStreamSelected(liveChannelList[nextIdx])
+        }
+    } else null
+
+    val prevChannelAction: (() -> Unit)? = if (playerUiState.isLive && liveChannelList.isNotEmpty()) {
+        {
+            val prevIdx = if (currentLiveIndex > 0) currentLiveIndex - 1 else liveChannelList.size - 1
+            onStreamSelected(liveChannelList[prevIdx])
+        }
+    } else null
+
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep)) {
         val showSplitPlayer = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
 
@@ -360,7 +383,8 @@ fun DashboardScreen(
                                 onSeriesSelected = onSeriesSelected,
                                 firstCardFocusRequester = searchFirstCardFocusRequester,
                                 searchBarFocusRequester = searchBarFocusRequester,
-                                sideNavFocusRequester = sideNavFocusRequester
+                                sideNavFocusRequester = sideNavFocusRequester,
+                                watchProgress = { uiState.getWatchProgress(it) }
                             )
                         } else {
                             // Normal Home Layout
@@ -438,7 +462,8 @@ fun DashboardScreen(
                                         HomeMoviesRow(
                                             title = "Hot Movies",
                                             items = uiState.homeHotMovies,
-                                            onStreamSelected = onStreamSelected
+                                            onStreamSelected = onStreamSelected,
+                                            watchProgress = { uiState.getWatchProgress(it) }
                                         )
                                     }
                                 }
@@ -448,7 +473,8 @@ fun DashboardScreen(
                                         HomeSeriesRow(
                                             title = "Popular TV Series",
                                             items = uiState.homePopularSeries,
-                                            onSeriesSelected = onSeriesSelected
+                                            onSeriesSelected = onSeriesSelected,
+                                            watchProgress = { uiState.getWatchProgress(it) }
                                         )
                                     }
                                 }
@@ -538,7 +564,8 @@ fun DashboardScreen(
                                         currentPage             = uiState.currentPage,
                                         totalPages              = uiState.totalPages,
                                         onPrevPage              = onPrevPage,
-                                        onNextPage              = onNextPage
+                                        onNextPage              = onNextPage,
+                                        watchProgress           = { uiState.getWatchProgress(it) }
                                     )
                                 else ->
                                     StreamGrid(
@@ -552,7 +579,8 @@ fun DashboardScreen(
                                         currentPage             = uiState.currentPage,
                                         totalPages              = uiState.totalPages,
                                         onPrevPage              = onPrevPage,
-                                        onNextPage              = onNextPage
+                                        onNextPage              = onNextPage,
+                                        watchProgress           = { uiState.getWatchProgress(it) }
                                     )
                             }
                         }
@@ -597,11 +625,13 @@ fun DashboardScreen(
                         .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
                 ) {
                     PlayerPanel(
-                        exoPlayer = exoPlayer,
-                        uiState   = playerUiState,
-                        viewModel = playerViewModel,
-                        onStop    = onPlayerStop,
-                        modifier  = Modifier.fillMaxSize()
+                        exoPlayer     = exoPlayer,
+                        uiState       = playerUiState,
+                        viewModel     = playerViewModel,
+                        onStop        = onPlayerStop,
+                        onNextChannel = nextChannelAction,
+                        onPrevChannel = prevChannelAction,
+                        modifier      = Modifier.fillMaxSize()
                     )
                 }
             }
@@ -688,6 +718,8 @@ fun DashboardScreen(
                         onNextEpisode   = nextEpAction,
                         onPrevEpisode   = prevEpAction,
                         onEpisodesClick = episodesClickAction,
+                        onNextChannel   = nextChannelAction,
+                        onPrevChannel   = prevChannelAction,
                         modifier        = Modifier.fillMaxSize()
                     )
                 }
@@ -788,7 +820,8 @@ private fun StreamGrid(
     currentPage:            Int,
     totalPages:             Int,
     onPrevPage:             () -> Unit,
-    onNextPage:             () -> Unit
+    onNextPage:             () -> Unit,
+    watchProgress:          (String) -> Float? = { null }
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -811,7 +844,12 @@ private fun StreamGrid(
                 if (section == ContentSection.LIVE) {
                     LiveChannelCard(stream = stream, onClick = { onStreamSelected(stream) }, modifier = mod)
                 } else {
-                    VodPosterCard(stream = stream, onClick = { onStreamSelected(stream) }, modifier = mod)
+                    VodPosterCard(
+                        stream = stream,
+                        onClick = { onStreamSelected(stream) },
+                        modifier = mod,
+                        watchProgress = watchProgress(stream.streamId.toString())
+                    )
                 }
             }
         }
@@ -838,7 +876,8 @@ private fun SeriesGrid(
     currentPage:            Int,
     totalPages:             Int,
     onPrevPage:             () -> Unit,
-    onNextPage:             () -> Unit
+    onNextPage:             () -> Unit,
+    watchProgress:          (String) -> Float? = { null }
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         LazyVerticalGrid(
@@ -858,7 +897,12 @@ private fun SeriesGrid(
                     }
                     .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     
-                SeriesPosterCard(series = series, onClick = { onSeriesSelected(series) }, modifier = mod)
+                SeriesPosterCard(
+                    series = series,
+                    onClick = { onSeriesSelected(series) },
+                    modifier = mod,
+                    watchProgress = watchProgress(series.seriesId.toString())
+                )
             }
         }
 
@@ -1085,7 +1129,8 @@ private fun LibraryCard(
                     added = null, num = null, rating = item.rating, rating5based = null, containerExtension = item.containerExtension, epgChannelId = null, tvArchive = null, tvArchiveDuration = null, directSource = null, customSid = null
                 )
             }
-            VodPosterCard(stream = stream, onClick = { onStreamSelected(stream) })
+            val progress = if (item.durationMs > 0L) (item.lastWatchedPositionMs.toFloat() / item.durationMs).coerceIn(0f, 1f) else null
+            VodPosterCard(stream = stream, onClick = { onStreamSelected(stream) }, watchProgress = progress)
         }
         "series" -> {
             val series = remember(item) {
@@ -1096,7 +1141,8 @@ private fun LibraryCard(
                     plot = null, cast = null, director = null, genre = null, releaseDate = null, lastModified = null, rating = item.rating, rating5based = null, backdropPath = null, youtubeTrailer = null, episodeRunTime = null, categoryId = item.categoryId
                 )
             }
-            SeriesPosterCard(series = series, onClick = { onSeriesSelected(series) })
+            val progress = if (item.durationMs > 0L) (item.lastWatchedPositionMs.toFloat() / item.durationMs).coerceIn(0f, 1f) else null
+            SeriesPosterCard(series = series, onClick = { onSeriesSelected(series) }, watchProgress = progress)
         }
         "episode" -> {
             val seriesTitle = if (rawName.contains(" - ")) rawName.substringBefore(" - ") else rawName

@@ -67,6 +67,16 @@ class DashboardViewModel(
     // Active load jobs — cancelled when the section/category changes.
     private var categoryJob: Job? = null
     private var contentJob:  Job? = null
+    private var revalidationJob: Job? = null
+
+    // Cache revalidation tracking (Phase 5)
+    private val sectionLastFetchTime = java.util.concurrent.ConcurrentHashMap<ContentSection, Long>()
+    private val CACHE_REVALIDATION_TTL_MS = 12 * 60 * 60 * 1000L // 12 hours
+
+    fun shouldRevalidateCache(section: ContentSection): Boolean {
+        val lastTime = sectionLastFetchTime[section] ?: return true
+        return (System.currentTimeMillis() - lastTime) > CACHE_REVALIDATION_TTL_MS
+    }
 
     init {
         // Load the default section on first creation.
@@ -129,7 +139,13 @@ class DashboardViewModel(
     fun selectCategory(categoryId: String?) {
         if (_uiState.value.selectedCategoryId == categoryId) return
 
-        _uiState.update { it.copy(selectedCategoryId = categoryId, searchQuery = "", currentPage = 0) }
+        _uiState.update { it.copy(
+            selectedCategoryId = categoryId,
+            searchQuery = "",
+            currentPage = 0,
+            streams = emptyList(),
+            seriesList = emptyList()
+        ) }
         loadContent(
             section    = _uiState.value.activeSection,
             categoryId = categoryId
@@ -718,10 +734,14 @@ class DashboardViewModel(
     //  Private loading logic
     // =========================================================================
 
-    /** Full section load: categories first, then all content (no category filter). */
+    /** Full section load: fast cache-first load, then silent background revalidation if stale. */
     private fun loadSectionData(section: ContentSection, forceRefresh: Boolean = false) {
-        loadCategories(section, forceRefresh)
-        loadContent(section, categoryId = null, forceRefresh = forceRefresh)
+        val needsReval = forceRefresh || shouldRevalidateCache(section)
+        loadCategories(section, forceRefresh = false)
+        loadContent(section, categoryId = null, forceRefresh = false)
+        if (needsReval) {
+            triggerBackgroundRevalidation(section)
+        }
     }
 
     private fun loadCategories(section: ContentSection, forceRefresh: Boolean = false) {
@@ -763,10 +783,9 @@ class DashboardViewModel(
     private fun loadContent(section: ContentSection, categoryId: String?, forceRefresh: Boolean = false) {
         contentJob?.cancel()
         contentJob = viewModelScope.launch {
+            val hasExistingItems = _uiState.value.streams.isNotEmpty() || _uiState.value.seriesList.isNotEmpty()
             _uiState.update { it.copy(
-                isLoadingContent = true,
-                streams          = emptyList(),
-                seriesList       = emptyList(),
+                isLoadingContent = !hasExistingItems,
                 error            = null
             ) }
 
@@ -779,6 +798,7 @@ class DashboardViewModel(
                                 isLoadingContent = false,
                                 isFromCache      = false
                             ) }
+                            if (!forceRefresh) sectionLastFetchTime[section] = System.currentTimeMillis()
                         }
                         .onFailure(::handleContentError)
                 }
@@ -790,6 +810,7 @@ class DashboardViewModel(
                                 isLoadingContent = false,
                                 isFromCache      = false
                             ) }
+                            if (!forceRefresh) sectionLastFetchTime[section] = System.currentTimeMillis()
                         }
                         .onFailure(::handleContentError)
                 }
@@ -801,6 +822,7 @@ class DashboardViewModel(
                                 isLoadingContent = false,
                                 isFromCache      = false
                             ) }
+                            if (!forceRefresh) sectionLastFetchTime[section] = System.currentTimeMillis()
                         }
                         .onFailure(::handleContentError)
                 }
@@ -809,6 +831,53 @@ class DashboardViewModel(
                 ContentSection.DOWNLOADS -> { /* no-op */ }
                 ContentSection.HOME -> { /* no-op */ }
                 ContentSection.WHATS_NEW -> { /* no-op */ }
+            }
+        }
+    }
+
+    private fun triggerBackgroundRevalidation(section: ContentSection) {
+        revalidationJob?.cancel()
+        revalidationJob = viewModelScope.launch {
+            try {
+                android.util.Log.d("DashboardViewModel", "Silent background cache revalidation for $section")
+                when (section) {
+                    ContentSection.LIVE -> {
+                        val cats = repository.getLiveCategories(forceRefresh = true).getOrNull()
+                        val streams = repository.getLiveStreams(categoryId = null, forceRefresh = true).getOrNull()
+                        if (streams != null && _uiState.value.activeSection == ContentSection.LIVE) {
+                            _uiState.update { it.copy(
+                                categories = cats ?: it.categories,
+                                streams    = streams
+                            ) }
+                            sectionLastFetchTime[section] = System.currentTimeMillis()
+                        }
+                    }
+                    ContentSection.VOD -> {
+                        val cats = repository.getVodCategories(forceRefresh = true).getOrNull()
+                        val streams = repository.getVodStreams(categoryId = null, forceRefresh = true).getOrNull()
+                        if (streams != null && _uiState.value.activeSection == ContentSection.VOD) {
+                            _uiState.update { it.copy(
+                                categories = cats ?: it.categories,
+                                streams    = streams
+                            ) }
+                            sectionLastFetchTime[section] = System.currentTimeMillis()
+                        }
+                    }
+                    ContentSection.SERIES -> {
+                        val cats = repository.getSeriesCategories(forceRefresh = true).getOrNull()
+                        val series = repository.getSeries(categoryId = null, forceRefresh = true).getOrNull()
+                        if (series != null && _uiState.value.activeSection == ContentSection.SERIES) {
+                            _uiState.update { it.copy(
+                                categories = cats ?: it.categories,
+                                seriesList = series
+                            ) }
+                            sectionLastFetchTime[section] = System.currentTimeMillis()
+                        }
+                    }
+                    else -> Unit
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("DashboardViewModel", "Silent revalidation failed for $section: ${e.message}")
             }
         }
     }

@@ -54,7 +54,8 @@ fun HomeSearchResultsView(
     firstCardFocusRequester: FocusRequester,
     searchBarFocusRequester: FocusRequester,
     sideNavFocusRequester: FocusRequester,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    watchProgress: (String) -> Float? = { null }
 ) {
     if (isSearching) {
         Box(
@@ -144,6 +145,7 @@ fun HomeSearchResultsView(
                             VodPosterCard(
                                 stream = movie,
                                 onClick = { onStreamSelected(movie) },
+                                watchProgress = watchProgress(movie.streamId.toString()),
                                 modifier = Modifier
                                     .focusProperties {
                                         up = searchBarFocusRequester
@@ -182,6 +184,7 @@ fun HomeSearchResultsView(
                             SeriesPosterCard(
                                 series = show,
                                 onClick = { onSeriesSelected(show) },
+                                watchProgress = watchProgress(show.seriesId.toString()),
                                 modifier = Modifier
                                     .focusProperties {
                                         if (movies.isEmpty()) {

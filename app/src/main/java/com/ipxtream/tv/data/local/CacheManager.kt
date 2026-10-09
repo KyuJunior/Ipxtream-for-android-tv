@@ -127,6 +127,20 @@ class CacheManager(private val cacheDir: File) {
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
+    /**
+     * Returns true if cache entry exists and is older than [maxAgeMs], or does not exist.
+     */
+    fun isStale(cacheKey: String, maxAgeMs: Long = DEFAULT_MAX_AGE_MS): Boolean {
+        val file = fileFor(cacheKey)
+        if (!file.exists()) return true
+        return try {
+            val entry = gson.fromJson(file.readText(), CacheEntry::class.java)
+            (System.currentTimeMillis() - entry.timestamp) > maxAgeMs
+        } catch (e: Exception) {
+            true
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Constants
     // -------------------------------------------------------------------------
@@ -134,14 +148,14 @@ class CacheManager(private val cacheDir: File) {
     companion object {
         private const val TAG = "CacheManager"
 
-        /** Default max cache age: 6 hours in milliseconds. */
-        const val DEFAULT_MAX_AGE_MS: Long = 6 * 60 * 60 * 1000L
+        /** Default max cache age: 12 hours in milliseconds. */
+        const val DEFAULT_MAX_AGE_MS: Long = 12 * 60 * 60 * 1000L
 
-        /** Short cache window for data that changes frequently (e.g. live channels). */
-        const val LIVE_MAX_AGE_MS: Long = 30 * 60 * 1000L   // 30 minutes
+        /** Short cache window for data that changes frequently (e.g. live channels: 2 hours). */
+        const val LIVE_MAX_AGE_MS: Long = 2 * 60 * 60 * 1000L
 
-        /** Longer cache window for slow-changing data (series catalogue). */
-        const val SERIES_MAX_AGE_MS: Long = 24 * 60 * 60 * 1000L // 24 hours
+        /** Longer cache window for slow-changing data (series catalogue: 24 hours). */
+        const val SERIES_MAX_AGE_MS: Long = 24 * 60 * 60 * 1000L
     }
 }
 

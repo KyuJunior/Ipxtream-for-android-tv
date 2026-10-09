@@ -624,7 +624,8 @@ fun HomeMoviesRow(
     title: String,
     items: List<com.ipxtream.tv.data.model.StreamItem>,
     onStreamSelected: (com.ipxtream.tv.data.model.StreamItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    watchProgress: (String) -> Float? = { null }
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
         Text(
@@ -639,7 +640,11 @@ fun HomeMoviesRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hm_${item.streamId}_$index" }, contentType = { _, _ -> "vod_movie" }) { _, item ->
-                VodPosterCard(stream = item, onClick = { onStreamSelected(item) })
+                VodPosterCard(
+                    stream = item,
+                    onClick = { onStreamSelected(item) },
+                    watchProgress = watchProgress(item.streamId.toString())
+                )
             }
         }
     }
@@ -650,7 +655,8 @@ fun HomeSeriesRow(
     title: String,
     items: List<com.ipxtream.tv.data.model.SeriesItem>,
     onSeriesSelected: (com.ipxtream.tv.data.model.SeriesItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    watchProgress: (String) -> Float? = { null }
 ) {
     Column(modifier = modifier.padding(vertical = 12.dp)) {
         Text(
@@ -665,7 +671,11 @@ fun HomeSeriesRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hs_${item.seriesId}_$index" }, contentType = { _, _ -> "tv_series" }) { _, item ->
-                SeriesPosterCard(series = item, onClick = { onSeriesSelected(item) })
+                SeriesPosterCard(
+                    series = item,
+                    onClick = { onSeriesSelected(item) },
+                    watchProgress = watchProgress(item.seriesId.toString())
+                )
             }
         }
     }

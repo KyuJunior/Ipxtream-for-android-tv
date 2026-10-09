@@ -176,4 +176,12 @@ data class DashboardUiState(
 
     /** True when the player panel should be shown alongside the content grid. */
     val hasActivePlayback: Boolean get() = selectedStream != null || selectedEpisode != null
+
+    /** Watch progress fraction (0.0f..1.0f) for a movie or series, if in history. */
+    fun getWatchProgress(id: String): Float? {
+        val item = historyList.firstOrNull { it.id == id || it.parentId == id } ?: return null
+        return if (item.durationMs > 0L) {
+            (item.lastWatchedPositionMs.toFloat() / item.durationMs).coerceIn(0f, 1f)
+        } else null
+    }
 }

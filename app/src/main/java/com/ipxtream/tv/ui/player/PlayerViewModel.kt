@@ -16,6 +16,7 @@ import androidx.media3.common.VideoSize
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.upstream.DefaultAllocator
 import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesItem
@@ -62,12 +63,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     private val loadControl = DefaultLoadControl.Builder()
+        .setAllocator(DefaultAllocator(/* trimOnReset = */ true, C.DEFAULT_BUFFER_SEGMENT_SIZE))
         .setBufferDurationsMs(
             /* minBufferMs = */ 15_000,
             /* maxBufferMs = */ 50_000,
-            /* bufferForPlaybackMs = */ 2_500,
-            /* bufferForPlaybackAfterRebufferMs = */ 5_000
+            /* bufferForPlaybackMs = */ 1_500,
+            /* bufferForPlaybackAfterRebufferMs = */ 3_000
         )
+        .setBackBuffer(/* backBufferDurationMs = */ 20_000, /* retainBackBufferFromKeyframe = */ true)
+        .setPrioritizeTimeOverSizeThresholds(true)
         .build()
 
     val exoPlayer: ExoPlayer = ExoPlayer.Builder(application)

@@ -41,10 +41,31 @@ import androidx.media3.ui.PlayerView
 import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.AccentGreen
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateDeep
+import com.ipxtream.tv.ui.theme.SlateGlass
 import com.ipxtream.tv.ui.theme.TextSecondary
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 
 /**
@@ -93,6 +114,8 @@ fun PlayerPanel(
     onNextEpisode:   (() -> Unit)? = null,
     onPrevEpisode:   (() -> Unit)? = null,
     onEpisodesClick: (() -> Unit)? = null,
+    onNextChannel:   (() -> Unit)? = null,
+    onPrevChannel:   (() -> Unit)? = null,
     modifier:        Modifier = Modifier
 ) {
     val context        = LocalContext.current
@@ -169,6 +192,22 @@ fun PlayerPanel(
         }
     }
 
+    // ── Live TV Channel Surfing Banner ─────────────────────────────────────────
+    var showChannelBanner by remember { mutableStateOf(false) }
+    var lastChannelId by remember { mutableStateOf<Int?>(null) }
+
+    androidx.compose.runtime.LaunchedEffect(uiState.activeStream?.streamId) {
+        val currentId = uiState.activeStream?.streamId
+        if (currentId != null && currentId != lastChannelId) {
+            lastChannelId = currentId
+            if (uiState.isLive) {
+                showChannelBanner = true
+                delay(2800L)
+                showChannelBanner = false
+            }
+        }
+    }
+
     // ── Root Box with D-Pad interception ─────────────────────────────────────
     var isRootFocused by remember { mutableStateOf(false) }
 
@@ -188,11 +227,26 @@ fun PlayerPanel(
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
 
+                // Hardware remote Channel Up / Down keys (always handled)
+                val isChanUp = event.key == Key.ChannelUp
+                val isChanDown = event.key == Key.ChannelDown
+
+                if (isChanUp && onNextChannel != null) {
+                    onNextChannel()
+                    showChannelBanner = true
+                    return@onPreviewKeyEvent true
+                }
+                if (isChanDown && onPrevChannel != null) {
+                    onPrevChannel()
+                    showChannelBanner = true
+                    return@onPreviewKeyEvent true
+                }
+
                 when {
                     // Track menu is open — only intercept BACK; menu list handles navigation.
                     uiState.isTrackMenuOpen -> {
                         viewModel.onHudInteraction()
-                        if (event.key == Key.Back) {
+                        if (event.key == Key.Back || event.key == Key.DirectionLeft) {
                             viewModel.dismissTrackMenu()
                             true  // consumed
                         } else false
@@ -282,11 +336,28 @@ fun PlayerPanel(
                                 true
                             }
 
-                            Key.DirectionUp,
+                            Key.DirectionUp -> {
+                                if (uiState.isLive && onPrevChannel != null) {
+                                    onPrevChannel()
+                                    showChannelBanner = true
+                                    true
+                                } else {
+                                    viewModel.onHudInteraction()
+                                    runCatching { playButtonFocus.requestFocus() }
+                                    true
+                                }
+                            }
+
                             Key.DirectionDown -> {
-                                viewModel.onHudInteraction()
-                                runCatching { playButtonFocus.requestFocus() }
-                                true
+                                if (uiState.isLive && onNextChannel != null) {
+                                    onNextChannel()
+                                    showChannelBanner = true
+                                    true
+                                } else {
+                                    viewModel.onHudInteraction()
+                                    runCatching { playButtonFocus.requestFocus() }
+                                    true
+                                }
                             }
 
                             else -> false
@@ -300,6 +371,95 @@ fun PlayerPanel(
             factory  = { playerView },
             modifier = Modifier.fillMaxSize()
         )
+
+        // ── Floating OSD Channel Banner (Live TV Rapid Surfing) ──────────────
+        val isBannerVisible = showChannelBanner && !uiState.isHudVisible && uiState.isLive && uiState.activeStream != null
+        AnimatedVisibility(
+            visible  = isBannerVisible,
+            enter    = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(250)) + fadeIn(tween(250)),
+            exit     = slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(250)) + fadeOut(tween(250)),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(top = 28.dp, start = 28.dp)
+        ) {
+            val stream = uiState.activeStream
+            if (stream != null) {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .background(SlateGlass, RoundedCornerShape(14.dp))
+                        .border(BorderStroke(1.dp, Color(0x3338BDF8)), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // Channel Logo
+                        if (!stream.streamIcon.isNullOrBlank()) {
+                            AsyncImage(
+                                model = stream.streamIcon,
+                                contentDescription = stream.name,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0x22FFFFFF))
+                            )
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (stream.num != null && stream.num > 0) {
+                                    Text(
+                                        text = "CH ${stream.num}",
+                                        color = AccentCyan,
+                                        style = IpxTypography.BodySmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .background(Color(0xFFE50914).copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+                                        .border(BorderStroke(1.dp, Color(0xFFE50914).copy(alpha = 0.7f)), RoundedCornerShape(4.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFFE50914))
+                                        )
+                                        Text(
+                                            text = "LIVE",
+                                            color = Color.White,
+                                            style = IpxTypography.LabelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 9.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = stream.name,
+                                style = IpxTypography.TitleMedium,
+                                color = Color.White,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // ── Connecting / loading indicator ────────────────────────────────────
         AnimatedVisibility(
