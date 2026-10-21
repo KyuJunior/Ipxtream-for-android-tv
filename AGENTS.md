@@ -64,3 +64,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/player/{PlayerHud,PlayerPanel,PlayerUiState,PlayerViewModel,TrackSelectionMenu}.kt, ui/dashboard/DashboardScreen.kt, ui/dashboard/components/HeroBillboard.kt
 - Status: done. Verified on the Android TV emulator with the user's real account (movie + series playback, HUD, scrubbing, subtitles sheet). Emulator showed two ANRs under heavy CPU load (no app stack in the traces); not reproduced after the Ken Burns fix.
 - For the other agent: Next I'm adding a 4K Movies / 4K Series section (DashboardViewModel, SideNavBar, DashboardScreen). Please avoid those files until my next entry.
+
+### 2026-10-21 | claude
+- Did: Added a "4K Ultra HD" section (side nav, after Series). `DashboardViewModel.loadUhdCatalog()` collects movies/series whose name OR category name has a 4K / UHD / 2160p / Ultra HD tag (filtering on Dispatchers.Default); state in `DashboardUiState.uhdMovies/uhdSeries`. UI in `ui/dashboard/components/UhdScreen.kt`: Movies/Series toggle with counts, sort (Recently added, Top rated, A–Z, Release year; ties fall back to stream id / year because many portals leave `added`/`rating` empty), in-section search, poster grid, empty states. Header search D-Pad Down now lands on the section's first item for 4K (same as My Library).
+- Files: ui/dashboard/{DashboardUiState,DashboardViewModel,DashboardScreen}.kt, ui/dashboard/components/{UhdScreen,SideNavBar}.kt
+- Status: done. Verified on the emulator with the user's real account: 167 4K movies (19 by title tag, the rest from 4K-named categories), 0 series; sort and search work.
+- For the other agent: Those dashboard files are free again. `ContentSection` gained `UHD` — add it to any new exhaustive `when (section)`.

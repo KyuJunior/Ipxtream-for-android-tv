@@ -19,6 +19,7 @@ enum class ContentSection(val displayName: String, val iconRes: String) {
     LIVE("Live TV",   "ic_live_tv"),
     VOD("Movies",    "ic_movie"),
     SERIES("Series", "ic_series"),
+    UHD("4K Ultra HD", "ic_4k"),
     MY_LIBRARY("My Library", "ic_library"),
     WHATS_NEW("What's New", "ic_whats_new"),
     SETTINGS("Settings", "ic_settings"),
@@ -81,6 +82,9 @@ data class DashboardUiState(
     // ─── New Home & Cache State ───
     val isCachingAll:        Boolean           = false,
     val whatsNewItems:       List<LibraryItem> = emptyList(),
+    /** Movies and series detected as 4K/UHD (by title tag or category name). */
+    val uhdMovies:           List<StreamItem> = emptyList(),
+    val uhdSeries:           List<SeriesItem> = emptyList(),
     val homeLiveHighlights:  List<StreamItem>  = emptyList(),
     val homeHotMovies:       List<StreamItem>  = emptyList(),
     val homePopularSeries:   List<SeriesItem>  = emptyList(),

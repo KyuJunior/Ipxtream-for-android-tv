@@ -408,7 +408,9 @@ fun DashboardScreen(
             }
 
             val isHomeSection = uiState.activeSection == ContentSection.HOME
-            val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY
+            // Sections without a category row: the header's D-Pad Down goes to their first item.
+            val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY ||
+                uiState.activeSection == ContentSection.UHD
             val isHomeNormal = isHomeSection && uiState.searchQuery.isBlank()
             val hasSearchResults = isHomeSection && uiState.searchQuery.isNotBlank() && !uiState.isSearchingHome &&
                     (uiState.paginatedSearchMovies.isNotEmpty() || uiState.paginatedSearchSeries.isNotEmpty())
@@ -728,6 +730,19 @@ fun DashboardScreen(
                             onCheckForUpdates = onCheckForUpdates,
                             onDownloadUpdate = onDownloadUpdate,
                             onRefresh = onRefresh
+                        )
+                    }
+                    ContentSection.UHD -> {
+                        com.ipxtream.tv.ui.dashboard.components.UhdScreen(
+                            movies                  = uiState.uhdMovies,
+                            series                  = uiState.uhdSeries,
+                            isLoading               = uiState.isLoadingContent,
+                            onStreamSelected        = onStreamSelected,
+                            onSeriesSelected        = onSeriesSelected,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            sideNavFocusRequester   = sideNavFocusRequester,
+                            watchProgress           = { uiState.getWatchProgress(it) },
+                            modifier                = Modifier.fillMaxSize()
                         )
                     }
                     else -> {

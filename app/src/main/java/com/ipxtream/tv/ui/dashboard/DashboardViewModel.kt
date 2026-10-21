@@ -131,6 +131,8 @@ class DashboardViewModel(
             refreshLibraryLists()
         } else if (section == ContentSection.WHATS_NEW) {
             loadWhatsNew()
+        } else if (section == ContentSection.UHD) {
+            loadUhdCatalog()
         } else if (section == ContentSection.SETTINGS || section == ContentSection.DOWNLOADS) {
             // No data loading needed for Settings or Downloads
         } else {
@@ -517,6 +519,32 @@ class DashboardViewModel(
 
     // ─── New Home & Cache Logic ───
 
+    /**
+     * Builds the 4K collection. Xtream portals don't expose resolution in their
+     * catalogs, so a title counts as 4K when its name or its category name carries a
+     * 4K / UHD / 2160p tag. Filtering runs off the main thread (catalogs can be 50k+).
+     */
+    fun loadUhdCatalog() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingContent = true, error = null) }
+
+            val vodCats    = repository.getVodCategories(forceRefresh = false).getOrNull().orEmpty()
+            val seriesCats = repository.getSeriesCategories(forceRefresh = false).getOrNull().orEmpty()
+            val movies     = repository.getVodStreams(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
+            val series     = repository.getSeries(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
+
+            val (uhdMovies, uhdSeries) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                val vodCatIds    = vodCats.filter { UHD_TAG.containsMatchIn(it.categoryName) }.mapTo(HashSet()) { it.categoryId }
+                val seriesCatIds = seriesCats.filter { UHD_TAG.containsMatchIn(it.categoryName) }.mapTo(HashSet()) { it.categoryId }
+                movies.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in vodCatIds } to
+                    series.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in seriesCatIds }
+            }
+            android.util.Log.d("DashboardVM", "4K collection: ${uhdMovies.size} movies, ${uhdSeries.size} series")
+
+            _uiState.update { it.copy(isLoadingContent = false, uhdMovies = uhdMovies, uhdSeries = uhdSeries) }
+        }
+    }
+
     fun loadWhatsNew() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingContent = true, error = null, whatsNewItems = emptyList()) }
@@ -764,6 +792,7 @@ class DashboardViewModel(
                 ContentSection.DOWNLOADS -> return@launch
                 ContentSection.HOME -> return@launch
                 ContentSection.WHATS_NEW -> return@launch
+                ContentSection.UHD -> return@launch
             }
 
             result
@@ -837,6 +866,7 @@ class DashboardViewModel(
                 ContentSection.DOWNLOADS -> { /* no-op */ }
                 ContentSection.HOME -> { /* no-op */ }
                 ContentSection.WHATS_NEW -> { /* no-op */ }
+                ContentSection.UHD -> { /* loaded by loadUhdCatalog() */ }
             }
         }
     }
@@ -974,3 +1004,6 @@ class DashboardViewModel(
         _uiState.update { it.copy(historyList = emptyList()) }
     }
 }
+
+/** "4K", "UHD", "2160p", "Ultra HD" as standalone tags (so "4Kids" doesn't match). */
+private val UHD_TAG = Regex("""(?i)(?<![a-z0-9])(4k|uhd|2160p?|ultra\s*hd)(?![a-z0-9])""")

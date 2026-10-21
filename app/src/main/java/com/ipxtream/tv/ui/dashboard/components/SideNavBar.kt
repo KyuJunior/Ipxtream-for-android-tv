@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowDownward
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.HighQuality
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
@@ -93,6 +94,7 @@ private val NAV_SECTIONS = listOf(
     NavSectionItem(ContentSection.LIVE,       Icons.Rounded.Tv),
     NavSectionItem(ContentSection.VOD,        Icons.Rounded.Movie),
     NavSectionItem(ContentSection.SERIES,     Icons.Rounded.Slideshow),
+    NavSectionItem(ContentSection.UHD,        Icons.Rounded.HighQuality),
     NavSectionItem(ContentSection.MY_LIBRARY, Icons.Rounded.Favorite),
     NavSectionItem(ContentSection.WHATS_NEW,  Icons.Rounded.AutoAwesome),
     NavSectionItem(ContentSection.DOWNLOADS,  Icons.Rounded.ArrowDownward),
