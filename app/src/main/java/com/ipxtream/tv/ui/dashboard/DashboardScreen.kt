@@ -306,9 +306,11 @@ fun DashboardScreen(
     // Billboard data usually lands after the first frame; the list would otherwise keep
     // its anchor on the tiles and leave the billboard scrolled out above the fold.
     LaunchedEffect(hasHero) {
-        if (hasHero && !isSideNavFocused && !isOverlayOpen) {
+        if (hasHero) {
             homeListState.scrollToItem(0)
-            runCatching { firstItemFocusRequester.requestFocus() }
+            if (!isSideNavFocused && !isOverlayOpen) {
+                runCatching { firstItemFocusRequester.requestFocus() }
+            }
         }
     }
 
