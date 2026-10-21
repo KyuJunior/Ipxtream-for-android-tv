@@ -10,3 +10,6 @@
 local.properties
 /app/build
 .kotlin/
+
+# Local secrets shared between agents (never commit)
+SECRETS.local.md
