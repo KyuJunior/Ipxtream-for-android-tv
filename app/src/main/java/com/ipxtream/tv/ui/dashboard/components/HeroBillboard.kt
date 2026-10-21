@@ -37,11 +37,15 @@ import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.VideoLibrary
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -170,18 +174,25 @@ fun buildHeroFeatures(
 fun HeroBackdrop(
     feature:        HeroFeature?,
     scrollProgress: () -> Float,
+    animate:        Boolean = true,
     modifier:       Modifier = Modifier
 ) {
-    val drift = rememberInfiniteTransition(label = "kenBurns")
-    val kenBurns by drift.animateFloat(
-        initialValue  = 1.0f,
-        targetValue   = 1.07f,
-        animationSpec = infiniteRepeatable(tween(18_000, easing = IpxMotion.EaseStandard), RepeatMode.Reverse),
-        label         = "kenBurnsScale"
-    )
+    // The drift only runs while the billboard is actually on screen; under the player or a
+    // dialog it would keep re-rendering a blurred layer every frame for nothing.
+    val kenBurnsState: State<Float> = if (animate) {
+        rememberInfiniteTransition(label = "kenBurns").animateFloat(
+            initialValue  = 1.0f,
+            targetValue   = 1.07f,
+            animationSpec = infiniteRepeatable(tween(18_000, easing = IpxMotion.EaseStandard), RepeatMode.Reverse),
+            label         = "kenBurnsScale"
+        )
+    } else {
+        remember { mutableFloatStateOf(1.035f) }
+    }
 
     Box(
-        modifier = modifier.graphicsLayer {
+        // Clip so the Ken Burns zoom never spills past the scrims.
+        modifier = modifier.clipToBounds().graphicsLayer {
             val p = scrollProgress()
             translationY = -p * size.height * 0.18f
             alpha = 1f - 0.7f * p
@@ -202,14 +213,14 @@ fun HeroBackdrop(
                             alignment          = Alignment.TopCenter,
                             modifier           = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer { scaleX = kenBurns; scaleY = kenBurns }
+                                .graphicsLayer { scaleX = kenBurnsState.value; scaleY = kenBurnsState.value }
                         )
                     } else {
                         AmbientArtwork(
                             url = f.posterUrl,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .graphicsLayer { scaleX = kenBurns; scaleY = kenBurns }
+                                .graphicsLayer { scaleX = kenBurnsState.value; scaleY = kenBurnsState.value }
                         )
                         AsyncImage(
                             model              = f.posterUrl,

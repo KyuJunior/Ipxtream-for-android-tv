@@ -68,6 +68,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.launch
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Forward10
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Replay10
+import androidx.compose.material.icons.rounded.SkipNext
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.draw.drawBehind
+import com.ipxtream.tv.ui.theme.GlassStroke
+import com.ipxtream.tv.ui.theme.Hairline
+import com.ipxtream.tv.ui.theme.IpxMotion
+import com.ipxtream.tv.ui.theme.SurfaceElevated
+import com.ipxtream.tv.ui.dashboard.components.PremiumButton
 
 /**
  * Embedded player composable — the root of the Phase 4 player panel, now
@@ -117,6 +140,7 @@ fun PlayerPanel(
     onEpisodesClick: (() -> Unit)? = null,
     onNextChannel:   (() -> Unit)? = null,
     onPrevChannel:   (() -> Unit)? = null,
+    nextEpisodeLabel: String? = null,
     modifier:        Modifier = Modifier
 ) {
     val context        = LocalContext.current
@@ -144,6 +168,10 @@ fun PlayerPanel(
             com.ipxtream.tv.data.local.AspectRatioMode.ZOOM -> androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
         }
         subtitleView?.setFixedTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, appSettings.subtitleTextSize.sizeSp)
+        // Lift subtitles clear of the controls while the overlay is up.
+        subtitleView?.setBottomPaddingFraction(
+            if (uiState.isHudVisible) 0.30f else androidx.media3.ui.SubtitleView.DEFAULT_BOTTOM_PADDING_FRACTION
+        )
     }
 
     // ── Lifecycle: Pause on background, Resume on foreground ──────────────────
@@ -219,6 +247,31 @@ fun PlayerPanel(
         }
     }
 
+    // ── Centre feedback (play/pause/seek glyph that blooms and fades) ─────────
+    var feedback by remember { mutableStateOf<HudFeedback?>(null) }
+    val togglePlayPause: () -> Unit = {
+        val willPlay = !exoPlayer.isPlaying
+        viewModel.togglePlayPause()
+        feedback = HudFeedback(if (willPlay) Icons.Rounded.PlayArrow else Icons.Rounded.Pause, 0)
+    }
+    val seekBy: (Long) -> Unit = { delta ->
+        if (!uiState.isLive) {
+            viewModel.seekRelative(delta)
+            feedback = HudFeedback(if (delta < 0) Icons.Rounded.Replay10 else Icons.Rounded.Forward10, if (delta < 0) -1 else 1)
+        }
+    }
+
+    // ── End-of-title / error overlays take focus so their buttons work ────────
+    val overlayFocus = remember { FocusRequester() }
+    val isEndOrError = uiState.playbackState == PlaybackState.ENDED || uiState.playbackState == PlaybackState.ERROR
+    androidx.compose.runtime.LaunchedEffect(uiState.playbackState) {
+        if (isEndOrError) {
+            viewModel.hideHud()
+            delay(120)
+            runCatching { overlayFocus.requestFocus() }
+        }
+    }
+
     // ── Root Box with D-Pad interception ─────────────────────────────────────
     var isRootFocused by remember { mutableStateOf(false) }
 
@@ -237,6 +290,13 @@ fun PlayerPanel(
             .focusable()
             .onPreviewKeyEvent { event ->
                 if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+
+                // End/error cards own the D-Pad while they're up; BACK still leaves.
+                if (isEndOrError && !uiState.isHudVisible) {
+                    if (event.key == Key.Back) { onStop(); return@onPreviewKeyEvent true }
+                    if (isRootFocused) runCatching { overlayFocus.requestFocus() }
+                    return@onPreviewKeyEvent false
+                }
 
                 // Hardware remote Channel Up / Down keys (always handled)
                 val isChanUp = event.key == Key.ChannelUp
@@ -286,13 +346,13 @@ fun PlayerPanel(
                             Key.Enter,
                             Key.MediaPlay,
                             Key.MediaPause,
-                            Key.MediaPlayPause  -> { viewModel.togglePlayPause(); true }
+                            Key.MediaPlayPause  -> { togglePlayPause(); true }
 
                             Key.DirectionLeft,
-                            Key.MediaRewind     -> { viewModel.seekRelative(-10_000L); true }
+                            Key.MediaRewind     -> { seekBy(-10_000L); true }
 
                             Key.DirectionRight,
-                            Key.MediaFastForward -> { viewModel.seekRelative(10_000L); true }
+                            Key.MediaFastForward -> { seekBy(10_000L); true }
 
                             Key.Back -> {
                                 viewModel.hideHud()
@@ -313,6 +373,7 @@ fun PlayerPanel(
                             Key.MediaPause -> {
                                 if (exoPlayer.isPlaying) {
                                     viewModel.pause()
+                                    feedback = HudFeedback(Icons.Rounded.Pause, 0)
                                 }
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
@@ -321,6 +382,7 @@ fun PlayerPanel(
 
                             Key.MediaPlay -> {
                                 viewModel.resume()
+                                feedback = HudFeedback(Icons.Rounded.PlayArrow, 0)
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
                                 true
@@ -333,7 +395,7 @@ fun PlayerPanel(
 
                             Key.DirectionLeft,
                             Key.MediaRewind -> {
-                                viewModel.seekRelative(-10_000L)
+                                seekBy(-10_000L)
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
                                 true
@@ -341,7 +403,7 @@ fun PlayerPanel(
 
                             Key.DirectionRight,
                             Key.MediaFastForward -> {
-                                viewModel.seekRelative(10_000L)
+                                seekBy(10_000L)
                                 viewModel.onHudInteraction()
                                 runCatching { playButtonFocus.requestFocus() }
                                 true
@@ -383,123 +445,108 @@ fun PlayerPanel(
             modifier = Modifier.fillMaxSize()
         )
 
-        // ── Floating OSD Channel Banner (Live TV Rapid Surfing) ──────────────
+        // ── Channel banner (live surfing) ─────────────────────────────────────
         val isBannerVisible = showChannelBanner && !uiState.isHudVisible && uiState.isLive && uiState.activeStream != null
         AnimatedVisibility(
             visible  = isBannerVisible,
-            enter    = slideInVertically(initialOffsetY = { -it }, animationSpec = tween(250)) + fadeIn(tween(250)),
-            exit     = slideOutVertically(targetOffsetY = { -it }, animationSpec = tween(250)) + fadeOut(tween(250)),
+            enter    = slideInVertically(tween(450, easing = IpxMotion.EaseApple)) { -it / 2 } + fadeIn(tween(IpxMotion.Standard)),
+            exit     = slideOutVertically(tween(IpxMotion.Standard)) { -it / 2 } + fadeOut(tween(IpxMotion.Fast)),
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(top = 28.dp, start = 28.dp)
+                .padding(top = 36.dp, start = 48.dp)
         ) {
             val stream = uiState.activeStream
             if (stream != null) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .wrapContentSize()
-                        .background(SlateGlass, RoundedCornerShape(14.dp))
-                        .border(BorderStroke(1.dp, Color(0x3338BDF8)), RoundedCornerShape(14.dp))
-                        .padding(horizontal = 18.dp, vertical = 12.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xE61C1C1E))
+                        .border(BorderStroke(1.dp, GlassStroke), RoundedCornerShape(18.dp))
+                        .padding(start = 12.dp, end = 22.dp, top = 12.dp, bottom = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(width = 88.dp, height = 56.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xFF2C2C2E)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        // Channel Logo
                         if (!stream.streamIcon.isNullOrBlank()) {
                             AsyncImage(
                                 model = stream.streamIcon,
                                 contentDescription = stream.name,
                                 contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0x22FFFFFF))
+                                modifier = Modifier.fillMaxSize().padding(8.dp)
                             )
                         }
-
-                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                if (stream.num != null && stream.num > 0) {
-                                    Text(
-                                        text = "CH ${stream.num}",
-                                        color = AccentCyan,
-                                        style = IpxTypography.BodySmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .background(com.ipxtream.tv.ui.theme.AccentRed.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
-                                        .border(BorderStroke(1.dp, com.ipxtream.tv.ui.theme.AccentRed.copy(alpha = 0.7f)), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .clip(CircleShape)
-                                                .background(com.ipxtream.tv.ui.theme.AccentRed)
-                                        )
-                                        Text(
-                                            text = "LIVE",
-                                            color = Color.White,
-                                            style = IpxTypography.LabelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 9.sp
-                                        )
-                                    }
-                                }
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            LivePill()
+                            if (stream.num != null && stream.num > 0) {
+                                Text(
+                                    text = "${stream.num}",
+                                    style = IpxTypography.TitleMedium.copy(fontFeatureSettings = "tnum"),
+                                    color = TextSecondary
+                                )
                             }
-
-                            Text(
-                                text = stream.name,
-                                style = IpxTypography.TitleMedium,
-                                color = Color.White,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
                         }
+                        Text(
+                            text = stream.name,
+                            style = IpxTypography.TitleLarge,
+                            color = Color.White,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.widthIn(max = 520.dp)
+                        )
                     }
                 }
             }
         }
 
-        // ── Connecting / loading indicator ────────────────────────────────────
+        // ── Buffering indicator ───────────────────────────────────────────────
         AnimatedVisibility(
             visible  = uiState.playbackState == PlaybackState.LOADING,
-            enter    = fadeIn(),
-            exit     = fadeOut(),
+            enter    = fadeIn(tween(IpxMotion.Standard, delayMillis = 150)),
+            exit     = fadeOut(tween(IpxMotion.Fast)),
             modifier = Modifier.align(Alignment.Center)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 androidx.compose.material3.CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = AccentCyan,
-                    strokeWidth = 2.dp
+                    modifier    = Modifier.size(52.dp),
+                    color       = Color.White,
+                    trackColor  = Color.White.copy(alpha = 0.14f),
+                    strokeWidth = 3.dp,
+                    strokeCap   = StrokeCap.Round
                 )
-                Text("Connecting…", style = IpxTypography.TitleMedium, color = TextSecondary)
+                if (uiState.bufferedPercent in 1..99) {
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        text  = "${uiState.bufferedPercent}%",
+                        style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"),
+                        color = TextSecondary
+                    )
+                }
             }
         }
 
-        // ── Custom HUD (unified lower-third overlay) ──────────────────────────
+        // ── Play / pause / seek glyph ─────────────────────────────────────────
+        FeedbackFlash(feedback = feedback, modifier = Modifier.fillMaxSize())
+
+        // ── Overlay ───────────────────────────────────────────────────────────
         PlayerHud(
             uiState            = uiState,
-            onTogglePlayPause  = viewModel::togglePlayPause,
-            onSeekBack10       = { viewModel.seekRelative(-10_000L) },
-            onSeekForward10    = { viewModel.seekRelative(10_000L) },
+            onTogglePlayPause  = togglePlayPause,
+            onSeekBack10       = { seekBy(-10_000L) },
+            onSeekForward10    = { seekBy(10_000L) },
+            onSeekTo           = viewModel::seekTo,
             onPrev             = onPrevEpisode ?: { viewModel.seekTo(0L) },
-            onNext             = onNextEpisode ?: { viewModel.seekRelative(10_000L) },
+            onNext             = onNextEpisode ?: { seekBy(10_000L) },
             onReplay           = viewModel::replay,
             onShowAudioMenu    = { viewModel.showTrackMenu(TrackMenuType.AUDIO) },
             onShowSubMenu      = { viewModel.showTrackMenu(TrackMenuType.SUBTITLE) },
@@ -514,7 +561,7 @@ fun PlayerPanel(
             modifier           = Modifier.fillMaxSize()
         )
 
-        // ── Track selection menu (slides over the HUD from right) ─────────────
+        // ── Track selection sheet ─────────────────────────────────────────────
         TrackSelectionMenu(
             menuType            = uiState.activeTrackMenu,
             audioTracks         = uiState.audioTrackOptions,
@@ -527,63 +574,266 @@ fun PlayerPanel(
             modifier            = Modifier.fillMaxSize()
         )
 
-        // ── Error overlay ─────────────────────────────────────────────────────
+        // ── Error card ────────────────────────────────────────────────────────
         AnimatedVisibility(
             visible  = uiState.playbackState == PlaybackState.ERROR,
-            enter    = fadeIn(),
-            exit     = fadeOut(),
-            modifier = Modifier.align(Alignment.Center)
+            enter    = fadeIn(tween(IpxMotion.Standard)),
+            exit     = fadeOut(tween(IpxMotion.Fast)),
+            modifier = Modifier.fillMaxSize()
         ) {
             ErrorOverlay(
-                message = uiState.error ?: "Unknown playback error.",
-                onRetry = { exoPlayer.prepare() },
-                onClose = onStop
+                message      = uiState.error ?: "Unknown playback error.",
+                focusTarget  = overlayFocus,
+                onRetry      = { exoPlayer.prepare(); exoPlayer.play() },
+                onClose      = onStop
             )
         }
 
-        // ── Ended overlay ─────────────────────────────────────────────────────
+        // ── End of title: Up Next (series) or Watch again ─────────────────────
         AnimatedVisibility(
             visible  = uiState.playbackState == PlaybackState.ENDED,
-            enter    = fadeIn(),
-            exit     = fadeOut(),
-            modifier = Modifier.align(Alignment.Center)
+            enter    = fadeIn(tween(IpxMotion.Slow, easing = IpxMotion.EaseOut)),
+            exit     = fadeOut(tween(IpxMotion.Fast)),
+            modifier = Modifier.fillMaxSize()
         ) {
             EndedOverlay(
-                onReplay = { exoPlayer.seekTo(0); exoPlayer.play() },
-                onClose  = onStop
+                title         = uiState.activeSeries?.name ?: uiState.activeStreamName ?: "",
+                nextLabel     = if (onNextEpisode != null) nextEpisodeLabel ?: "Next episode" else null,
+                autoPlay      = appSettings.autoPlayNextEpisode,
+                focusTarget   = overlayFocus,
+                onPlayNext    = { onNextEpisode?.invoke() },
+                onReplay      = { exoPlayer.seekTo(0); exoPlayer.play() },
+                onClose       = onStop
             )
         }
     }
 }
 
 // =============================================================================
-//  Overlays (error / ended)
+//  Centre feedback
 // =============================================================================
 
-@OptIn(ExperimentalTvMaterial3Api::class)
+/** A transport glyph to flash in the centre (side = -1 left, 0 centre, 1 right). */
+internal class HudFeedback(val icon: ImageVector, val side: Int)
+
 @Composable
-private fun ErrorOverlay(message: String, onRetry: () -> Unit, onClose: () -> Unit) {
-    androidx.compose.foundation.layout.Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)
+private fun FeedbackFlash(feedback: HudFeedback?, modifier: Modifier = Modifier) {
+    val alpha = remember { Animatable(0f) }
+    val scale = remember { Animatable(0.8f) }
+    LaunchedEffect(feedback) {
+        if (feedback == null) return@LaunchedEffect
+        launch {
+            scale.snapTo(0.78f)
+            scale.animateTo(1f, IpxMotion.focusSpring())
+        }
+        alpha.snapTo(0f)
+        alpha.animateTo(1f, tween(110, easing = IpxMotion.EaseOut))
+        delay(320)
+        alpha.animateTo(0f, tween(420, easing = IpxMotion.EaseStandard))
+    }
+    if (feedback == null) return
+    Box(
+        modifier = modifier,
+        contentAlignment = when (feedback.side) {
+            -1   -> Alignment.CenterStart
+            1    -> Alignment.CenterEnd
+            else -> Alignment.Center
+        }
     ) {
-        Text(message, style = IpxTypography.BodyMedium, color = TextSecondary)
-        androidx.compose.foundation.layout.Row(
-            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+        Box(
+            modifier = Modifier
+                .padding(horizontal = 200.dp)
+                .graphicsLayer {
+                    this.alpha = alpha.value
+                    scaleX = scale.value
+                    scaleY = scale.value
+                }
+                .size(108.dp)
+                .clip(CircleShape)
+                .background(Color(0x73000000))
+                .border(1.dp, GlassStroke, CircleShape),
+            contentAlignment = Alignment.Center
         ) {
-            Button(onClick = onRetry) { Text("Retry") }
-            Button(onClick = onClose) { Text("Close") }
+            androidx.tv.material3.Icon(
+                imageVector = feedback.icon,
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(52.dp)
+            )
         }
     }
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
+// =============================================================================
+//  Error / ended cards
+// =============================================================================
+
 @Composable
-private fun EndedOverlay(onReplay: () -> Unit, onClose: () -> Unit) {
-    androidx.compose.foundation.layout.Row(
-        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+private fun ErrorOverlay(
+    message:     String,
+    focusTarget: FocusRequester,
+    onRetry:     () -> Unit,
+    onClose:     () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize().background(Color(0xB3000000)),
+        contentAlignment = Alignment.Center
     ) {
-        Button(onClick = onReplay) { Text("Replay") }
-        Button(onClick = onClose)  { Text("Close")  }
+        Column(
+            modifier = Modifier
+                .widthIn(max = 560.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(SurfaceElevated)
+                .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                .padding(horizontal = 40.dp, vertical = 36.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Can't play this right now", style = IpxTypography.HeadlineMedium, color = Color.White)
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = message,
+                style = IpxTypography.BodyLarge,
+                color = TextSecondary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+            Spacer(Modifier.height(28.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                PremiumButton(label = "Try Again", icon = null, onClick = onRetry, modifier = Modifier.focusRequester(focusTarget))
+                PremiumButton(label = "Close", icon = null, onClick = onClose)
+            }
+        }
+    }
+}
+
+/**
+ * End card. For a series with a next episode it becomes "Up Next": a countdown ring
+ * fills around the play button and starts the episode on its own (when autoplay is
+ * on in Settings). Otherwise it offers Watch Again / Close.
+ */
+@Composable
+private fun EndedOverlay(
+    title:       String,
+    nextLabel:   String?,
+    autoPlay:    Boolean,
+    focusTarget: FocusRequester,
+    onPlayNext:  () -> Unit,
+    onReplay:    () -> Unit,
+    onClose:     () -> Unit
+) {
+    val countdownSeconds = 10
+    val ring = remember { Animatable(0f) }
+    var cancelled by remember { mutableStateOf(false) }
+    var secondsLeft by remember { mutableIntStateOf(countdownSeconds) }
+
+    if (nextLabel != null && autoPlay && !cancelled) {
+        LaunchedEffect(Unit) {
+            launch {
+                while (isActive && secondsLeft > 0) {
+                    delay(1_000)
+                    secondsLeft -= 1
+                }
+            }
+            ring.animateTo(1f, tween(countdownSeconds * 1_000, easing = androidx.compose.animation.core.LinearEasing))
+            onPlayNext()
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                androidx.compose.ui.graphics.Brush.horizontalGradient(
+                    0f to Color(0x66000000),
+                    0.55f to Color(0xB3000000),
+                    1f to Color(0xF2000000)
+                )
+            ),
+        contentAlignment = Alignment.BottomEnd
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(end = 72.dp, bottom = 72.dp)
+                .widthIn(max = 520.dp),
+            horizontalAlignment = Alignment.End
+        ) {
+            if (nextLabel != null) {
+                Text("UP NEXT", style = IpxTypography.Eyebrow, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = nextLabel,
+                    style = IpxTypography.HeadlineMedium,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = if (autoPlay && !cancelled) "Starts in $secondsLeft s" else title,
+                    style = IpxTypography.BodyLarge.copy(fontFeatureSettings = "tnum"),
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(24.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (autoPlay && !cancelled) {
+                        PremiumButton(label = "Cancel", icon = null, onClick = { cancelled = true })
+                    } else {
+                        PremiumButton(label = "Close", icon = null, onClick = onClose)
+                    }
+                    Box(
+                        modifier = Modifier.drawBehind {
+                            if (autoPlay && !cancelled && ring.value > 0f) {
+                                val stroke = 3.dp.toPx()
+                                val inset = -6.dp.toPx()
+                                drawRoundRect(
+                                    color = Color.White,
+                                    topLeft = androidx.compose.ui.geometry.Offset(inset, inset),
+                                    size = androidx.compose.ui.geometry.Size(size.width - 2 * inset, size.height - 2 * inset),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius((size.height - 2 * inset) / 2),
+                                    alpha = 0.25f,
+                                    style = Stroke(stroke)
+                                )
+                                // Countdown sweeps left→right along the capsule.
+                                val w = (size.width - 2 * inset) * ring.value
+                                drawRoundRect(
+                                    color = Color.White,
+                                    topLeft = androidx.compose.ui.geometry.Offset(inset, size.height - inset - stroke),
+                                    size = androidx.compose.ui.geometry.Size(w, stroke),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(stroke / 2)
+                                )
+                            }
+                        }
+                    ) {
+                        PremiumButton(
+                            label = "Play Next",
+                            icon = Icons.Rounded.SkipNext,
+                            onClick = onPlayNext,
+                            modifier = Modifier.focusRequester(focusTarget)
+                        )
+                    }
+                }
+            } else {
+                Text("FINISHED", style = IpxTypography.Eyebrow, color = TextSecondary)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = title,
+                    style = IpxTypography.HeadlineMedium,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End
+                )
+                Spacer(Modifier.height(24.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                    PremiumButton(label = "Close", icon = null, onClick = onClose)
+                    PremiumButton(
+                        label = "Watch Again",
+                        icon = Icons.Rounded.PlayArrow,
+                        onClick = onReplay,
+                        modifier = Modifier.focusRequester(focusTarget)
+                    )
+                }
+            }
+        }
     }
 }

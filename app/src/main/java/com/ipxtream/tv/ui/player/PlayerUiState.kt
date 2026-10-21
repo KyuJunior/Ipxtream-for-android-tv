@@ -69,9 +69,17 @@ data class PlayerUiState(
     val hasActiveMedia: Boolean get() =
         playbackState != PlaybackState.IDLE
 
-    /** True for live channels (duration is 0 or TIME_UNSET). */
-    val isLive: Boolean get() =
-        durationMs <= 0L || durationMs == Long.MAX_VALUE
+    /**
+     * True for live channels. Movies and episodes are known from their type, so they
+     * never flash the live layout while the duration is still unknown at startup;
+     * only untyped streams fall back to "no duration means live".
+     */
+    val isLive: Boolean get() = when {
+        activeEpisode != null                -> false
+        activeStream?.streamType == "movie"  -> false
+        activeStream?.streamType == "live"   -> true
+        else                                 -> durationMs <= 0L || durationMs == Long.MAX_VALUE
+    }
 
     /** 0.0–1.0 progress fraction for the VOD progress bar. */
     val progressFraction: Float get() =

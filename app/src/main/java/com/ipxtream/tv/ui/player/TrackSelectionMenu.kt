@@ -45,7 +45,9 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Hairline
+import com.ipxtream.tv.ui.theme.IpxMotion
+import androidx.compose.foundation.border
 import com.ipxtream.tv.ui.theme.BorderSubtle
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateCard
@@ -108,48 +110,56 @@ fun TrackSelectionMenu(
 
     AnimatedVisibility(
         visible  = isVisible,
-        enter    = fadeIn() + slideInHorizontally(initialOffsetX = { it }),
-        exit     = fadeOut() + slideOutHorizontally(targetOffsetX = { it }),
+        enter    = fadeIn(androidx.compose.animation.core.tween(IpxMotion.Standard)) +
+            slideInHorizontally(androidx.compose.animation.core.tween(500, easing = IpxMotion.EaseApple)) { it / 3 },
+        exit     = fadeOut(androidx.compose.animation.core.tween(IpxMotion.Fast)) +
+            slideOutHorizontally(androidx.compose.animation.core.tween(IpxMotion.Standard)) { it / 4 },
         modifier = modifier
     ) {
         // Dark scrim behind the panel
         Box(
-            modifier         = Modifier.fillMaxSize().background(Color(0x88000000)),
+            modifier         = Modifier
+                .fillMaxSize()
+                .background(
+                    androidx.compose.ui.graphics.Brush.horizontalGradient(
+                        0f to Color.Transparent,
+                        0.5f to Color(0x59000000),
+                        1f to Color(0xB3000000)
+                    )
+                ),
             contentAlignment = Alignment.CenterEnd
         ) {
-            // Panel itself
+            // Floating glass sheet
             Column(
                 modifier = Modifier
-                    .widthIn(min = 320.dp, max = 420.dp)
+                    .padding(top = 32.dp, bottom = 32.dp, end = 32.dp)
+                    .widthIn(min = 360.dp, max = 440.dp)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
-                    .background(SlateNav)
-                    .padding(vertical = 24.dp)
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(Color(0xF21C1C1E))
+                    .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                    .padding(vertical = 28.dp)
             ) {
-                // Header
                 Text(
-                    text     = title,
-                    style    = IpxTypography.TitleMedium,
-                    color    = AccentCyan,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 12.dp)
+                    text     = if (isAudioMenu) "AUDIO" else "SUBTITLES",
+                    style    = IpxTypography.Eyebrow,
+                    color    = TextSecondary,
+                    modifier = Modifier.padding(horizontal = 28.dp)
                 )
-
-                // Divider
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(1.dp)
-                        .padding(horizontal = 16.dp)
-                        .background(BorderSubtle)
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text     = if (isAudioMenu) "Choose a language" else "Choose subtitles",
+                    style    = IpxTypography.HeadlineMedium,
+                    color    = Color.White,
+                    modifier = Modifier.padding(horizontal = 28.dp)
                 )
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(20.dp))
 
                 // Track list
                 LazyColumn(
                     state   = listState,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (!isAudioMenu) {
                         // "(None)" — disable subtitles option (subtitle menu only)
@@ -232,17 +242,11 @@ private fun TrackMenuItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val bgColor   = when {
-        isSelected && isFocused -> AccentCyan
-        isSelected              -> SlateGlass
-        isFocused               -> SlateCard
-        else                    -> Color.Transparent
-    }
+    // White platter on focus; quiet text otherwise. Selection is the checkmark.
     val textColor = when {
-        isSelected && isFocused -> TextOnAccent
-        isSelected              -> AccentCyan
-        isFocused               -> TextPrimary
-        else                    -> if (isSupported) TextSecondary else TextMuted
+        isFocused  -> Color.Black
+        isSelected -> Color.White
+        else       -> if (isSupported) TextPrimary.copy(alpha = 0.82f) else TextMuted
     }
 
     val rowMod = if (focusRequester != null)
@@ -253,18 +257,20 @@ private fun TrackMenuItem(
         modifier = rowMod
             .fillMaxWidth()
             .onFocusChanged { isFocused = it.isFocused },
-        colors   = ClickableSurfaceDefaults.colors(containerColor = bgColor),
-        shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(8.dp)),
+        colors   = ClickableSurfaceDefaults.colors(
+            containerColor        = Color.Transparent,
+            focusedContainerColor = Color.White,
+            pressedContainerColor = Color(0xFFD1D1D6)
+        ),
+        shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
         scale    = ClickableSurfaceDefaults.scale(focusedScale = 1.02f),
         border   = ClickableSurfaceDefaults.border(
-            focusedBorder = androidx.tv.material3.Border(
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color.White),
-                shape  = RoundedCornerShape(8.dp)
-            )
+            border        = androidx.tv.material3.Border.None,
+            focusedBorder = androidx.tv.material3.Border.None
         )
     ) {
         Row(
-            modifier          = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier          = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Selection indicator
@@ -276,8 +282,8 @@ private fun TrackMenuItem(
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = "Selected",
-                        tint = AccentCyan,
-                        modifier = Modifier.size(16.dp)
+                        tint = textColor,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -286,7 +292,7 @@ private fun TrackMenuItem(
             Column {
                 Text(
                     text      = label,
-                    style     = IpxTypography.BodyMedium,
+                    style     = IpxTypography.BodyLarge,
                     color     = textColor,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                 )
@@ -294,7 +300,7 @@ private fun TrackMenuItem(
                     Text(
                         text  = sublabel,
                         style = IpxTypography.LabelSmall,
-                        color = if (isSelected && isFocused) TextOnAccent.copy(0.7f) else TextMuted
+                        color = if (isFocused) Color.Black.copy(alpha = 0.6f) else TextSecondary
                     )
                 }
             }

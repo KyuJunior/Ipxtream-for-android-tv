@@ -339,9 +339,15 @@ fun DashboardScreen(
         prevDetailsOpen = isDetailsOpen
     }
 
+    var hadUpdateDialog by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.updateRelease) {
         if (uiState.updateRelease != null) {
+            hadUpdateDialog = true
             runCatching { updateDialogFocusRequester.requestFocus() }
+        } else if (hadUpdateDialog) {
+            // Hand focus back to the page instead of letting it fall to the search field.
+            hadUpdateDialog = false
+            runCatching { firstItemFocusRequester.requestFocus() }
         }
     }
 
@@ -390,6 +396,7 @@ fun DashboardScreen(
                 HeroBackdrop(
                     feature        = heroFeatures.getOrNull(heroIndex),
                     scrollProgress = { heroScrollProgress },
+                    animate        = !isOverlayOpen && heroScrollProgress < 1f,
                     modifier       = Modifier.fillMaxWidth().height(heroHeight + 120.dp).align(Alignment.TopCenter)
                 )
             } else if (uiState.settings.showSpotlightBackdrop && uiState.activeSection != ContentSection.HOME) {
@@ -918,6 +925,11 @@ fun DashboardScreen(
                     { onEpisodePlay(seriesForEpisode, nextEp) }
                 } else null
 
+                val nextEpLabel: String? = allEpisodes.getOrNull(currentEpIndex + 1)?.let { ep ->
+                    val base = "S${ep.season} · E${ep.episodeNum}"
+                    if (ep.title.isNotBlank()) "$base  ${ep.title}" else base
+                }
+
                 val prevEpAction: (() -> Unit)? = if (currentEpIndex > 0 && seriesForEpisode != null) {
                     val prevEp = allEpisodes[currentEpIndex - 1]
                     { onEpisodePlay(seriesForEpisode, prevEp) }
@@ -934,6 +946,7 @@ fun DashboardScreen(
                         viewModel       = playerViewModel,
                         onStop          = onPlayerStop,
                         onNextEpisode   = nextEpAction,
+                        nextEpisodeLabel = nextEpLabel,
                         onPrevEpisode   = prevEpAction,
                         onEpisodesClick = episodesClickAction,
                         onNextChannel   = nextChannelAction,

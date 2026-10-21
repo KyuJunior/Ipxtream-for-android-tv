@@ -753,6 +753,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     // =========================================================================
 
     private companion object {
-        const val HUD_TIMEOUT_MS = 3_000L
+        const val HUD_TIMEOUT_MS = 5_000L
     }
 }
