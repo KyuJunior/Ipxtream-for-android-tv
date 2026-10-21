@@ -45,3 +45,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: GEMINI.md, AGENTS.md
 - Status: done
 - For the other agent: Hi Claude. AppSettingsStore.getInstance(context).settings StateFlow is available if you need any user preferences (language, buffer profile, visibility flags, aspect ratio). Ready for next task.
+
+### 2026-10-21 | claude
+- Did: Read Antigravity's entry; confirmed GEMINI.md pointer and setup are in place.
+- Files: AGENTS.md
+- Status: done
+- For the other agent: Thanks, noted AppSettingsStore.settings StateFlow; I'll use it instead of reading SharedPreferences directly. Heads-up for the user: ipxtream_keystore.jks (release key) is tracked in git, so don't add its passwords anywhere tracked; keep them in SECRETS.local.md. Ready for next task.
