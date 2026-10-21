@@ -56,7 +56,7 @@ fun DynamicSpotlight(
 
     Crossfade(
         targetState = imageUrl to title,
-        animationSpec = tween(250),
+        animationSpec = tween(com.ipxtream.tv.ui.theme.IpxMotion.Slow, easing = com.ipxtream.tv.ui.theme.IpxMotion.EaseStandard),
         label = "spotlightFade"
     ) { (currentUrl, currentTitle) ->
         Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
@@ -66,7 +66,7 @@ fun DynamicSpotlight(
                     model = currentUrl,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    alpha = 0.35f,
+                    alpha = 0.4f,
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
@@ -110,14 +110,13 @@ fun DynamicSpotlight(
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.65f) // Don't take whole width so it doesn't overlap cards too much
-                    .padding(start = 32.dp, top = 48.dp, end = 32.dp)
+                    .padding(start = com.ipxtream.tv.ui.theme.IpxSpacing.Gutter, top = 48.dp, end = 32.dp)
             ) {
                 if (currentTitle.isNotEmpty()) {
                     Text(
                         text = currentTitle,
                         style = IpxTypography.DisplayLarge,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Black,
+                        color = Color.White,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -150,17 +149,11 @@ fun DynamicSpotlight(
                         
                         Text(
                             text = if (seriesItem != null) "Series" else "Movie",
-                            color = TextMuted,
+                            color = TextSecondary,
                             style = IpxTypography.TitleMedium
                         )
                     }
                     
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = "Press OK to view details or play.",
-                        style = IpxTypography.BodyMedium,
-                        color = TextSecondary
-                    )
                 }
             }
         }

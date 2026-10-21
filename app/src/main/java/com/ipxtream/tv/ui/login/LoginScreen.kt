@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -208,8 +209,9 @@ fun LoginScreen(
                     alpha = cardAlpha
                     translationY = cardOffset.toPx()
                 }
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(28.dp))
                 .background(SlateCard.copy(alpha = 0.85f))
+                .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(28.dp))
                 .padding(horizontal = 36.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -222,8 +224,9 @@ fun LoginScreen(
                 Text(
                     text       = "IPXtream",
                     fontSize   = 38.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color      = AccentCyan
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = (-1).sp,
+                    color      = androidx.compose.ui.graphics.Color.White
                 )
                 Text(
                     text  = "TV",
@@ -328,6 +331,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(52.dp)
                         .focusRequester(buttonFocuser),
+                    shape    = ButtonDefaults.shape(RoundedCornerShape(50)),
                     colors   = ButtonDefaults.colors(
                         containerColor        = AccentCyan,
                         focusedContainerColor = AccentCyan,
@@ -337,6 +341,7 @@ fun LoginScreen(
                 ) {
                     if (isLoading) {
                         Row(
+                            modifier               = Modifier.fillMaxWidth(),
                             verticalAlignment      = Alignment.CenterVertically,
                             horizontalArrangement  = Arrangement.Center
                         ) {
@@ -352,8 +357,10 @@ fun LoginScreen(
                         Text(
                             "Sign In",
                             color      = TextOnAccent,
-                            fontWeight = FontWeight.Bold,
-                            fontSize   = 16.sp
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize   = 16.sp,
+                            textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier   = Modifier.fillMaxWidth()
                         )
                     }
                 }

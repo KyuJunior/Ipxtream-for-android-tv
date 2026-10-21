@@ -21,13 +21,20 @@ private val IpxFontFamily = FontFamily.Default
 
 /** Base typography styles scaled for a 10-foot TV viewing distance. */
 object IpxTypography {
-    val DisplayLarge  = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Bold,   fontSize = 48.sp, lineHeight = 56.sp)
-    val HeadlineMedium = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 36.sp)
-    val TitleLarge    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp)
-    val TitleMedium   = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,  fontSize = 16.sp, lineHeight = 24.sp)
-    val BodyMedium    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,  fontSize = 14.sp, lineHeight = 20.sp)
-    val BodySmall     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,  fontSize = 12.sp, lineHeight = 16.sp)
-    val LabelSmall    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,  fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.5.sp)
+    // Display sizes use tight negative tracking, body sizes stay neutral —
+    // the same optical rules Apple applies to SF Pro Display vs. SF Pro Text.
+    val HeroTitle     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Bold,     fontSize = 52.sp, lineHeight = 56.sp, letterSpacing = (-1.2).sp)
+    val DisplayLarge  = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Bold,     fontSize = 48.sp, lineHeight = 54.sp, letterSpacing = (-1.0).sp)
+    val HeadlineMedium = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.4).sp)
+    val TitleLarge    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp)
+    val RowTitle      = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp, letterSpacing = (-0.2).sp)
+    val TitleMedium   = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,   fontSize = 16.sp, lineHeight = 22.sp, letterSpacing = (-0.1).sp)
+    val BodyLarge     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 16.sp, lineHeight = 24.sp)
+    val BodyMedium    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 14.sp, lineHeight = 20.sp)
+    val BodySmall     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 12.sp, lineHeight = 16.sp)
+    val LabelSmall    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,   fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp)
+    /** Small all-caps label above a title ("MOVIE", "NEW SEASON"). */
+    val Eyebrow       = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 1.6.sp)
 }
 
 // ─── Colour Scheme ────────────────────────────────────────────────────────────

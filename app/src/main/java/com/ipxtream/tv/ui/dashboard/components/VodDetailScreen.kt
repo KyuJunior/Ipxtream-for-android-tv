@@ -252,7 +252,7 @@ fun VodDetailScreen(
                         Text(
                             text       = genre,
                             style      = IpxTypography.BodyMedium.copy(fontSize = 14.sp),
-                            color      = AccentCyan,
+                            color      = TextSecondary,
                             fontWeight = FontWeight.Medium,
                             maxLines   = 1,
                             overflow   = TextOverflow.Ellipsis
@@ -454,34 +454,31 @@ private fun VodActionButton(
         modifier = modifier,
         colors = if (isPrimary) {
             ButtonDefaults.colors(
-                containerColor        = Color.White,
-                contentColor          = Color(0xFF07090E),
-                focusedContainerColor = AccentCyan,
-                focusedContentColor   = Color(0xFF07090E)
+                containerColor        = Color(0xEBFFFFFF),
+                contentColor          = Color.Black,
+                focusedContainerColor = Color.White,
+                focusedContentColor   = Color.Black
             )
         } else {
             ButtonDefaults.colors(
-                containerColor        = Color(0xFF161E2E).copy(alpha = 0.75f),
+                containerColor        = Color(0x2EFFFFFF),
                 contentColor          = Color.White,
                 focusedContainerColor = Color.White,
-                focusedContentColor   = Color(0xFF07090E)
+                focusedContentColor   = Color.Black
             )
         },
-        shape = ButtonDefaults.shape(shape = RoundedCornerShape(12.dp)),
-        scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.05f),
+        shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
+        scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
         border = ButtonDefaults.border(
             border = Border(
-                border = BorderStroke(1.dp, if (isPrimary) Color.Transparent else Color.White.copy(alpha = 0.18f)),
-                shape  = RoundedCornerShape(12.dp)
+                border = BorderStroke(1.dp, if (isPrimary) Color.Transparent else Color.White.copy(alpha = 0.2f)),
+                shape  = RoundedCornerShape(50)
             ),
-            focusedBorder = Border(
-                border = BorderStroke(2.dp, if (isPrimary) AccentCyan else Color.White),
-                shape  = RoundedCornerShape(12.dp)
-            )
+            focusedBorder = Border.None
         )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 11.dp),
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -494,7 +491,7 @@ private fun VodActionButton(
             Text(
                 text       = label,
                 style      = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
         }
     }

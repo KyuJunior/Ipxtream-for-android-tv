@@ -4,9 +4,18 @@ on:
   push:
     branches:
       - main
+    # Notes between agents (AGENTS.md, docs) don't need a new APK.
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
 permissions:
   contents: write
+
+# Two agents push to main; queue releases instead of racing on the version bump.
+concurrency:
+  group: release-main
+  cancel-in-progress: false
 
 jobs:
   release:
@@ -69,6 +78,8 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add app/build.gradle.kts
           git commit -m "chore: bump version to ${{ steps.versioning.outputs.new_version }}"
+          # main may have moved while we built; replay the bump on top of it.
+          git pull --rebase origin main
           git push origin main
 
       - name: Create Release

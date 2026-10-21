@@ -67,17 +67,18 @@ fun SearchBar(
     val focusManager = LocalFocusManager.current
 
     val bgColor by animateColorAsState(
-        targetValue = if (isFocused) SlateGlass else SlateCard,
+        targetValue = if (isFocused) Color(0x33FFFFFF) else Color(0x14FFFFFF),
         label = "searchBgColor"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isFocused) AccentCyan else Color.Transparent,
+        targetValue = if (isFocused) Color(0x66FFFFFF) else Color(0x1AFFFFFF),
         label = "searchBorderColor"
     )
 
     // Scale animation similar to TV Cards
     val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.02f else 1f,
+        targetValue = if (isFocused) 1.03f else 1f,
+        animationSpec = com.ipxtream.tv.ui.theme.IpxMotion.focusSpring(),
         label = "searchScale"
     )
 
@@ -86,16 +87,16 @@ fun SearchBar(
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(48.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
             }
-            .background(bgColor, RoundedCornerShape(8.dp))
+            .background(bgColor, RoundedCornerShape(50))
             .border(
-                width = if (isFocused) 2.dp else 0.dp,
+                width = 1.dp,
                 color = borderColor,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(50)
             )
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { keyEvent ->
@@ -140,7 +141,7 @@ fun SearchBar(
                 }
             }
         ),
-        cursorBrush = SolidColor(AccentCyan),
+        cursorBrush = SolidColor(Color.White),
         decorationBox = { innerTextField ->
             Row(
                 modifier = Modifier
@@ -151,7 +152,7 @@ fun SearchBar(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = "Search",
-                    tint = if (isFocused) AccentCyan else TextMuted,
+                    tint = if (isFocused) Color.White else com.ipxtream.tv.ui.theme.TextSecondary,
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(12.dp))

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Slideshow
 import androidx.compose.material.icons.rounded.Tv
@@ -46,6 +47,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.animation.core.tween
+import com.ipxtream.tv.ui.theme.Hairline
+import com.ipxtream.tv.ui.theme.IpxMotion
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
@@ -111,7 +119,7 @@ fun SideNavBar(
     var isExpanded by remember { mutableStateOf(false) }
     val width by animateDpAsState(
         targetValue   = if (isExpanded) 240.dp else 72.dp,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+        animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
         label         = "navWidth"
     )
 
@@ -119,7 +127,13 @@ fun SideNavBar(
         modifier = modifier
             .width(width)
             .fillMaxHeight()
-            .background(SlateNav)
+            .background(
+                if (isExpanded) Brush.horizontalGradient(listOf(Color(0xFA0A0A0B), Color(0xF0111113)))
+                else Brush.horizontalGradient(listOf(SlateNav, SlateNav))
+            )
+            .drawBehind {
+                if (isExpanded) drawRect(Hairline, topLeft = Offset(size.width - 1.dp.toPx(), 0f), size = Size(1.dp.toPx(), size.height))
+            }
             .onFocusChanged { state ->
                 isExpanded = state.hasFocus
                 onFocusChanged(state.hasFocus)
@@ -147,39 +161,17 @@ fun SideNavBar(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.padding(start = 6.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(AccentCyan),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("IP", color = Color.Black, fontWeight = FontWeight.Black, fontSize = 11.sp)
-                        }
+                        BrandGlyph(size = 28.dp)
                         Text(
                             text       = "IPXtream",
                             style      = IpxTypography.TitleLarge,
                             color      = Color.White,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontWeight = FontWeight.SemiBold,
                             fontSize   = 19.sp
                         )
                     }
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(8.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .clip(CircleShape)
-                                .background(AccentCyan)
-                        )
-                    }
+                    Box(Modifier.padding(start = 6.dp)) { BrandGlyph(size = 28.dp) }
                 }
             }
 
@@ -232,33 +224,24 @@ private fun NavItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    val scale by animateFloatAsState(
-        targetValue   = if (isFocused) 1.04f else 1.0f,
-        animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow),
-        label         = "navItemScale"
-    )
-
     val contentAlpha by animateFloatAsState(
-        targetValue = if (isFocused || isActive || isExpanded) 1f else 0.65f,
-        label       = "navAlpha"
+        targetValue   = if (isFocused || isActive || isExpanded) 1f else 0.6f,
+        animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
+        label         = "navAlpha"
     )
 
-    val textColor by animateColorAsState(
-        targetValue = when {
-            isFocused -> Color.White
-            isActive  -> AccentCyan
-            else      -> TextSecondary
-        },
-        label = "navItemText"
-    )
-
-    val containerColor = when {
-        isFocused -> Color.White.copy(alpha = 0.18f)
-        isActive  -> AccentCyan.copy(alpha = 0.12f)
-        else      -> Color.Transparent
+    val contentColor = when {
+        isFocused -> Color.Black
+        isActive  -> Color.White
+        else      -> TextSecondary
     }
 
-    val navItemShape = RoundedCornerShape(10.dp)
+    val containerColor = when {
+        isActive && isExpanded -> Color.White.copy(alpha = 0.10f)
+        else                   -> Color.Transparent
+    }
+
+    val navItemShape = RoundedCornerShape(12.dp)
 
     Surface(
         onClick  = onSelected,
@@ -266,7 +249,7 @@ private fun NavItem(
             .fillMaxWidth()
             .height(48.dp)
             .padding(horizontal = 8.dp)
-            .graphicsLayer { scaleX = scale; scaleY = scale; alpha = contentAlpha }
+            .graphicsLayer { alpha = contentAlpha }
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) {
@@ -286,12 +269,13 @@ private fun NavItem(
             .semantics { role = Role.Tab },
         colors = ClickableSurfaceDefaults.colors(
             containerColor        = containerColor,
-            focusedContainerColor = Color.White.copy(alpha = 0.18f)
+            focusedContainerColor = Color.White
         ),
         border = ClickableSurfaceDefaults.border(
-            border        = Border(BorderStroke(0.dp, Color.Transparent), shape = navItemShape),
-            focusedBorder = Border(BorderStroke(1.5.dp, AccentCyan.copy(alpha = 0.85f)), shape = navItemShape)
+            border        = Border.None,
+            focusedBorder = Border.None
         ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.04f),
         shape = ClickableSurfaceDefaults.shape(shape = navItemShape)
     ) {
         Row(
@@ -299,48 +283,51 @@ private fun NavItem(
             horizontalArrangement = Arrangement.Start,
             verticalAlignment   = Alignment.CenterVertically
         ) {
-            // Left accent indicator pill
-            if (isFocused || isActive) {
-                Box(
-                    modifier = Modifier
-                        .width(4.dp)
-                        .height(22.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(AccentCyan)
-                )
-                Spacer(Modifier.width(10.dp))
-            } else {
-                Spacer(Modifier.width(14.dp))
-            }
+            Spacer(Modifier.width(14.dp))
 
             // Section Icon
             Icon(
                 imageVector        = icon,
                 contentDescription = title,
-                tint               = when {
-                    isFocused -> Color.White
-                    isActive  -> AccentCyan
-                    else      -> TextSecondary
-                },
+                tint               = contentColor,
                 modifier = Modifier.size(24.dp)
             )
 
             // Section Title (Visible when expanded)
             AnimatedVisibility(
                 visible = isExpanded,
-                enter   = fadeIn(),
-                exit    = fadeOut()
+                enter   = fadeIn(tween(IpxMotion.Standard, delayMillis = 60, easing = IpxMotion.EaseOut)),
+                exit    = fadeOut(tween(IpxMotion.Fast))
             ) {
                 Text(
                     text       = title,
                     style      = IpxTypography.TitleMedium,
-                    color      = textColor,
-                    fontWeight = if (isActive || isFocused) FontWeight.Bold else FontWeight.Medium,
+                    color      = contentColor,
+                    fontWeight = if (isActive || isFocused) FontWeight.SemiBold else FontWeight.Medium,
                     fontSize   = 15.sp,
                     maxLines   = 1,
                     modifier   = Modifier.padding(start = 16.dp)
                 )
             }
         }
+    }
+}
+
+/** Monochrome app mark: white rounded square with a black play glyph. */
+@Composable
+private fun BrandGlyph(size: androidx.compose.ui.unit.Dp) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(size * 0.28f))
+            .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFD1D1D6)))),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.PlayArrow,
+            contentDescription = null,
+            tint = Color.Black,
+            modifier = Modifier.size(size * 0.62f)
+        )
     }
 }

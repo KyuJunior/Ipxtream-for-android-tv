@@ -62,7 +62,7 @@ fun TopHeader(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = IpxSpacing.Gutter, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 1. Search Bar (Left-Center)
@@ -114,8 +114,7 @@ fun TopHeader(
             HeaderIconButton(
                 onClick = onLogout,
                 icon = Icons.AutoMirrored.Rounded.ExitToApp,
-                contentDescription = "Logout",
-                tint = Color(0xFFE50914) // Red logout indicator
+                contentDescription = "Logout"
             )
         }
         
@@ -141,33 +140,27 @@ fun HeaderIconButton(
     modifier: Modifier = Modifier,
     tint: Color = TextPrimary
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(targetValue = if (isFocused) 1.15f else 1.0f, label = "buttonScale")
-    
+    // Frosted circle at rest, solid white platter with a black glyph on focus.
     Surface(
         onClick = onClick,
-        modifier = modifier
-            .onFocusChanged { isFocused = it.isFocused }
-            .size(40.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
+        modifier = modifier.size(42.dp),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.04f),
-            focusedContainerColor = Color.White.copy(alpha = 0.18f)
+            containerColor = Color.White.copy(alpha = 0.06f),
+            contentColor = tint,
+            focusedContainerColor = Color.White,
+            focusedContentColor = Color.Black
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.08f)), shape = CircleShape),
-            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = CircleShape)
+            border = Border(BorderStroke(1.dp, Hairline), shape = CircleShape),
+            focusedBorder = Border.None
         ),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.12f),
         shape = ClickableSurfaceDefaults.shape(shape = CircleShape)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
-                tint = if (isFocused) AccentCyan else tint,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -191,27 +184,27 @@ fun UserProfileCard(
     Surface(
         onClick = onCheckForUpdates,
         modifier = modifier,
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(12.dp)),
+        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.05f),
-            focusedContainerColor = Color.White.copy(alpha = 0.16f)
+            containerColor = Color.White.copy(alpha = 0.06f),
+            focusedContainerColor = Color.White.copy(alpha = 0.22f)
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)), shape = RoundedCornerShape(12.dp)),
-            focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(12.dp))
+            border = Border(BorderStroke(1.dp, Hairline), shape = RoundedCornerShape(14.dp)),
+            focusedBorder = Border(BorderStroke(1.dp, GlassStroke), shape = RoundedCornerShape(14.dp))
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.08f)
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.06f)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Initials Avatar: Clean, slate/cyan gradient (Zero Purple)
+            // Monogram avatar in the neutral grey gradient tvOS uses for profiles
             Box(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(Color(0xFF005F73), Color(0xFF00A8E1)))),
+                    .background(Brush.verticalGradient(listOf(Color(0xFFA1A1A6), Color(0xFF636366)))),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -285,13 +278,13 @@ fun UserProfileCard(
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF2ECC71))
+                                .background(AccentGreen)
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = "Up to date",
                             style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
-                            color = Color(0xFF2ECC71)
+                            color = AccentGreen
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
@@ -321,84 +314,64 @@ fun QuickAccessCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    
+    val shape = RoundedCornerShape(16.dp)
+    val glow by animateFloatAsState(
+        targetValue = if (isFocused) 1f else 0f,
+        animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
+        label = "tileGlow"
+    )
+
     Surface(
         onClick = onClick,
         modifier = modifier
-            .zIndex(if (isFocused) 2f else 1f)
+            .premiumFocus(isFocused, focusedScale = 1.05f, shape = shape)
             .onFocusChanged { isFocused = it.isFocused }
-            .height(180.dp),
+            .height(150.dp),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.04f),
-            focusedContainerColor = Color.White.copy(alpha = 0.20f)
+            containerColor = SurfaceElevated,
+            focusedContainerColor = SurfaceElevated
         ),
         border = ClickableSurfaceDefaults.border(
-            focusedBorder = Border(
-                border = BorderStroke(3.dp, Color.White),
-                shape = RoundedCornerShape(16.dp)
-            ),
-            border = Border(
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)),
-                shape = RoundedCornerShape(16.dp)
-            )
+            border = Border(BorderStroke(1.dp, Hairline), shape = shape),
+            focusedBorder = Border(BorderStroke(1.dp, GlassStroke), shape = shape)
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.06f),
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(16.dp))
+        scale = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+        shape = ClickableSurfaceDefaults.shape(shape = shape)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            // Ambient accent glow top right
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .align(Alignment.TopEnd)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                themeColor.copy(alpha = if (isFocused) 0.45f else 0.15f),
-                                Color.Transparent
-                            )
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            themeColor.copy(alpha = 0.28f + 0.22f * glow),
+                            themeColor.copy(alpha = 0.06f),
+                            Color.Transparent
                         )
                     )
-            )
-
-            // Icon top right
+                )
+                .padding(22.dp)
+        ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = if (isFocused) Color.White else themeColor.copy(alpha = 0.85f),
+                tint = Color.White.copy(alpha = 0.55f + 0.45f * glow),
                 modifier = Modifier
-                    .size(68.dp)
+                    .size(44.dp)
                     .align(Alignment.TopEnd)
             )
-            
-            // Text content bottom left
-            Column(
-                modifier = Modifier.align(Alignment.BottomStart)
-            ) {
-                if (isFocused) {
-                    Box(
-                        modifier = Modifier
-                            .width(36.dp)
-                            .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(themeColor)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
+
+            Column(modifier = Modifier.align(Alignment.BottomStart)) {
                 Text(
                     text = title,
-                    style = IpxTypography.HeadlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+                    style = IpxTypography.HeadlineMedium,
                     color = Color.White
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = subtitle,
                     style = IpxTypography.BodyMedium,
-                    color = if (isFocused) Color.White.copy(alpha = 0.95f) else TextSecondary
+                    color = TextSecondary.copy(alpha = 0.85f + 0.15f * glow)
                 )
             }
         }
@@ -471,21 +444,19 @@ fun ContinueWatchingCard(
             }
         },
         modifier = modifier
-            .size(180.dp, 270.dp)
-            .onFocusChanged { isFocused = it.isFocused },
+            .premiumFocus(isFocused, focusedScale = 1.1f, shape = RoundedCornerShape(12.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .size(180.dp, 270.dp),
         shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
         colors = CardDefaults.colors(
-            containerColor = Color.Transparent,
-            focusedContainerColor = Color.Transparent
+            containerColor = SlateCard,
+            focusedContainerColor = SlateCard
         ),
-        scale = CardDefaults.scale(focusedScale = 1.12f),
+        scale = CardDefaults.scale(focusedScale = 1f),
         border = CardDefaults.border(
-            focusedBorder = Border(
-                border = BorderStroke(3.dp, Color.White),
-                shape = RoundedCornerShape(12.dp)
-            ),
+            focusedBorder = Border.None,
             border = Border(
-                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)),
+                border = BorderStroke(1.dp, Hairline),
                 shape = RoundedCornerShape(12.dp)
             )
         )
@@ -552,12 +523,63 @@ fun ContinueWatchingCard(
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = AccentCyan,
-                        trackColor = Color.White.copy(alpha = 0.2f)
+                        color = ProgressWatched,
+                        trackColor = ProgressRail
                     )
                 }
             }
         }
+    }
+}
+
+// =============================================================================
+//  Shelves
+// =============================================================================
+
+@Composable
+private fun ShelfTitle(title: String) {
+    Text(
+        text = title,
+        style = IpxTypography.RowTitle,
+        color = TextPrimary,
+        modifier = Modifier.padding(horizontal = IpxSpacing.Gutter)
+    )
+}
+
+/**
+ * Wraps a poster so its title fades in underneath while focused — posters stay
+ * clean artwork at rest, the way the TV app presents them.
+ */
+@Composable
+private fun CaptionedPoster(
+    title: String,
+    content: @Composable () -> Unit
+) {
+    var hasFocus by remember { mutableStateOf(false) }
+    val reveal by animateFloatAsState(
+        targetValue = if (hasFocus) 1f else 0f,
+        animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
+        label = "captionReveal"
+    )
+    Column(
+        modifier = Modifier
+            .zIndex(if (hasFocus) 1f else 0f)
+            .width(180.dp)
+            .onFocusChanged { hasFocus = it.hasFocus }
+    ) {
+        content()
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = title,
+            style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = TextPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.graphicsLayer {
+                alpha = reveal
+                translationY = (1f - reveal) * -6.dp.toPx()
+            }
+        )
     }
 }
 
@@ -569,19 +591,11 @@ fun ContinueWatchingRow(
     onEpisodePlay: (SeriesItem, EpisodeItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.padding(vertical = 16.dp)) {
-        Text(
-            text = "Continue Watching",
-            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        
-        Spacer(Modifier.height(12.dp))
-        
+    Column(modifier = modifier.padding(top = IpxSpacing.RowGap)) {
+        ShelfTitle("Continue Watching")
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(horizontal = IpxSpacing.Gutter, vertical = 18.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "cw_${item.type}_${item.id}_$index" }, contentType = { _, _ -> "continue_watching" }) { _, item ->
                 ContinueWatchingCard(
@@ -603,17 +617,11 @@ fun HomeHighlightsRow(
     showChannelNumber: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        Text(
-            text = title,
-            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(Modifier.height(10.dp))
+    Column(modifier = modifier.padding(top = IpxSpacing.RowGap)) {
+        ShelfTitle(title)
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(horizontal = IpxSpacing.Gutter, vertical = 16.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hl_${item.streamId}_$index" }, contentType = { _, _ -> "live_channel" }) { _, item ->
                 LiveChannelCard(stream = item, onClick = { onStreamSelected(item) }, showChannelNumber = showChannelNumber)
@@ -630,24 +638,20 @@ fun HomeMoviesRow(
     modifier: Modifier = Modifier,
     watchProgress: (String) -> Float? = { null }
 ) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        Text(
-            text = title,
-            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(Modifier.height(10.dp))
+    Column(modifier = modifier.padding(top = IpxSpacing.RowGap)) {
+        ShelfTitle(title)
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 18.dp, bottom = 4.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hm_${item.streamId}_$index" }, contentType = { _, _ -> "vod_movie" }) { _, item ->
-                VodPosterCard(
-                    stream = item,
-                    onClick = { onStreamSelected(item) },
-                    watchProgress = watchProgress(item.streamId.toString())
-                )
+                CaptionedPoster(title = item.name) {
+                    VodPosterCard(
+                        stream = item,
+                        onClick = { onStreamSelected(item) },
+                        watchProgress = watchProgress(item.streamId.toString())
+                    )
+                }
             }
         }
     }
@@ -661,24 +665,20 @@ fun HomeSeriesRow(
     modifier: Modifier = Modifier,
     watchProgress: (String) -> Float? = { null }
 ) {
-    Column(modifier = modifier.padding(vertical = 12.dp)) {
-        Text(
-            text = title,
-            style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
-        Spacer(Modifier.height(10.dp))
+    Column(modifier = modifier.padding(top = IpxSpacing.RowGap)) {
+        ShelfTitle(title)
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+            contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 18.dp, bottom = 4.dp)
         ) {
             itemsIndexed(items, key = { index, item -> "hs_${item.seriesId}_$index" }, contentType = { _, _ -> "tv_series" }) { _, item ->
-                SeriesPosterCard(
-                    series = item,
-                    onClick = { onSeriesSelected(item) },
-                    watchProgress = watchProgress(item.seriesId.toString())
-                )
+                CaptionedPoster(title = item.name) {
+                    SeriesPosterCard(
+                        series = item,
+                        onClick = { onSeriesSelected(item) },
+                        watchProgress = watchProgress(item.seriesId.toString())
+                    )
+                }
             }
         }
     }

@@ -1,12 +1,9 @@
 package com.ipxtream.tv.ui.dashboard.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -27,11 +26,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,22 +38,20 @@ import androidx.tv.material3.Border
 import androidx.tv.material3.Card
 import androidx.tv.material3.CardDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.Glow
 import androidx.tv.material3.Text
 import coil.compose.AsyncImage
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
 import com.ipxtream.tv.ui.theme.AccentAmber
-import com.ipxtream.tv.ui.theme.AccentCyan
-import com.ipxtream.tv.ui.theme.AccentCyanGlow
-import com.ipxtream.tv.ui.theme.AccentGreen
+import com.ipxtream.tv.ui.theme.AccentRed
+import com.ipxtream.tv.ui.theme.Hairline
 import com.ipxtream.tv.ui.theme.IpxTypography
+import com.ipxtream.tv.ui.theme.ProgressRail
+import com.ipxtream.tv.ui.theme.ProgressWatched
 import com.ipxtream.tv.ui.theme.SlateCard
-import com.ipxtream.tv.ui.theme.SlateGlass
-import com.ipxtream.tv.ui.theme.SlatePrimary
-import com.ipxtream.tv.ui.theme.TextMuted
+import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.TextPrimary
-import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.premiumFocus
 
 // ─── Shared card dimensions ────────────────────────────────────────────────────
 
@@ -67,7 +62,8 @@ private val CardWidthLive   = 240.dp
 private val CardHeightLive  = 135.dp  // 16:9 channel card
 
 private val CardShape = RoundedCornerShape(12.dp)
-private val FocusScale = 1.15f
+private const val FocusScalePoster = 1.1f
+private const val FocusScaleLive   = 1.08f
 
 // =============================================================================
 //  LIVE CHANNEL CARD
@@ -76,10 +72,8 @@ private val FocusScale = 1.15f
 /**
  * Landscape 16:9 card for a Live TV channel.
  *
- * ### D-Pad Focus behaviour (provided by TV Material Card):
- * - **Scale**: smoothly animates to 110% when focused.
- * - **Border**: 2dp electric cyan glow ring appears on focus.
- * - **Elevation glow**: cyan shadow emitted below the card when focused.
+ * Focus uses [premiumFocus]: spring scale, lift shadow, directional lean and a
+ * one-shot specular sweep — no border ring, the way tvOS presents focus.
  *
  * @param stream   The [StreamItem] to display.
  * @param onClick  Called when the user presses OK/Enter on the remote.
@@ -92,20 +86,31 @@ fun LiveChannelCard(
     showChannelNumber: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
     Card(
         onClick  = onClick,
-        modifier = modifier.size(CardWidthLive, CardHeightLive),
+        modifier = modifier
+            .premiumFocus(isFocused, focusedScale = FocusScaleLive, shape = CardShape)
+            .onFocusChanged { isFocused = it.isFocused }
+            .size(CardWidthLive, CardHeightLive),
         shape    = CardDefaults.shape(CardShape),
         colors   = CardDefaults.colors(
             containerColor        = SlateCard,
-            focusedContainerColor = SlateGlass
+            focusedContainerColor = SurfaceElevated
         ),
-        scale  = CardDefaults.scale(focusedScale = FocusScale),
+        scale  = CardDefaults.scale(focusedScale = 1f),
         border = CardDefaults.border(
-            focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
+            border        = Border.None,
+            focusedBorder = Border.None
         )
     ) {
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Brush.verticalGradient(listOf(Color(0xFF202023), Color(0xFF131315))))
+                .border(1.dp, Hairline, CardShape)
+        ) {
             //  Channel logo / thumbnail
             AsyncImage(
                 model             = stream.streamIcon,
@@ -113,51 +118,41 @@ fun LiveChannelCard(
                 contentScale      = ContentScale.Fit,
                 modifier          = Modifier
                     .fillMaxSize()
-                    .padding(12.dp)
+                    .padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 30.dp)
             )
 
-            // "LIVE" badge
             if (stream.isLive) {
                 LiveBadge(modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(8.dp))
             }
 
-            // Channel number badge
             if (showChannelNumber && stream.num != null && stream.num > 0) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(6.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(Color.Black.copy(alpha = 0.65f))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
+                GlassPill(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) {
                     Text(
-                        text = "#${stream.num}",
+                        text = "${stream.num}",
                         fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontWeight = FontWeight.SemiBold,
+                        color = TextPrimary
                     )
                 }
             }
 
-            // Gradient + channel name at the bottom
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color(0xEE000000))
+                            colors = listOf(Color.Transparent, Color(0xCC000000))
                         )
                     )
-                    .padding(horizontal = 10.dp, vertical = 8.dp)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(
                     text     = stream.name,
-                    style    = IpxTypography.LabelSmall,
-                    color    = TextPrimary,
+                    style    = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
+                    color    = if (isFocused) Color.White else TextPrimary.copy(alpha = 0.85f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -176,7 +171,6 @@ fun LiveChannelCard(
  * @param stream   The [StreamItem] to display.
  * @param onClick  Called on OK/Enter.
  */
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun VodPosterCard(
     stream:  StreamItem,
@@ -184,55 +178,14 @@ fun VodPosterCard(
     modifier: Modifier = Modifier,
     watchProgress: Float? = null
 ) {
-    Card(
-        onClick  = onClick,
-        modifier = modifier.size(CardWidthVod, CardHeightVod),
-        shape    = CardDefaults.shape(CardShape),
-        colors   = CardDefaults.colors(
-            containerColor        = Color.Transparent,
-            focusedContainerColor = Color.Transparent
-        ),
-        scale  = CardDefaults.scale(focusedScale = FocusScale),
-        border = CardDefaults.border(
-            focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
-        )
-    ) {
-        Box(Modifier.fillMaxSize()) {
-            AsyncImage(
-                model              = stream.streamIcon,
-                contentDescription = stream.name,
-                contentScale       = ContentScale.Crop,
-                modifier           = Modifier.fillMaxSize()
-            )
-
-            // Rating badge (sleeker top-right placement)
-            stream.rating?.takeIf { it.isNotBlank() }?.let { rating ->
-                RatingBadge(
-                    rating   = rating,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                )
-            }
-
-            // Watch Progress Bar (Netflix/IPX Red)
-            if (watchProgress != null && watchProgress in 0.02f..0.98f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(Color.Black.copy(alpha = 0.65f))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(watchProgress)
-                            .background(Color(0xFFE50914))
-                    )
-                }
-            }
-        }
-    }
+    PosterCard(
+        imageUrl      = stream.streamIcon,
+        title         = stream.name,
+        rating        = stream.rating,
+        watchProgress = watchProgress,
+        onClick       = onClick,
+        modifier      = modifier
+    )
 }
 
 // =============================================================================
@@ -245,7 +198,6 @@ fun VodPosterCard(
  * @param series  The [SeriesItem] to display.
  * @param onClick Called on OK/Enter.
  */
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun SeriesPosterCard(
     series:  SeriesItem,
@@ -253,52 +205,68 @@ fun SeriesPosterCard(
     modifier: Modifier = Modifier,
     watchProgress: Float? = null
 ) {
+    PosterCard(
+        imageUrl      = series.cover,
+        title         = series.name,
+        rating        = series.rating,
+        watchProgress = watchProgress,
+        onClick       = onClick,
+        modifier      = modifier
+    )
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun PosterCard(
+    imageUrl:      String?,
+    title:         String,
+    rating:        String?,
+    watchProgress: Float?,
+    onClick:       () -> Unit,
+    modifier:      Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
     Card(
         onClick  = onClick,
-        modifier = modifier.size(CardWidthVod, CardHeightVod),
+        modifier = modifier
+            .premiumFocus(isFocused, focusedScale = FocusScalePoster, shape = CardShape)
+            .onFocusChanged { isFocused = it.isFocused }
+            .size(CardWidthVod, CardHeightVod),
         shape    = CardDefaults.shape(CardShape),
         colors   = CardDefaults.colors(
-            containerColor        = Color.Transparent,
-            focusedContainerColor = Color.Transparent
+            containerColor        = SlateCard,
+            focusedContainerColor = SlateCard
         ),
-        scale  = CardDefaults.scale(focusedScale = FocusScale),
+        scale  = CardDefaults.scale(focusedScale = 1f),
         border = CardDefaults.border(
-            focusedBorder = Border(BorderStroke(3.dp, Color.White), shape = CardShape)
+            border        = Border.None,
+            focusedBorder = Border.None
         )
     ) {
         Box(Modifier.fillMaxSize()) {
+            PosterPlaceholder(title)
+
             AsyncImage(
-                model              = series.cover,
-                contentDescription = series.name,
+                model              = imageUrl,
+                contentDescription = title,
                 contentScale       = ContentScale.Crop,
                 modifier           = Modifier.fillMaxSize()
             )
 
-            series.rating?.takeIf { it.isNotBlank() }?.let { rating ->
+            rating?.takeIf { it.isNotBlank() && (it.toDoubleOrNull() ?: 1.0) > 0.0 }?.let {
                 RatingBadge(
-                    rating   = rating,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
+                    rating   = it,
+                    modifier = Modifier.align(Alignment.TopEnd)
                 )
             }
 
-            // Watch Progress Bar (Netflix/IPX Red)
             if (watchProgress != null && watchProgress in 0.02f..0.98f) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth()
-                        .height(4.dp)
-                        .background(Color.Black.copy(alpha = 0.65f))
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(watchProgress)
-                            .background(Color(0xFFE50914))
-                    )
-                }
+                WatchProgressBar(watchProgress)
             }
+
+            // Hairline edge keeps light posters from bleeding into each other.
+            Box(Modifier.fillMaxSize().border(1.dp, Hairline, CardShape))
         }
     }
 }
@@ -307,21 +275,92 @@ fun SeriesPosterCard(
 //  Shared sub-composables
 // =============================================================================
 
+/** Shown under the artwork while it loads, or when a portal has no artwork. */
 @Composable
-private fun LiveBadge(modifier: Modifier = Modifier) {
+private fun PosterPlaceholder(title: String) {
     Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(AccentGreen)
-            .padding(horizontal = 6.dp, vertical = 2.dp)
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF26262A), Color(0xFF141416)))),
+        contentAlignment = Alignment.Center
     ) {
         Text(
-            text  = "LIVE",
-            style = IpxTypography.LabelSmall,
-            color = Color(0xFF0B1520),
-            fontWeight = FontWeight.Bold,
-            fontSize = 10.sp
+            text      = title,
+            style     = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.SemiBold),
+            color     = TextPrimary.copy(alpha = 0.55f),
+            maxLines  = 3,
+            overflow  = TextOverflow.Ellipsis,
+            modifier  = Modifier.padding(16.dp)
         )
+    }
+}
+
+/** Thin white progress line inset from the poster edges, like the TV app. */
+@Composable
+private fun BoxScope.WatchProgressBar(progress: Float) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .fillMaxWidth()
+            .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xB3000000))))
+            .padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(ProgressRail)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(progress)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(ProgressWatched)
+            )
+        }
+    }
+}
+
+/** Dark translucent capsule used for small overlay labels. */
+@Composable
+internal fun GlassPill(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color(0x99000000))
+            .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(50))
+            .padding(horizontal = 8.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun LiveBadge(modifier: Modifier = Modifier) {
+    GlassPill(modifier = modifier) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(AccentRed)
+            )
+            Spacer(Modifier.width(5.dp))
+            Text(
+                text  = "LIVE",
+                style = IpxTypography.LabelSmall,
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 9.sp,
+                letterSpacing = 1.sp
+            )
+        }
     }
 }
 
@@ -334,29 +373,21 @@ private fun RatingBadge(
         String.format(java.util.Locale.US, "%.1f", it)
     } ?: rating
 
-    Box(
-        modifier = modifier
-            .padding(10.dp)
-            .clip(RoundedCornerShape(6.dp))
-            .background(Color(0xE6000000))
-            .padding(horizontal = 6.dp, vertical = 3.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    GlassPill(modifier = modifier.padding(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
                 tint = AccentAmber,
-                modifier = Modifier.size(11.dp)
+                modifier = Modifier.size(10.dp)
             )
-            Spacer(Modifier.size(3.dp))
+            Spacer(Modifier.width(3.dp))
             Text(
                 text  = formattedRating,
                 style = IpxTypography.LabelSmall,
-                color = AccentAmber,
-                fontWeight = FontWeight.Bold,
-                fontSize = 11.sp
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 10.sp
             )
         }
     }

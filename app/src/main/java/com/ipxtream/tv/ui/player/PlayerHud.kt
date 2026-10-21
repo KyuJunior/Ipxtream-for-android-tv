@@ -488,13 +488,13 @@ private fun PlayerProgressBar(
                 .clip(RoundedCornerShape(2.dp))
                 .background(Color(0x66FFFFFF))
         )
-        // Active progress - Netflix Red
+        // Active progress - white fill, as in the tvOS player
         Box(
             modifier = Modifier
                 .fillMaxWidth(progress.coerceIn(0f, 1f))
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(Color(0xFFE50914))
+                .background(Color.White)
         )
         // Scrubber thumb - solid white circle
         Box(

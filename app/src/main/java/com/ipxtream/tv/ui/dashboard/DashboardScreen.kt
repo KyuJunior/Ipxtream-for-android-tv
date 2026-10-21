@@ -72,6 +72,21 @@ import com.ipxtream.tv.data.model.StreamItem
 import com.ipxtream.tv.ui.dashboard.components.CategoryRow
 import com.ipxtream.tv.ui.dashboard.components.DownloadTray
 import com.ipxtream.tv.ui.dashboard.components.DynamicSpotlight
+import com.ipxtream.tv.ui.dashboard.components.HeroBackdrop
+import com.ipxtream.tv.ui.dashboard.components.HeroInfo
+import com.ipxtream.tv.ui.dashboard.components.PremiumButton
+import com.ipxtream.tv.ui.dashboard.components.buildHeroFeatures
+import com.ipxtream.tv.ui.theme.IpxMotion
+import com.ipxtream.tv.ui.theme.IpxSpacing
+import com.ipxtream.tv.ui.theme.TextOnAccent
+import com.ipxtream.tv.ui.theme.trackFocusTravel
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
+import kotlinx.coroutines.delay
 import com.ipxtream.tv.ui.dashboard.components.LiveChannelCard
 import com.ipxtream.tv.ui.dashboard.components.PaginationBar
 import com.ipxtream.tv.ui.dashboard.components.SearchBar
@@ -102,6 +117,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.border
 import androidx.compose.ui.unit.sp
 import com.ipxtream.tv.ui.theme.SlateGlass
 
@@ -262,6 +278,47 @@ fun DashboardScreen(
     var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
     var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
 
+    // ─── Home billboard ─────────────────────────────────────────────────────
+    val heroFeatures = remember(uiState.homeHotMovies, uiState.homePopularSeries) {
+        buildHeroFeatures(uiState.homeHotMovies, uiState.homePopularSeries)
+    }
+    var heroIndex by remember { mutableIntStateOf(0) }
+    if (heroIndex >= heroFeatures.size && heroFeatures.isNotEmpty()) heroIndex = 0
+    val homeListState = rememberLazyListState()
+    val heroHeight = 430.dp
+    val heroHeightPx = with(LocalDensity.current) { heroHeight.toPx() }
+    val heroScrollProgress by remember {
+        derivedStateOf {
+            if (homeListState.firstVisibleItemIndex > 0) 1f
+            else (homeListState.firstVisibleItemScrollOffset / heroHeightPx).coerceIn(0f, 1f)
+        }
+    }
+    val hasHero = uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isBlank() && heroFeatures.isNotEmpty()
+
+    // Auto-advance like the TV app's billboard; pauses once it has scrolled away.
+    LaunchedEffect(hasHero, heroIndex, heroFeatures.size, heroScrollProgress >= 1f, isOverlayOpen) {
+        if (hasHero && heroFeatures.size > 1 && heroScrollProgress < 1f && !isOverlayOpen) {
+            delay(9_000)
+            heroIndex = (heroIndex + 1) % heroFeatures.size
+        }
+    }
+
+    // Billboard data usually lands after the first frame; the list would otherwise keep
+    // its anchor on the tiles and leave the billboard scrolled out above the fold.
+    LaunchedEffect(hasHero) {
+        if (hasHero && !isSideNavFocused && !isOverlayOpen) {
+            homeListState.scrollToItem(0)
+            runCatching { firstItemFocusRequester.requestFocus() }
+        }
+    }
+
+    // Each section fades up into place instead of snapping in.
+    val sectionEntrance = remember { Animatable(1f) }
+    LaunchedEffect(uiState.activeSection) {
+        sectionEntrance.snapTo(0f)
+        sectionEntrance.animateTo(1f, tween(IpxMotion.Slow, easing = IpxMotion.EaseApple))
+    }
+
     LaunchedEffect(uiState.activeSection, uiState.isLoading, uiState.searchQuery.isBlank()) {
         if (!uiState.isLoading && !isSideNavFocused && uiState.searchQuery.isBlank() && !isOverlayOpen) {
             runCatching { firstItemFocusRequester.requestFocus() }
@@ -309,7 +366,7 @@ fun DashboardScreen(
         }
     } else null
 
-    Box(modifier = Modifier.fillMaxSize().background(SlateDeep)) {
+    Box(modifier = Modifier.fillMaxSize().background(SlateDeep).trackFocusTravel()) {
         val showSplitPlayer = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
 
         Row(
@@ -327,7 +384,13 @@ fun DashboardScreen(
                 .fillMaxHeight()
         ) {
             // ─── Phase 10: Dynamic Spotlight Behind Content ───────────────
-            if (uiState.settings.showSpotlightBackdrop) {
+            if (hasHero) {
+                HeroBackdrop(
+                    feature        = heroFeatures.getOrNull(heroIndex),
+                    scrollProgress = { heroScrollProgress },
+                    modifier       = Modifier.fillMaxWidth().height(heroHeight + 120.dp).align(Alignment.TopCenter)
+                )
+            } else if (uiState.settings.showSpotlightBackdrop && uiState.activeSection != ContentSection.HOME) {
                 DynamicSpotlight(
                     streamItem = focusedStreamItem,
                     seriesItem = focusedSeriesItem,
@@ -370,7 +433,7 @@ fun DashboardScreen(
                         },
                     actionButtonsModifier = Modifier.focusProperties {
                         if (isHomeNormal) {
-                            down = moviesCardFocusRequester
+                            down = if (hasHero) liveTvCardFocusRequester else moviesCardFocusRequester
                         } else if (isLibrarySection) {
                             down = firstItemFocusRequester
                         } else {
@@ -381,7 +444,7 @@ fun DashboardScreen(
                         .focusRequester(userProfileFocusRequester)
                         .focusProperties {
                             if (isHomeNormal) {
-                                down = seriesCardFocusRequester
+                                down = if (hasHero) liveTvCardFocusRequester else seriesCardFocusRequester
                             } else if (isLibrarySection) {
                                 down = firstItemFocusRequester
                             } else {
@@ -421,6 +484,16 @@ fun DashboardScreen(
                     }
                 )
 
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            val t = sectionEntrance.value
+                            alpha = t
+                            translationY = (1f - t) * 28.dp.toPx()
+                        }
+                ) {
+                Column(modifier = Modifier.fillMaxSize()) {
                 when (uiState.activeSection) {
                     ContentSection.HOME -> {
                         val recentHistory = remember(uiState.historyList) {
@@ -450,24 +523,28 @@ fun DashboardScreen(
                         } else {
                             // Normal Home Layout
                             LazyColumn(
+                                state = homeListState,
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 120.dp)
                             ) {
-                                item {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                                    ) {
-                                        QuickAccessCard(
-                                            title = "LIVE TV",
-                                            subtitle = "Stream live broadcasts & channels",
-                                            icon = Icons.Rounded.Tv,
-                                            themeColor = Color(0xFFE50914),
-                                            onClick = { onSectionSelected(ContentSection.LIVE) },
-                                            modifier = Modifier
-                                                .weight(1f)
+                                if (hasHero) {
+                                    item(key = "hero") {
+                                        val feature = heroFeatures[heroIndex.coerceIn(heroFeatures.indices)]
+                                        HeroInfo(
+                                            features = heroFeatures,
+                                            index = heroIndex,
+                                            isFavorite = feature.stream?.let { isStreamFavorite(it.streamId, "movie") }
+                                                ?: feature.series?.let { isSeriesFavorite(it.seriesId) } ?: false,
+                                            onPrimary = { f ->
+                                                f.stream?.let(onVodPlay) ?: f.series?.let(onSeriesSelected)
+                                            },
+                                            onDetails = { f -> f.stream?.let(onStreamSelected) },
+                                            onToggleFavorite = { f ->
+                                                f.stream?.let(onToggleFavoriteStream) ?: f.series?.let(onToggleFavoriteSeries)
+                                            },
+                                            onIndexChange = { heroIndex = it },
+                                            height = heroHeight - 64.dp,
+                                            primaryModifier = Modifier
                                                 .focusRequester(liveTvCardFocusRequester)
                                                 .focusRequester(firstItemFocusRequester)
                                                 .focusProperties {
@@ -475,27 +552,55 @@ fun DashboardScreen(
                                                     left = sideNavFocusRequester
                                                 }
                                         )
+                                    }
+                                }
+                                item(key = "tiles") {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = IpxSpacing.Gutter, vertical = 20.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(20.dp)
+                                    ) {
                                         QuickAccessCard(
-                                            title = "MOVIES",
-                                            subtitle = "Watch blockbuster movies on demand",
+                                            title = "Live TV",
+                                            subtitle = "Channels, sports and news",
+                                            icon = Icons.Rounded.Tv,
+                                            themeColor = Color(0xFFFF453A),
+                                            onClick = { onSectionSelected(ContentSection.LIVE) },
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .then(
+                                                    if (hasHero) Modifier
+                                                    else Modifier
+                                                        .focusRequester(liveTvCardFocusRequester)
+                                                        .focusRequester(firstItemFocusRequester)
+                                                )
+                                                .focusProperties {
+                                                    up = if (hasHero) liveTvCardFocusRequester else searchBarFocusRequester
+                                                    left = sideNavFocusRequester
+                                                }
+                                        )
+                                        QuickAccessCard(
+                                            title = "Movies",
+                                            subtitle = "Films on demand",
                                             icon = Icons.Rounded.Movie,
-                                            themeColor = Color(0xFF007DFE),
+                                            themeColor = Color(0xFF0A84FF),
                                             onClick = { onSectionSelected(ContentSection.VOD) },
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .focusRequester(moviesCardFocusRequester)
-                                                .focusProperties { up = searchBarFocusRequester }
+                                                .focusProperties { up = if (hasHero) liveTvCardFocusRequester else searchBarFocusRequester }
                                         )
                                         QuickAccessCard(
-                                            title = "TV SERIES",
-                                            subtitle = "Binge-watch episodic shows",
+                                            title = "TV Series",
+                                            subtitle = "Shows worth the binge",
                                             icon = Icons.Rounded.Slideshow,
-                                            themeColor = Color(0xFFFFB347),
+                                            themeColor = Color(0xFFFF9F0A),
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .focusRequester(seriesCardFocusRequester)
-                                                .focusProperties { up = userProfileFocusRequester }
+                                                .focusProperties { up = if (hasHero) liveTvCardFocusRequester else userProfileFocusRequester }
                                         )
                                     }
                                 }
@@ -514,7 +619,7 @@ fun DashboardScreen(
                                 if (uiState.homeLiveHighlights.isNotEmpty()) {
                                     item {
                                         HomeHighlightsRow(
-                                            title = "Live TV Highlights",
+                                            title = "Live Now",
                                             items = uiState.homeLiveHighlights,
                                             onStreamSelected = onStreamSelected,
                                             showChannelNumber = uiState.settings.showChannelNumbers
@@ -525,7 +630,7 @@ fun DashboardScreen(
                                 if (uiState.homeHotMovies.isNotEmpty()) {
                                     item {
                                         HomeMoviesRow(
-                                            title = "Hot Movies",
+                                            title = "Top Movies",
                                             items = uiState.homeHotMovies,
                                             onStreamSelected = onStreamSelected,
                                             watchProgress = { uiState.getWatchProgress(it) }
@@ -536,7 +641,7 @@ fun DashboardScreen(
                                 if (uiState.homePopularSeries.isNotEmpty()) {
                                     item {
                                         HomeSeriesRow(
-                                            title = "Popular TV Series",
+                                            title = "Popular Series",
                                             items = uiState.homePopularSeries,
                                             onSeriesSelected = onSeriesSelected,
                                             watchProgress = { uiState.getWatchProgress(it) }
@@ -678,6 +783,8 @@ fun DashboardScreen(
                             }
                         }
                     }
+                }
+                }
                 }
             }
 
@@ -848,12 +955,13 @@ fun DashboardScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(SlatePrimary)
-                        .padding(32.dp)
-                        .width(420.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(com.ipxtream.tv.ui.theme.SurfaceElevated)
+                        .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(24.dp))
+                        .padding(36.dp)
+                        .width(460.dp)
                 ) {
-                    Text("App Update Available", style = IpxTypography.TitleMedium, color = AccentCyan)
+                    Text("Update Available", style = IpxTypography.HeadlineMedium, color = Color.White)
 
                     val release = uiState.updateRelease
                     Text(
@@ -878,10 +986,10 @@ fun DashboardScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Downloading: ${(progress * 100).toInt()}%", style = IpxTypography.BodySmall, color = AccentCyan)
+                            Text("Downloading ${(progress * 100).toInt()}%", style = IpxTypography.BodyMedium, color = TextSecondary)
                             LinearProgressIndicator(
                                 progress = { progress },
-                                color = AccentCyan,
+                                color = Color.White,
                                 trackColor = Color.White.copy(alpha = 0.2f),
                                 strokeCap = StrokeCap.Round,
                                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp))
@@ -896,15 +1004,17 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            androidx.tv.material3.Button(
+                            PremiumButton(
+                                label = "Install Now",
+                                icon = null,
                                 onClick = onDownloadUpdate,
                                 modifier = Modifier.focusRequester(updateDialogFocusRequester)
-                            ) {
-                                Text("Install Now")
-                            }
-                            androidx.tv.material3.Button(onClick = onDismissUpdate) {
-                                Text("Later")
-                            }
+                            )
+                            PremiumButton(
+                                label = "Later",
+                                icon = null,
+                                onClick = onDismissUpdate
+                            )
                         }
                     }
                 }
@@ -940,9 +1050,9 @@ private fun StreamGrid(
             columns        = if (section == ContentSection.LIVE) GRID_COLUMNS_LIVE else GRID_COLUMNS_POSTER,
             state          = rememberLazyGridState(),
             modifier       = Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 12.dp, start = 12.dp, top = 24.dp, end = 12.dp),
-            verticalArrangement   = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
+            verticalArrangement   = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             itemsIndexed(streams, key = { index, s -> "st_${s.streamId}_$index" }) { index, stream ->
                 var isFocused by remember { mutableStateOf(false) }
@@ -1014,9 +1124,9 @@ private fun SeriesGrid(
             columns        = GRID_COLUMNS_POSTER,
             state          = rememberLazyGridState(),
             modifier       = Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 12.dp, start = 12.dp, top = 24.dp, end = 12.dp),
-            verticalArrangement   = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            contentPadding = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
+            verticalArrangement   = Arrangement.spacedBy(24.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             itemsIndexed(seriesList, key = { index, s -> "se_${s.seriesId}_$index" }) { index, series ->
                 var isFocused by remember { mutableStateOf(false) }
@@ -1065,7 +1175,7 @@ private fun SectionHeader(title: String, itemCount: Int, isFromCache: Boolean, c
         modifier          = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, style = IpxTypography.TitleLarge, color = AccentCyan)
+        Text(title, style = IpxTypography.TitleLarge, color = TextPrimary)
         Spacer(Modifier.weight(1f))
         if (itemCount > 0) {
             Text(
@@ -1080,8 +1190,13 @@ private fun SectionHeader(title: String, itemCount: Int, isFromCache: Boolean, c
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun LoadingIndicator() {
-    Text("Loading…", style = IpxTypography.TitleMedium, color = TextSecondary,
-        modifier = Modifier.wrapContentSize())
+    androidx.compose.material3.CircularProgressIndicator(
+        color = Color.White.copy(alpha = 0.8f),
+        trackColor = Color.White.copy(alpha = 0.12f),
+        strokeWidth = 3.dp,
+        strokeCap = StrokeCap.Round,
+        modifier = Modifier.size(40.dp)
+    )
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)

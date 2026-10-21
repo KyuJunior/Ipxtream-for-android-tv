@@ -167,22 +167,19 @@ fun SeriesDetailScreen(
                             onClick = onToggleFavorite,
                             modifier = Modifier.focusRequester(likeButtonFocusRequester),
                             colors = ButtonDefaults.colors(
-                                containerColor = Color(0xFF161E2E).copy(alpha = 0.75f),
+                                containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
                                 focusedContainerColor = Color.White,
-                                focusedContentColor = Color(0xFF07090E)
+                                focusedContentColor = Color.Black
                             ),
-                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(12.dp)),
-                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.05f),
+                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
+                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
                             border = ButtonDefaults.border(
                                 border = Border(
-                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
-                                    shape = RoundedCornerShape(12.dp)
+                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                                    shape = RoundedCornerShape(50)
                                 ),
-                                focusedBorder = Border(
-                                    border = BorderStroke(2.dp, Color.White),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
+                                focusedBorder = Border.None
                             )
                         ) {
                             Row(
@@ -206,22 +203,19 @@ fun SeriesDetailScreen(
                         Button(
                             onClick = onClose,
                             colors = ButtonDefaults.colors(
-                                containerColor = Color(0xFF161E2E).copy(alpha = 0.75f),
+                                containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
                                 focusedContainerColor = Color.White,
-                                focusedContentColor = Color(0xFF07090E)
+                                focusedContentColor = Color.Black
                             ),
-                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(12.dp)),
-                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.05f),
+                            shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
+                            scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
                             border = ButtonDefaults.border(
                                 border = Border(
-                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.18f)),
-                                    shape = RoundedCornerShape(12.dp)
+                                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+                                    shape = RoundedCornerShape(50)
                                 ),
-                                focusedBorder = Border(
-                                    border = BorderStroke(2.dp, Color.White),
-                                    shape = RoundedCornerShape(12.dp)
-                                )
+                                focusedBorder = Border.None
                             )
                         ) {
                             Row(
@@ -336,8 +330,16 @@ private fun EpisodeCard(
         onClick = onPlay,
         onLongClick = onDownload,
         modifier = modifier.fillMaxWidth().height(130.dp),
-        colors = CardDefaults.colors(containerColor = com.ipxtream.tv.ui.theme.SlateCard),
-        shape = CardDefaults.shape(shape = RoundedCornerShape(8.dp))
+        colors = CardDefaults.colors(
+            containerColor = com.ipxtream.tv.ui.theme.SlateCard,
+            focusedContainerColor = com.ipxtream.tv.ui.theme.SurfaceElevated2
+        ),
+        shape = CardDefaults.shape(shape = RoundedCornerShape(14.dp)),
+        scale = CardDefaults.scale(focusedScale = 1.03f),
+        border = CardDefaults.border(
+            border = Border(BorderStroke(1.dp, com.ipxtream.tv.ui.theme.Hairline), shape = RoundedCornerShape(14.dp)),
+            focusedBorder = Border(BorderStroke(1.dp, Color(0x40FFFFFF)), shape = RoundedCornerShape(14.dp))
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp).fillMaxSize(),
@@ -362,7 +364,7 @@ private fun EpisodeCard(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("▶ OK to Play", style = IpxTypography.LabelSmall, color = AccentCyan)
+                Text("▶  Play", style = IpxTypography.LabelSmall, color = TextPrimary)
                 Text("Long-press to download", style = IpxTypography.LabelSmall, color = TextMuted)
             }
         }

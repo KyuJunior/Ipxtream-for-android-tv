@@ -434,8 +434,8 @@ fun PlayerPanel(
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFE50914).copy(alpha = 0.25f), RoundedCornerShape(4.dp))
-                                        .border(BorderStroke(1.dp, Color(0xFFE50914).copy(alpha = 0.7f)), RoundedCornerShape(4.dp))
+                                        .background(com.ipxtream.tv.ui.theme.AccentRed.copy(alpha = 0.25f), RoundedCornerShape(4.dp))
+                                        .border(BorderStroke(1.dp, com.ipxtream.tv.ui.theme.AccentRed.copy(alpha = 0.7f)), RoundedCornerShape(4.dp))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Row(
@@ -446,7 +446,7 @@ fun PlayerPanel(
                                             modifier = Modifier
                                                 .size(6.dp)
                                                 .clip(CircleShape)
-                                                .background(Color(0xFFE50914))
+                                                .background(com.ipxtream.tv.ui.theme.AccentRed)
                                         )
                                         Text(
                                             text = "LIVE",

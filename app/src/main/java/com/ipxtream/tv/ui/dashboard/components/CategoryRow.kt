@@ -36,7 +36,7 @@ import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 
-private val ChipShape = RoundedCornerShape(8.dp)
+private val ChipShape = RoundedCornerShape(50)
 
 /**
  * Horizontal scrollable row of category filter chips.
@@ -70,9 +70,9 @@ fun CategoryRow(
 
     LazyRow(
         state           = listState,
-        modifier        = modifier.height(52.dp),
-        contentPadding  = PaddingValues(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        modifier        = modifier.height(58.dp),
+        contentPadding  = PaddingValues(horizontal = com.ipxtream.tv.ui.theme.IpxSpacing.Gutter),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // "All" chip
         item {
@@ -129,7 +129,7 @@ private fun CategoryChip(
         colors   = FilterChipDefaults.colors(
             containerColor                = Color.Transparent,
             contentColor                  = TextSecondary,
-            selectedContainerColor        = Color(0x22FFFFFF), // Subtly glass when selected
+            selectedContainerColor        = Color(0x29FFFFFF), // Frosted glass when selected
             selectedContentColor          = Color.White,
             focusedContainerColor         = Color.White,
             focusedContentColor           = Color.Black,
@@ -137,18 +137,18 @@ private fun CategoryChip(
             focusedSelectedContentColor   = Color.Black
         ),
         border  = FilterChipDefaults.border(
-            border                = Border(BorderStroke(1.dp, Color.Transparent), shape = ChipShape),
-            focusedBorder         = Border(BorderStroke(2.dp, Color.White), shape = ChipShape),
-            selectedBorder        = Border(BorderStroke(1.dp, Color(0x44FFFFFF)), shape = ChipShape),
-            focusedSelectedBorder = Border(BorderStroke(2.dp, Color.White), shape = ChipShape)
+            border                = Border.None,
+            focusedBorder         = Border.None,
+            selectedBorder        = Border(BorderStroke(1.dp, Color(0x33FFFFFF)), shape = ChipShape),
+            focusedSelectedBorder = Border.None
         ),
-        scale   = FilterChipDefaults.scale(focusedScale = 1.05f)
+        scale   = FilterChipDefaults.scale(focusedScale = 1.08f)
     ) {
         Text(
             text       = label,
             style      = com.ipxtream.tv.ui.theme.IpxTypography.BodyMedium,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            modifier   = Modifier.padding(horizontal = 8.dp)
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+            modifier   = Modifier.padding(horizontal = 10.dp)
         )
     }
 }
