@@ -176,13 +176,15 @@ fun VodPosterCard(
     stream:  StreamItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    watchProgress: Float? = null
+    watchProgress: Float? = null,
+    badge: String? = null
 ) {
     PosterCard(
         imageUrl      = stream.streamIcon,
         title         = stream.name,
         rating        = stream.rating,
         watchProgress = watchProgress,
+        badge         = badge,
         onClick       = onClick,
         modifier      = modifier
     )
@@ -203,13 +205,15 @@ fun SeriesPosterCard(
     series:  SeriesItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    watchProgress: Float? = null
+    watchProgress: Float? = null,
+    badge: String? = null
 ) {
     PosterCard(
         imageUrl      = series.cover,
         title         = series.name,
         rating        = series.rating,
         watchProgress = watchProgress,
+        badge         = badge,
         onClick       = onClick,
         modifier      = modifier
     )
@@ -222,6 +226,7 @@ private fun PosterCard(
     title:         String,
     rating:        String?,
     watchProgress: Float?,
+    badge:         String? = null,
     onClick:       () -> Unit,
     modifier:      Modifier
 ) {
@@ -259,6 +264,20 @@ private fun PosterCard(
                     rating   = it,
                     modifier = Modifier.align(Alignment.TopEnd)
                 )
+            }
+
+            // Quality label (e.g. measured "4K HDR"); drawn inside the card so it scales with focus.
+            if (badge != null) {
+                GlassPill(modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) {
+                    Text(
+                        text = badge,
+                        style = IpxTypography.LabelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 10.sp,
+                        letterSpacing = 0.8.sp
+                    )
+                }
             }
 
             if (watchProgress != null && watchProgress in 0.02f..0.98f) {

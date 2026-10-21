@@ -106,56 +106,8 @@ fun DynamicSpotlight(
                     )
             )
 
-            // Content Overlay (Title, Info) aligned to Top-Left
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth(0.65f) // Don't take whole width so it doesn't overlap cards too much
-                    .padding(start = com.ipxtream.tv.ui.theme.IpxSpacing.Gutter, top = 48.dp, end = 32.dp)
-            ) {
-                if (currentTitle.isNotEmpty()) {
-                    Text(
-                        text = currentTitle,
-                        style = IpxTypography.DisplayLarge,
-                        color = Color.White,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isLive) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(com.ipxtream.tv.ui.theme.AccentGreen)
-                                    .padding(horizontal = 6.dp, vertical = 2.dp)
-                            ) {
-                                Text("LIVE", color = Color.Black, style = IpxTypography.LabelSmall, fontWeight = FontWeight.Bold)
-                            }
-                            Spacer(Modifier.width(12.dp))
-                        } else if (rating > 0.0) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Star,
-                                    contentDescription = null,
-                                    tint = AccentAmber,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                Text("$rating", color = AccentAmber, style = IpxTypography.TitleMedium)
-                            }
-                            Spacer(Modifier.width(12.dp))
-                        }
-                        
-                        Text(
-                            text = if (seriesItem != null) "Series" else "Movie",
-                            color = TextSecondary,
-                            style = IpxTypography.TitleMedium
-                        )
-                    }
-                    
-                }
-            }
+            // Backdrop only: the grid's header and chips sit on top of this area, so a
+            // title here would collide with them.
         }
     }
 }

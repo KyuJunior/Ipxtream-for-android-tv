@@ -108,6 +108,8 @@ data class DashboardUiState(
     /** Measured resolution of each 4K title, keyed "m{streamId}" / "s{seriesId}". */
     val uhdResolutions:      Map<String, com.ipxtream.tv.data.local.VideoRes> = emptyMap(),
     val uhdScan:             UhdScanState = UhdScanState(),
+    /** Best-known resolution of the movie shown in the detail overlay. */
+    val detailVodResolution: com.ipxtream.tv.data.local.VideoRes? = null,
     val homeLiveHighlights:  List<StreamItem>  = emptyList(),
     val homeHotMovies:       List<StreamItem>  = emptyList(),
     val homePopularSeries:   List<SeriesItem>  = emptyList(),

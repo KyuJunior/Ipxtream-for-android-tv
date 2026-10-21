@@ -181,14 +181,22 @@ class DashboardViewModel(
             it.copy(
                 detailVodItem = stream,
                 detailVodInfo = null,
-                isLoadingVodInfo = true
+                isLoadingVodInfo = true,
+                detailVodResolution = resolutionScanner.store.movie(stream.streamId)?.takeIf { r -> r.isKnown }
             ) 
         }
         viewModelScope.launch {
             repository.getVodInfo(stream.streamId).also { r ->
-                // Free measurement: remember what the portal reports for this file.
-                VideoRes.fromPanelJson(r.getOrNull()?.info?.video)?.let {
-                    resolutionScanner.store.putMovie(stream.streamId, it)
+                // Free measurement: remember what the portal reports for this file, unless
+                // playback already measured it (the decoder is the more reliable source).
+                VideoRes.fromPanelJson(r.getOrNull()?.info?.video)?.let { panel ->
+                    if (resolutionScanner.store.movie(stream.streamId)?.isKnown != true) {
+                        resolutionScanner.store.putMovie(stream.streamId, panel)
+                    }
+                    _uiState.update { s ->
+                        if (s.detailVodItem?.streamId == stream.streamId && s.detailVodResolution == null)
+                            s.copy(detailVodResolution = panel) else s
+                    }
                 }
             }
                 .onSuccess { infoRes ->
@@ -569,6 +577,31 @@ class DashboardViewModel(
         }
     }
 
+    /**
+     * The decoder's frame size is the final word on a title's resolution: store it, so a
+     * title whose portal data claimed 4K but plays at 1080p leaves the 4K list (and vice versa).
+     */
+    fun recordPlaybackResolution(stream: StreamItem?, series: SeriesItem?, width: Int, height: Int) {
+        if (width <= 0 || height <= 0) return
+        val store = resolutionScanner.store
+        val measured = VideoRes(width, height)
+        val previous = when {
+            stream != null && stream.isMovie -> store.movie(stream.streamId).also {
+                store.putMovie(stream.streamId, measured.copy(hdr = it?.hdr == true, codec = it?.codec))
+                _uiState.update { s ->
+                    if (s.detailVodItem?.streamId == stream.streamId) s.copy(detailVodResolution = store.movie(stream.streamId)) else s
+                }
+            }
+            series != null                   -> store.series(series.seriesId).also { store.putSeries(series.seriesId, measured.copy(hdr = it?.hdr == true, codec = it?.codec)) }
+            else                             -> return
+        }
+        if (previous?.width == width && previous.height == height) return
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            store.flush()
+            if (previous?.is4K != measured.is4K && uhdAllMovies.isNotEmpty()) publishUhdResults()
+        }
+    }
+
     /** Measures every title not yet measured, newest first. Resumable; results persist. */
     fun startUhdLibraryScan() {
         if (uhdScanJob?.isActive == true && _uiState.value.uhdScan.phase == UhdScanPhase.LIBRARY) return
@@ -647,8 +680,9 @@ class DashboardViewModel(
     private suspend fun publishUhdResults() {
         val store = resolutionScanner.store
         val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
-            val movies = uhdAllMovies.filter { store.movie(it.streamId)?.is4K == true }
-            val series = uhdAllSeries.filter { store.series(it.seriesId)?.is4K == true }
+            // Portals sometimes list a title in several categories; the grid needs unique keys.
+            val movies = uhdAllMovies.filter { store.movie(it.streamId)?.is4K == true }.distinctBy { it.streamId }
+            val series = uhdAllSeries.filter { store.series(it.seriesId)?.is4K == true }.distinctBy { it.seriesId }
             val res = HashMap<String, VideoRes>(movies.size + series.size)
             movies.forEach { m -> store.movie(m.streamId)?.let { res["m${m.streamId}"] = it } }
             series.forEach { s -> store.series(s.seriesId)?.let { res["s${s.seriesId}"] = it } }

@@ -65,6 +65,7 @@ fun VodDetailScreen(
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     isPlayerOpen: Boolean = false,
+    resolution: com.ipxtream.tv.data.local.VideoRes? = null,
     modifier: Modifier = Modifier
 ) {
     val playButtonFocus = remember { FocusRequester() }
@@ -226,7 +227,7 @@ fun VodDetailScreen(
                     }
 
                     // Measured resolution (from the portal's probe of the actual file)
-                    val measured = com.ipxtream.tv.data.local.VideoRes.fromPanelJson(info?.video)
+                    val measured = resolution ?: com.ipxtream.tv.data.local.VideoRes.fromPanelJson(info?.video)
                     measured?.label?.let { label ->
                         Box(
                             modifier = Modifier

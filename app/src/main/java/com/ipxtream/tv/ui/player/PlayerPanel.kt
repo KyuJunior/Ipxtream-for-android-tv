@@ -218,6 +218,8 @@ fun PlayerPanel(
     val playButtonFocus = remember { FocusRequester() }
 
     androidx.compose.runtime.LaunchedEffect(uiState.hasActiveMedia, uiState.activeEpisode, uiState.activeStream) {
+        // Don't grab focus while closing (state resets as the panel fades out).
+        if (!uiState.hasActiveMedia) return@LaunchedEffect
         delay(150)
         runCatching { focusRequester.requestFocus() }
     }

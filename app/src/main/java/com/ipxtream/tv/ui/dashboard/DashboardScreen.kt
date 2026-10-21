@@ -329,9 +329,25 @@ fun DashboardScreen(
         }
     }
 
+    // Closing the full-screen player must hand focus back to the page; otherwise it falls to
+    // the first focusable (the search field) and the keyboard pops up.
+    var prevPlayerOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(showFullScreenPlayer) {
+        if (prevPlayerOpen && !showFullScreenPlayer && !isDetailsOpen) {
+            // Wait out the player's 300 ms fade-out; it holds focus until it leaves composition.
+            kotlinx.coroutines.delay(360)
+            runCatching { firstItemFocusRequester.requestFocus() }
+        }
+        prevPlayerOpen = showFullScreenPlayer
+    }
+
     var prevDetailsOpen by remember { mutableStateOf(false) }
     LaunchedEffect(isDetailsOpen) {
-        if (prevDetailsOpen && !isDetailsOpen && !uiState.isLoading && !isSideNavFocused) {
+        // Details closed because playback started: the player owns focus; the player-close
+        // effect above restores the page afterwards.
+        if (prevDetailsOpen && !isDetailsOpen && !uiState.isLoading && !isSideNavFocused && !showFullScreenPlayer) {
+            // Let the page become focusable again (it's disabled while an overlay is up).
+            kotlinx.coroutines.delay(80)
             if (uiState.searchQuery.isNotBlank()) {
                 runCatching { searchFirstCardFocusRequester.requestFocus() }
             } else {
@@ -907,7 +923,8 @@ fun DashboardScreen(
                 onClose          = onCloseDetails,
                 isFavorite       = isStreamFavorite(uiState.detailVodItem.streamId, "movie"),
                 onToggleFavorite = { onToggleFavoriteStream(uiState.detailVodItem) },
-                isPlayerOpen     = showFullScreenPlayer
+                isPlayerOpen     = showFullScreenPlayer,
+                resolution       = uiState.detailVodResolution
             )
         } else if (uiState.detailSeriesItem != null) {
             com.ipxtream.tv.ui.dashboard.components.SeriesDetailScreen(

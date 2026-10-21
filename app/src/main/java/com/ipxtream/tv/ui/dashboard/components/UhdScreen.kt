@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -149,6 +150,17 @@ fun UhdScreen(
             }
     }
     val count = if (kind == UhdKind.MOVIES) visibleMovies.size else visibleSeries.size
+    val firstPosterFocus = remember { FocusRequester() }
+    // The page's "return focus here" requester follows the last poster opened, so closing
+    // its details or the player lands back on it instead of on the search field.
+    var lastOpenedKey by remember { mutableStateOf<String?>(null) }
+    fun posterFocus(key: String, index: Int): Modifier = when {
+        key == lastOpenedKey           -> Modifier.focusRequester(firstItemFocusRequester)
+        index == 0                     -> Modifier.focusRequester(firstPosterFocus)
+        else                           -> Modifier
+    }
+    // D-Pad Down from any control goes straight to the first poster.
+    val toGrid = Modifier.focusProperties { if (count > 0 && !isLoading) down = firstPosterFocus }
     val total = if (kind == UhdKind.MOVIES) movies.size else series.size
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -188,14 +200,16 @@ fun UhdScreen(
                 selected = kind == UhdKind.MOVIES,
                 onClick  = { kindName = UhdKind.MOVIES.name },
                 modifier = Modifier
-                    .focusRequester(firstItemFocusRequester)
+                    .then(if (lastOpenedKey == null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     .focusProperties { left = sideNavFocusRequester }
+                    .then(toGrid)
             )
             Spacer(Modifier.width(10.dp))
             PillChip(
                 label    = "Series  ${series.size}",
                 selected = kind == UhdKind.SERIES,
-                onClick  = { kindName = UhdKind.SERIES.name }
+                onClick  = { kindName = UhdKind.SERIES.name },
+                modifier = toGrid
             )
 
             Spacer(Modifier.width(20.dp))
@@ -207,14 +221,15 @@ fun UhdScreen(
                     label    = s.label,
                     selected = sort == s,
                     onClick  = { sortName = s.name },
-                    quiet    = true
+                    quiet    = true,
+                    modifier = toGrid
                 )
                 Spacer(Modifier.width(8.dp))
             }
 
             Spacer(Modifier.weight(1f))
 
-            Box(Modifier.widthIn(min = 260.dp, max = 360.dp)) {
+            Box(Modifier.widthIn(min = 260.dp, max = 360.dp).then(toGrid)) {
                 SearchBar(
                     query         = query,
                     onQueryChange = { query = it },
@@ -241,27 +256,31 @@ fun UhdScreen(
                     contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 20.dp, bottom = 48.dp),
                     verticalArrangement = Arrangement.spacedBy(28.dp),
                     horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    modifier = Modifier.fillMaxSize()
+                    // On TV, scrollable containers are themselves focusable; the grid must hand
+                    // focus to its posters instead of taking it (that left focus invisible).
+                    modifier = Modifier.fillMaxSize().focusProperties { canFocus = false }
                 ) {
                     if (kind == UhdKind.MOVIES) {
-                        itemsIndexed(visibleMovies, key = { i, m -> "uhd_m_${m.streamId}_$i" }) { _, m ->
-                            ResolutionBadged(resolutions["m${m.streamId}"]) {
-                                VodPosterCard(
-                                    stream = m,
-                                    onClick = { onStreamSelected(m) },
-                                    watchProgress = watchProgress(m.streamId.toString())
-                                )
-                            }
+                        // Stable keys: the list updates while titles are being measured, and
+                        // index-based keys would recreate (and unfocus) the poster you're on.
+                        itemsIndexed(visibleMovies, key = { _, m -> "uhd_m_${m.streamId}" }) { i, m ->
+                            VodPosterCard(
+                                modifier = posterFocus("m${m.streamId}", i),
+                                stream = m,
+                                onClick = { lastOpenedKey = "m${m.streamId}"; onStreamSelected(m) },
+                                watchProgress = watchProgress(m.streamId.toString()),
+                                badge = uhdBadge(resolutions["m${m.streamId}"])
+                            )
                         }
                     } else {
-                        itemsIndexed(visibleSeries, key = { i, s -> "uhd_s_${s.seriesId}_$i" }) { _, s ->
-                            ResolutionBadged(resolutions["s${s.seriesId}"]) {
-                                SeriesPosterCard(
-                                    series = s,
-                                    onClick = { onSeriesSelected(s) },
-                                    watchProgress = watchProgress(s.seriesId.toString())
-                                )
-                            }
+                        itemsIndexed(visibleSeries, key = { _, s -> "uhd_s_${s.seriesId}" }) { i, s ->
+                            SeriesPosterCard(
+                                modifier = posterFocus("s${s.seriesId}", i),
+                                series = s,
+                                onClick = { lastOpenedKey = "s${s.seriesId}"; onSeriesSelected(s) },
+                                watchProgress = watchProgress(s.seriesId.toString()),
+                                badge = uhdBadge(resolutions["s${s.seriesId}"])
+                            )
                         }
                     }
                 }
@@ -338,22 +357,8 @@ private fun PillChip(
 }
 
 
-/** Overlays the measured quality ("4K", "4K HDR") on a poster. */
-@Composable
-private fun ResolutionBadged(res: VideoRes?, content: @Composable () -> Unit) {
-    Box {
-        content()
-        if (res?.is4K == true) {
-            GlassPill(modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) {
-                Text(
-                    text = if (res.hdr) "4K HDR" else "4K",
-                    style = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
-                    color = Color.White
-                )
-            }
-        }
-    }
-}
+private fun uhdBadge(res: VideoRes?): String? =
+    if (res?.is4K == true) (if (res.hdr) "4K HDR" else "4K") else null
 
 /** One-line status of the measurement pass, with a control for the full-library check. */
 @Composable

@@ -56,6 +56,19 @@ class DashboardActivity : ComponentActivity() {
             IpxTvTheme {
                 val dashState     by dashboardViewModel.uiState.collectAsState()
                 val playerState   by playerViewModel.uiState.collectAsState()
+
+                // Feed the real decoded resolution back into the 4K measurements.
+                androidx.compose.runtime.LaunchedEffect(
+                    playerState.activeStream?.streamId, playerState.activeSeries?.seriesId,
+                    playerState.videoWidth, playerState.videoHeight
+                ) {
+                    dashboardViewModel.recordPlaybackResolution(
+                        stream = playerState.activeStream,
+                        series = if (playerState.activeEpisode != null) playerState.activeSeries else null,
+                        width  = playerState.videoWidth,
+                        height = playerState.videoHeight
+                    )
+                }
                 val downloadItems by dashboardViewModel.downloadItems.collectAsState()
 
                 DashboardScreen(

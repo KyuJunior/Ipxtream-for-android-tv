@@ -324,7 +324,7 @@ private fun HudTopBar(uiState: PlayerUiState) {
                 )
             }
             val badges = buildList {
-                qualityLabel(uiState.videoHeight)?.let { add(it) }
+                qualityLabel(uiState.videoWidth, uiState.videoHeight)?.let { add(it) }
                 if (!uiState.isLive) {
                     (uiState.activeStream?.containerExtension ?: uiState.activeEpisode?.containerExtension)
                         ?.takeIf { it.isNotBlank() }?.uppercase()?.let { add(it) }
@@ -340,12 +340,13 @@ private fun HudTopBar(uiState: PlayerUiState) {
     }
 }
 
-private fun qualityLabel(height: Int): String? = when {
-    height >= 2000 -> "4K UHD"
-    height >= 1000 -> "HD 1080p"
-    height >= 700  -> "HD 720p"
-    height > 0     -> "SD"
-    else           -> null
+/** Wide masters (e.g. 3840×1600) are 4K too, so width decides as much as height. */
+private fun qualityLabel(width: Int, height: Int): String? = when {
+    width <= 0 || height <= 0         -> null
+    width >= 3200 || height >= 2000   -> "4K UHD"
+    width >= 1800 || height >= 1000   -> "HD 1080p"
+    width >= 1200 || height >= 700    -> "HD 720p"
+    else                              -> "SD"
 }
 
 @Composable
