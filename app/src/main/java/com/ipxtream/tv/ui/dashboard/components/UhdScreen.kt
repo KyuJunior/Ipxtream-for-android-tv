@@ -43,6 +43,10 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
+import com.ipxtream.tv.data.local.VideoRes
+import com.ipxtream.tv.ui.dashboard.UhdScanPhase
+import com.ipxtream.tv.ui.dashboard.UhdScanState
+import androidx.compose.ui.draw.clip
 import com.ipxtream.tv.ui.theme.GlassStroke
 import com.ipxtream.tv.ui.theme.IpxSpacing
 import com.ipxtream.tv.ui.theme.IpxTypography
@@ -83,6 +87,10 @@ fun UhdScreen(
     firstItemFocusRequester: FocusRequester,
     sideNavFocusRequester:   FocusRequester,
     watchProgress:           (String) -> Float?,
+    resolutions:             Map<String, VideoRes>,
+    scan:                    UhdScanState,
+    onScanLibrary:           () -> Unit,
+    onStopScan:              () -> Unit,
     modifier:                Modifier = Modifier
 ) {
     var kindName by rememberSaveable { mutableStateOf(UhdKind.MOVIES.name) }
@@ -153,7 +161,7 @@ fun UhdScreen(
                 Spacer(Modifier.width(16.dp))
                 Text(
                     text = when {
-                        isLoading -> "Finding 4K titles…"
+                        isLoading -> "Loading library…"
                         query.isNotBlank() -> "$count of $total ${if (kind == UhdKind.MOVIES) "movies" else "series"}"
                         else -> "$total ${if (kind == UhdKind.MOVIES) "movies" else "series"} · ${sort.label}"
                     },
@@ -162,6 +170,8 @@ fun UhdScreen(
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
+            Spacer(Modifier.height(6.dp))
+            ScanStatus(scan = scan, onScanLibrary = onScanLibrary, onStopScan = onStopScan)
         }
 
         Spacer(Modifier.height(16.dp))
@@ -221,7 +231,9 @@ fun UhdScreen(
                 isLoading -> {}
                 count == 0 -> EmptyUhdMessage(
                     filtered = query.isNotBlank(),
-                    kindLabel = if (kind == UhdKind.MOVIES) "movies" else "series"
+                    kindLabel = if (kind == UhdKind.MOVIES) "movies" else "series",
+                    scanning = scan.isRunning,
+                    canScanLibrary = scan.unchecked > 0
                 )
                 else -> LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 180.dp),
@@ -233,19 +245,23 @@ fun UhdScreen(
                 ) {
                     if (kind == UhdKind.MOVIES) {
                         itemsIndexed(visibleMovies, key = { i, m -> "uhd_m_${m.streamId}_$i" }) { _, m ->
-                            VodPosterCard(
-                                stream = m,
-                                onClick = { onStreamSelected(m) },
-                                watchProgress = watchProgress(m.streamId.toString())
-                            )
+                            ResolutionBadged(resolutions["m${m.streamId}"]) {
+                                VodPosterCard(
+                                    stream = m,
+                                    onClick = { onStreamSelected(m) },
+                                    watchProgress = watchProgress(m.streamId.toString())
+                                )
+                            }
                         }
                     } else {
                         itemsIndexed(visibleSeries, key = { i, s -> "uhd_s_${s.seriesId}_$i" }) { _, s ->
-                            SeriesPosterCard(
-                                series = s,
-                                onClick = { onSeriesSelected(s) },
-                                watchProgress = watchProgress(s.seriesId.toString())
-                            )
+                            ResolutionBadged(resolutions["s${s.seriesId}"]) {
+                                SeriesPosterCard(
+                                    series = s,
+                                    onClick = { onSeriesSelected(s) },
+                                    watchProgress = watchProgress(s.seriesId.toString())
+                                )
+                            }
                         }
                     }
                 }
@@ -255,20 +271,28 @@ fun UhdScreen(
 }
 
 @Composable
-private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String) {
+private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String, scanning: Boolean, canScanLibrary: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 96.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = if (filtered) "No matches" else "No 4K $kindLabel yet",
+            text = when {
+                filtered -> "No matches"
+                scanning -> "Measuring video resolution…"
+                else     -> "No verified 4K $kindLabel yet"
+            },
             style = IpxTypography.HeadlineMedium,
             color = TextPrimary
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = if (filtered) "Try a different title."
-                   else "Titles show up here when your provider labels them 4K, UHD or 2160p in the name or category.",
+            text = when {
+                filtered       -> "Try a different title."
+                scanning       -> "Titles appear here as soon as their file is confirmed to be 2160p."
+                canScanLibrary -> "None of the titles labelled 4K measured as real 4K. Check the entire library to find the ones that are."
+                else           -> "Your whole library has been checked and no $kindLabel are encoded in 4K."
+            },
             style = IpxTypography.BodyLarge,
             color = TextSecondary,
             textAlign = TextAlign.Center,
@@ -309,6 +333,62 @@ private fun PillChip(
                 text  = label,
                 style = IpxTypography.BodyMedium.copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
             )
+        }
+    }
+}
+
+
+/** Overlays the measured quality ("4K", "4K HDR") on a poster. */
+@Composable
+private fun ResolutionBadged(res: VideoRes?, content: @Composable () -> Unit) {
+    Box {
+        content()
+        if (res?.is4K == true) {
+            GlassPill(modifier = Modifier.align(Alignment.TopStart).padding(8.dp)) {
+                Text(
+                    text = if (res.hdr) "4K HDR" else "4K",
+                    style = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 0.8.sp),
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+/** One-line status of the measurement pass, with a control for the full-library check. */
+@Composable
+private fun ScanStatus(scan: UhdScanState, onScanLibrary: () -> Unit, onStopScan: () -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        // Control first, so D-Pad Up from the chips below lands on it.
+        when {
+            scan.phase == UhdScanPhase.LIBRARY -> PillChip(label = "Pause check", selected = false, onClick = onStopScan)
+            !scan.isRunning && scan.unchecked > 0 -> PillChip(label = "Check entire library", selected = false, onClick = onScanLibrary)
+        }
+        if (scan.phase == UhdScanPhase.LIBRARY || (!scan.isRunning && scan.unchecked > 0)) Spacer(Modifier.width(16.dp))
+        val text = when (scan.phase) {
+            UhdScanPhase.LABELLED -> "Verifying titles labelled 4K · ${"%,d".format(scan.checked)} of ${"%,d".format(scan.total)}"
+            UhdScanPhase.LIBRARY  -> "Checking your library · ${"%,d".format(scan.checked)} of ${"%,d".format(scan.total)} · ${scan.found} in 4K"
+            UhdScanPhase.IDLE     -> if (scan.unchecked > 0)
+                "Measured from each file. ${"%,d".format(scan.unchecked)} titles not checked yet."
+            else "Measured from each file · entire library checked"
+        }
+        Text(text, style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"), color = TextSecondary)
+        if (scan.isRunning && scan.total > 0) {
+            Spacer(Modifier.width(14.dp))
+            Box(
+                Modifier
+                    .width(160.dp)
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(Color(0x33FFFFFF))
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth((scan.checked.toFloat() / scan.total).coerceIn(0f, 1f))
+                        .background(Color.White)
+                )
+            }
         }
     }
 }

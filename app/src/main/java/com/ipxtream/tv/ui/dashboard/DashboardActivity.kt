@@ -141,7 +141,9 @@ class DashboardActivity : ComponentActivity() {
                     onSubtitleTextSizeChange = dashboardViewModel::setSubtitleTextSize,
                     onToggleAutoRefreshCache = dashboardViewModel::setAutoRefreshCacheOnStartup,
                     onClearImageCache = dashboardViewModel::clearImageCache,
-                    onClearWatchHistory = dashboardViewModel::clearWatchHistory
+                    onClearWatchHistory = dashboardViewModel::clearWatchHistory,
+                    onUhdScanLibrary = dashboardViewModel::startUhdLibraryScan,
+                    onUhdStopScan = dashboardViewModel::stopUhdScan
                 )
             }
         }

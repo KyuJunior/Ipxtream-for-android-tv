@@ -51,5 +51,7 @@ data class EpisodeInfo(
     @SerializedName("releasedate")   val releaseDate:  String?,
     @SerializedName("rating")        val rating:       String?,
     @SerializedName("duration_secs") val durationSecs: Int?,
-    @SerializedName("duration")      val duration:     String?
+    @SerializedName("duration")      val duration:     String?,
+    /** Panel ffprobe data, when the portal provides it. */
+    @SerializedName("video")         val video:        com.google.gson.JsonElement? = null
 )

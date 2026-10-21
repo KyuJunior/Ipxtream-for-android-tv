@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard
 
+import com.ipxtream.tv.data.local.ResolutionStore
+import com.ipxtream.tv.data.local.VideoRes
+import com.ipxtream.tv.data.repository.ResolutionScanner
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -51,6 +54,14 @@ class DashboardViewModel(
     val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore(context)
 
     private val _uiState = MutableStateFlow(DashboardUiState(settings = appSettingsStore.settings.value))
+
+    // ─── 4K collection: measured resolutions ───
+    private val resolutionScanner by lazy {
+        ResolutionScanner(context, repository, ResolutionStore(context, repository.accountKey))
+    }
+    private var uhdAllMovies: List<StreamItem> = emptyList()
+    private var uhdAllSeries: List<SeriesItem> = emptyList()
+    private var uhdScanJob: kotlinx.coroutines.Job? = null
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
     /**
@@ -174,7 +185,12 @@ class DashboardViewModel(
             ) 
         }
         viewModelScope.launch {
-            repository.getVodInfo(stream.streamId)
+            repository.getVodInfo(stream.streamId).also { r ->
+                // Free measurement: remember what the portal reports for this file.
+                VideoRes.fromPanelJson(r.getOrNull()?.info?.video)?.let {
+                    resolutionScanner.store.putMovie(stream.streamId, it)
+                }
+            }
                 .onSuccess { infoRes ->
                     _uiState.update { 
                         it.copy(detailVodInfo = infoRes, isLoadingVodInfo = false) 
@@ -520,9 +536,10 @@ class DashboardViewModel(
     // ─── New Home & Cache Logic ───
 
     /**
-     * Builds the 4K collection. Xtream portals don't expose resolution in their
-     * catalogs, so a title counts as 4K when its name or its category name carries a
-     * 4K / UHD / 2160p tag. Filtering runs off the main thread (catalogs can be 50k+).
+     * Builds the 4K collection from *measured* resolution, never from labels: portals
+     * often tag 1080p files as "4K". Titles labelled 4K/UHD/2160p (by name or category)
+     * are verified first, falling back to reading the file header when the portal has no
+     * probe data. The full library can then be checked on request (see [startUhdLibraryScan]).
      */
     fun loadUhdCatalog() {
         viewModelScope.launch {
@@ -530,20 +547,131 @@ class DashboardViewModel(
 
             val vodCats    = repository.getVodCategories(forceRefresh = false).getOrNull().orEmpty()
             val seriesCats = repository.getSeriesCategories(forceRefresh = false).getOrNull().orEmpty()
-            val movies     = repository.getVodStreams(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
-            val series     = repository.getSeries(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
+            uhdAllMovies   = repository.getVodStreams(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
+            uhdAllSeries   = repository.getSeries(categoryId = null, forceRefresh = false).getOrNull().orEmpty()
 
-            val (uhdMovies, uhdSeries) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val (labelledMovies, labelledSeries) = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                 val vodCatIds    = vodCats.filter { UHD_TAG.containsMatchIn(it.categoryName) }.mapTo(HashSet()) { it.categoryId }
                 val seriesCatIds = seriesCats.filter { UHD_TAG.containsMatchIn(it.categoryName) }.mapTo(HashSet()) { it.categoryId }
-                movies.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in vodCatIds } to
-                    series.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in seriesCatIds }
+                uhdAllMovies.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in vodCatIds } to
+                    uhdAllSeries.filter { UHD_TAG.containsMatchIn(it.name) || it.categoryId in seriesCatIds }
             }
-            android.util.Log.d("DashboardVM", "4K collection: ${uhdMovies.size} movies, ${uhdSeries.size} series")
 
-            _uiState.update { it.copy(isLoadingContent = false, uhdMovies = uhdMovies, uhdSeries = uhdSeries) }
+            publishUhdResults()
+            _uiState.update { it.copy(isLoadingContent = false) }
+
+            // A library scan already running keeps going; otherwise verify the labelled titles.
+            if (uhdScanJob?.isActive != true) {
+                uhdScanJob = viewModelScope.launch {
+                    runUhdScan(labelledMovies, labelledSeries, allowFileProbe = true, phase = UhdScanPhase.LABELLED)
+                }
+            }
         }
     }
+
+    /** Measures every title not yet measured, newest first. Resumable; results persist. */
+    fun startUhdLibraryScan() {
+        if (uhdScanJob?.isActive == true && _uiState.value.uhdScan.phase == UhdScanPhase.LIBRARY) return
+        uhdScanJob?.cancel()
+        uhdScanJob = viewModelScope.launch {
+            runUhdScan(
+                movies = uhdAllMovies.sortedByDescending { it.streamId },
+                series = uhdAllSeries.sortedByDescending { it.seriesId },
+                allowFileProbe = false,
+                phase = UhdScanPhase.LIBRARY
+            )
+        }
+    }
+
+    fun stopUhdScan() {
+        uhdScanJob?.cancel()
+        resolutionScanner.store.flush()
+        _uiState.update { it.copy(uhdScan = it.uhdScan.copy(phase = UhdScanPhase.IDLE)) }
+        viewModelScope.launch { publishUhdResults() }
+    }
+
+    private suspend fun runUhdScan(
+        movies: List<StreamItem>,
+        series: List<SeriesItem>,
+        allowFileProbe: Boolean,
+        phase: UhdScanPhase
+    ) {
+        val scanner = resolutionScanner
+        val todo: List<Any> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            movies.filter { scanner.needsCheck(scanner.store.movie(it.streamId), allowFileProbe) } +
+                series.filter { scanner.needsCheck(scanner.store.series(it.seriesId), allowFileProbe) }
+        }
+        if (todo.isEmpty()) {
+            _uiState.update { it.copy(uhdScan = it.uhdScan.copy(phase = UhdScanPhase.IDLE)) }
+            publishUhdResults()
+            return
+        }
+
+        val checked = java.util.concurrent.atomic.AtomicInteger(0)
+        val next = java.util.concurrent.atomic.AtomicInteger(0)
+        _uiState.update { it.copy(uhdScan = UhdScanState(phase, checked = 0, total = todo.size, found = it.uhdScan.found)) }
+
+        try {
+            kotlinx.coroutines.coroutineScope {
+                // A few lightweight API calls in parallel; file probes serialise inside the scanner.
+                repeat(UHD_SCAN_WORKERS) {
+                    launch(kotlinx.coroutines.Dispatchers.IO) {
+                        while (true) {
+                            val i = next.getAndIncrement()
+                            if (i >= todo.size) break
+                            // Never compete with playback for the account's connection.
+                            while (_uiState.value.hasActivePlayback) kotlinx.coroutines.delay(2_000)
+                            val res = when (val item = todo[i]) {
+                                is StreamItem -> scanner.measureMovie(item, allowFileProbe)
+                                is SeriesItem -> scanner.measureSeries(item, allowFileProbe)
+                                else -> null
+                            }
+                            val done = checked.incrementAndGet()
+                            if (res?.is4K == true) publishUhdResults()
+                            if (done % 10 == 0 || done == todo.size) {
+                                _uiState.update { it.copy(uhdScan = it.uhdScan.copy(checked = done)) }
+                            }
+                            if (done % 200 == 0) scanner.store.flush()
+                        }
+                    }
+                }
+            }
+        } finally {
+            scanner.store.flush()
+        }
+        _uiState.update { it.copy(uhdScan = it.uhdScan.copy(phase = UhdScanPhase.IDLE, checked = todo.size)) }
+        publishUhdResults()
+    }
+
+    /** Rebuilds the visible 4K lists from the measurement store. */
+    private suspend fun publishUhdResults() {
+        val store = resolutionScanner.store
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+            val movies = uhdAllMovies.filter { store.movie(it.streamId)?.is4K == true }
+            val series = uhdAllSeries.filter { store.series(it.seriesId)?.is4K == true }
+            val res = HashMap<String, VideoRes>(movies.size + series.size)
+            movies.forEach { m -> store.movie(m.streamId)?.let { res["m${m.streamId}"] = it } }
+            series.forEach { s -> store.series(s.seriesId)?.let { res["s${s.seriesId}"] = it } }
+            val unchecked = uhdAllMovies.count { store.movie(it.streamId) == null } +
+                uhdAllSeries.count { store.series(it.seriesId) == null }
+            UhdPublish(movies, series, res, unchecked)
+        }
+        _uiState.update {
+            it.copy(
+                uhdMovies = result.movies,
+                uhdSeries = result.series,
+                uhdResolutions = result.resolutions,
+                uhdScan = it.uhdScan.copy(found = result.movies.size + result.series.size, unchecked = result.unchecked)
+            )
+        }
+    }
+
+    private class UhdPublish(
+        val movies: List<StreamItem>,
+        val series: List<SeriesItem>,
+        val resolutions: Map<String, VideoRes>,
+        val unchecked: Int
+    )
 
     fun loadWhatsNew() {
         viewModelScope.launch {
@@ -1005,5 +1133,11 @@ class DashboardViewModel(
     }
 }
 
-/** "4K", "UHD", "2160p", "Ultra HD" as standalone tags (so "4Kids" doesn't match). */
-private val UHD_TAG = Regex("""(?i)(?<![a-z0-9])(4k|uhd|2160p?|ultra\s*hd)(?![a-z0-9])""")
+/**
+ * Labels that make a title worth measuring ("4K", "8K", "UHD", "2160p", "3840", "Ultra HD").
+ * Only a hint — nothing is shown as 4K until its file is measured.
+ */
+private val UHD_TAG = Regex("""(?i)(?<![a-z0-9])(4k|8k|uhd|2160p?|4320p?|3840|ultra\s*hd)(?![a-z0-9])""")
+
+/** Parallel portal lookups during a 4K scan; kept low to stay polite to the provider. */
+private const val UHD_SCAN_WORKERS = 3

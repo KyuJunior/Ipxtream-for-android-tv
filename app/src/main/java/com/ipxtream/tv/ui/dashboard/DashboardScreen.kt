@@ -220,7 +220,9 @@ fun DashboardScreen(
     onSubtitleTextSizeChange: (SubtitleTextSize) -> Unit = {},
     onToggleAutoRefreshCache: (Boolean) -> Unit = {},
     onClearImageCache: () -> Unit = {},
-    onClearWatchHistory: () -> Unit = {}
+    onClearWatchHistory: () -> Unit = {},
+    onUhdScanLibrary: () -> Unit = {},
+    onUhdStopScan: () -> Unit = {}
 ) {
     val focusManager = LocalFocusManager.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -742,6 +744,10 @@ fun DashboardScreen(
                             firstItemFocusRequester = firstItemFocusRequester,
                             sideNavFocusRequester   = sideNavFocusRequester,
                             watchProgress           = { uiState.getWatchProgress(it) },
+                            resolutions             = uiState.uhdResolutions,
+                            scan                    = uiState.uhdScan,
+                            onScanLibrary           = onUhdScanLibrary,
+                            onStopScan              = onUhdStopScan,
                             modifier                = Modifier.fillMaxSize()
                         )
                     }

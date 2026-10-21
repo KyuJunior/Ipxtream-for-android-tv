@@ -35,7 +35,10 @@ data class VodInfo(
     @SerializedName("duration")               val duration: String? = null,
     @SerializedName("rating")                 val rating: String? = null,
     @SerializedName("rating_5based")          val rating5based: Double? = null,
-    @SerializedName("tmdb_id")                val tmdbId: JsonElement? = null
+    @SerializedName("tmdb_id")                val tmdbId: JsonElement? = null,
+    /** ffprobe stream info some panels attach: {"width":3840,"height":2160,"codec_name":"hevc",...}. */
+    @SerializedName("video")                  val video: JsonElement? = null,
+    @SerializedName("bitrate")                val bitrate: JsonElement? = null
 ) {
     /** Safe list of backdrop image URLs parsed from whatever format the server returned */
     val backdrops: List<String>

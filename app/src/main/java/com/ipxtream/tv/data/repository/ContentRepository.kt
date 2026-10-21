@@ -192,6 +192,28 @@ class ContentRepository(
         }
 
     // =========================================================================
+    //  Resolution probing (uncached — a library scan would otherwise write
+    //  tens of thousands of cache files)
+    // =========================================================================
+
+    suspend fun fetchVodInfoUncached(vodId: Int): Result<VodInfoResponse> = withContext(Dispatchers.IO) {
+        runCatching { apiService.getVodInfo(credentials.username, credentials.password, vodId = vodId) }
+    }
+
+    suspend fun fetchSeriesInfoUncached(seriesId: Int): Result<SeriesInfoResponse> = withContext(Dispatchers.IO) {
+        runCatching { apiService.getSeriesInfo(credentials.username, credentials.password, seriesId = seriesId) }
+    }
+
+    /** Stable per-account key for stores that live outside the HTTP cache. */
+    val accountKey: String get() = buildKey("account")
+
+    fun movieUrl(stream: StreamItem): String =
+        com.ipxtream.tv.ui.player.StreamUrlBuilder.buildForStream(credentials, stream)
+
+    fun episodeUrl(episode: com.ipxtream.tv.data.model.EpisodeItem): String =
+        com.ipxtream.tv.ui.player.StreamUrlBuilder.buildForEpisode(credentials, episode)
+
+    // =========================================================================
     //  Cache Management
     // =========================================================================
 

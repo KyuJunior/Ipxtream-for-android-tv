@@ -26,6 +26,26 @@ enum class ContentSection(val displayName: String, val iconRes: String) {
     DOWNLOADS("Downloads", "ic_downloads")
 }
 
+// ─── 4K scan progress ─────────────────────────────────────────────────────────
+
+enum class UhdScanPhase { IDLE, LABELLED, LIBRARY }
+
+/**
+ * @param checked   titles measured so far in the current pass
+ * @param total     titles queued in the current pass
+ * @param found     verified 4K titles
+ * @param unchecked titles in the library never measured yet
+ */
+data class UhdScanState(
+    val phase:     UhdScanPhase = UhdScanPhase.IDLE,
+    val checked:   Int = 0,
+    val total:     Int = 0,
+    val found:     Int = 0,
+    val unchecked: Int = 0
+) {
+    val isRunning: Boolean get() = phase != UhdScanPhase.IDLE
+}
+
 // ─── UI State ─────────────────────────────────────────────────────────────────
 
 /**
@@ -82,9 +102,12 @@ data class DashboardUiState(
     // ─── New Home & Cache State ───
     val isCachingAll:        Boolean           = false,
     val whatsNewItems:       List<LibraryItem> = emptyList(),
-    /** Movies and series detected as 4K/UHD (by title tag or category name). */
+    /** Movies and series whose measured video is 4K (see ResolutionScanner). */
     val uhdMovies:           List<StreamItem> = emptyList(),
     val uhdSeries:           List<SeriesItem> = emptyList(),
+    /** Measured resolution of each 4K title, keyed "m{streamId}" / "s{seriesId}". */
+    val uhdResolutions:      Map<String, com.ipxtream.tv.data.local.VideoRes> = emptyMap(),
+    val uhdScan:             UhdScanState = UhdScanState(),
     val homeLiveHighlights:  List<StreamItem>  = emptyList(),
     val homeHotMovies:       List<StreamItem>  = emptyList(),
     val homePopularSeries:   List<SeriesItem>  = emptyList(),

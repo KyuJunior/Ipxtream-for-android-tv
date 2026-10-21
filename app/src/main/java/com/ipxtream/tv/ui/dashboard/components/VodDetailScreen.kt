@@ -225,6 +225,26 @@ fun VodDetailScreen(
                         }
                     }
 
+                    // Measured resolution (from the portal's probe of the actual file)
+                    val measured = com.ipxtream.tv.data.local.VideoRes.fromPanelJson(info?.video)
+                    measured?.label?.let { label ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color.White.copy(alpha = if (measured.is4K) 0.9f else 0.12f))
+                                .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text          = if (measured.hdr) "$label HDR" else label,
+                                style         = IpxTypography.LabelSmall.copy(fontSize = 12.sp),
+                                color         = if (measured.is4K) Color.Black else Color.White,
+                                fontWeight    = FontWeight.Bold,
+                                letterSpacing = 0.6.sp
+                            )
+                        }
+                    }
+
                     // Quality / Extension Badge
                     Box(
                         modifier = Modifier
