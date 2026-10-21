@@ -17,9 +17,32 @@ Both agents MUST read this whole file at the start of every task and append to t
    - Commit only your own files: `git add <files>`, never `git add -A` / `git add .`.
    - Commit messages start with `[claude]` or `[antigravity]`.
    - Before pushing: `git pull --rebase origin main`, resolve conflicts keeping both sides' intent, build, push.
-4. **Version number** (`versionCode` / `versionName`): only bump when the user asks.
+4. **Version number** (`versionCode` / `versionName`): never edit it by hand. CI (`.github/workflows/release.yml`)
+   bumps it and publishes a GitHub release after every push to `main` that touches code; the in-app updater
+   offers that release. So after any push, `origin/main` gains a `chore: bump version to vX` bot commit —
+   always `git pull --rebase origin main` before your next push. Pushes that only change `*.md` / `docs/**`
+   don't trigger a release.
 5. **Secrets**: NEVER write tokens, passwords, API keys, or server credentials in this file or any tracked file.
    Put them in `SECRETS.local.md` (gitignored, local only) and refer to them by name here, e.g. "see SECRETS.local.md → XTREAM_TEST_LOGIN".
+
+## Current state (keep this short and up to date; details are in the log)
+
+- **Look & feel:** Apple TV–style. Tokens in `ui/theme/` — `Color.kt` (neutral greys, glass fills, white focus),
+  `Motion.kt` (`IpxMotion` curves/springs, `IpxSpacing.Gutter` = 32dp), `Theme.kt` (`IpxTypography`).
+  Focusable cards use `Modifier.premiumFocus(isFocused)` (`ui/theme/Focus.kt`) with the component's own focus
+  scale = 1f and `Border.None`. Standard buttons: `PremiumButton` / `GlassIconButton` (`HeroBillboard.kt`).
+- **Home:** hero billboard (`HeroBillboard.kt`), category tiles, shelves (`HomeComponents.kt`).
+- **Player:** Prime Video–style overlay — `ui/player/PlayerHud.kt` (top bar, scrubber, controls),
+  `PlayerPanel.kt` (key routing, feedback, Up Next/error cards), `TrackSelectionMenu.kt`.
+- **4K Ultra HD section:** lists only titles whose *measured* video is 4K (≥3200 wide or ≥2000 tall).
+  `data/local/ResolutionStore.kt` (persistent per-account results), `data/repository/ResolutionScanner.kt`
+  (portal ffprobe data → container-header fallback), playback's decoded size overrides both
+  (`DashboardViewModel.recordPlaybackResolution`). UI: `ui/dashboard/components/UhdScreen.kt`.
+- **TV focus gotcha:** Lazy grids/rows holding focusable cards need `focusProperties { canFocus = false }` on the
+  container, or D-Pad lands on the container with no visible focus.
+- **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
+  `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
+  `applicationIdSuffix = ".preview"` on the debug build type, so the installed release app is untouched.
 
 ## Log entry format
 
@@ -82,3 +105,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/{DashboardScreen,DashboardViewModel,DashboardUiState,DashboardActivity}.kt, ui/dashboard/components/{UhdScreen,ContentCard,VodDetailScreen,DynamicSpotlight}.kt, ui/player/{PlayerHud,PlayerPanel}.kt
 - Status: done; verified on the emulator with the user's account (poster focus, badge, detail "4K", player "4K UHD" for Triple Frontier, focus restore after details and after player).
 - For the other agent: New TV lists/grids that hold focusable cards should set `focusProperties { canFocus = false }` on the Lazy container, otherwise D-Pad can land on the container with no visible focus.
+
+### 2026-10-22 | claude
+- Did: Added a "Current state" summary near the top and corrected rule 4 (CI auto-bumps the version and releases on every code push; pull its bot commit before pushing).
+- Files: AGENTS.md
+- Status: done
+- For the other agent: Please read "Current state" before your next task and add a log entry when you start working again; you haven't posted since your first entry, so I don't know what you're on.
