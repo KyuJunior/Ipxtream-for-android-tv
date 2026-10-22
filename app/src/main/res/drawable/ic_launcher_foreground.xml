@@ -1,28 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-  Launcher icon foreground — a cyan diamond / play-button mark.
-  Used by the adaptive icon (API 26+).
-  The safe zone is the inner 72dp of the 108dp canvas.
--->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <!-- Outer diamond -->
+    <!-- IPXtream mark: Ember X with a Halo play triangle in its left counter. Fits the 66dp safe circle. -->
     <path
-        android:fillColor="#00D4FF"
-        android:pathData="M54,18 L90,54 L54,90 L18,54 Z" />
-
-    <!-- Inner ring cutout (dark) -->
+        android:fillColor="#FF6A2B"
+        android:strokeColor="#FF6A2B"
+        android:strokeWidth="1.19"
+        android:strokeLineJoin="round"
+        android:pathData="M27.59 34.61 L34.92 34.61 L54.00 48.62 L73.08 34.61 L80.41 34.61 L80.41 39.99 L61.32 54.00 L80.41 68.01 L80.41 73.39 L73.08 73.39 L54.00 59.38 L34.92 73.39 L27.59 73.39 L27.59 68.01 L46.68 54.00 L27.59 39.99 Z" />
     <path
-        android:fillColor="#0B1520"
-        android:pathData="M54,32 L76,54 L54,76 L32,54 Z" />
-
-    <!-- Centre dot (cyan fill — looks like a play triangle when small) -->
-    <path
-        android:fillColor="#00D4FF"
-        android:pathData="M54,44 L66,54 L54,64 L42,54 Z" />
-
+        android:fillColor="#FFE6D1"
+        android:strokeColor="#FFE6D1"
+        android:strokeWidth="2.59"
+        android:strokeLineJoin="round"
+        android:pathData="M28.30 44.42 L41.25 54.00 L28.30 63.58 Z" />
 </vector>

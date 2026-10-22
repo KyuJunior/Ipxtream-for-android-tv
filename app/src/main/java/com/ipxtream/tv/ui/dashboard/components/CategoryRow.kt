@@ -37,6 +37,9 @@ import com.ipxtream.tv.data.model.Category
 import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.AccentCyan
 
 private val ChipShape = RoundedCornerShape(50)
 
@@ -133,10 +136,10 @@ private fun CategoryChip(
             contentColor                  = TextSecondary,
             selectedContainerColor        = Color(0x29FFFFFF), // Frosted glass when selected
             selectedContentColor          = Color.White,
-            focusedContainerColor         = Color.White,
-            focusedContentColor           = Color.Black,
-            focusedSelectedContainerColor = Color.White,
-            focusedSelectedContentColor   = Color.Black
+            focusedContainerColor         = ChipFocused,
+            focusedContentColor           = TextOnFocus,
+            focusedSelectedContainerColor = ChipFocused,
+            focusedSelectedContentColor   = TextOnFocus
         ),
         border  = FilterChipDefaults.border(
             border                = Border.None,

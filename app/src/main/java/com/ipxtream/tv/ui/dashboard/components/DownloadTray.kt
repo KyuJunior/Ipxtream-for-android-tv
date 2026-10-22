@@ -56,6 +56,7 @@ import com.ipxtream.tv.ui.theme.SlateNav
 import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.TextOnAccent
 
 /**
  * Persistent bottom tray showing all active, paused, completed, and failed
@@ -134,7 +135,7 @@ fun DownloadTray(
                     Text(
                         text     = stringResource(R.string.downloads_active_count, activeCount),
                         fontSize = 10.sp,
-                        color    = Color(0xFF0B1520),
+                        color    = TextOnAccent,
                         fontWeight = FontWeight.Bold
                     )
                 }

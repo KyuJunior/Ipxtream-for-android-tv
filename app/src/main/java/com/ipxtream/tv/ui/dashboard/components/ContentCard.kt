@@ -111,7 +111,7 @@ fun LiveChannelCard(
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFF202023), Color(0xFF131315))))
+                .background(Brush.verticalGradient(listOf(Color(0xFF271C2F), Color(0xFF150E1B))))
                 .border(1.dp, Hairline, CardShape)
         ) {
             //  Channel logo / thumbnail
@@ -303,7 +303,7 @@ private fun PosterPlaceholder(title: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF26262A), Color(0xFF141416)))),
+            .background(Brush.verticalGradient(listOf(Color(0xFF271C2F), Color(0xFF150E1B)))),
         contentAlignment = Alignment.Center
     ) {
         Text(

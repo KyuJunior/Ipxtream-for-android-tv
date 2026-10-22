@@ -81,6 +81,7 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextOnAccent
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.AccentRed
 
 /**
  * Login screen — glass panel centred on a dark gradient background.
@@ -120,7 +121,7 @@ private fun AmbientBackground(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(SlateDeep)
     )
 }
 
@@ -308,11 +309,11 @@ fun LoginScreen(
                 Text(
                     text     = errorMessage ?: "",
                     style    = IpxTypography.BodyMedium,
-                    color    = Color(0xFFFF6B6B),
+                    color    = AccentRed,
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(Color(0x22FF4444))
+                        .background(AccentRed.copy(alpha = 0.13f))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 )
                 Spacer(Modifier.height(16.dp))

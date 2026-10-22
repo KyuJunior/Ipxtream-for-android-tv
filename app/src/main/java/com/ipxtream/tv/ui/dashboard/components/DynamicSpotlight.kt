@@ -37,6 +37,7 @@ import com.ipxtream.tv.ui.theme.SlatePrimary
 import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.SlateDeep
 
 /**
  * A cinematic hero banner that displays the dynamically focused item in the dashboard.
@@ -59,7 +60,7 @@ fun DynamicSpotlight(
         animationSpec = tween(com.ipxtream.tv.ui.theme.IpxMotion.Slow, easing = com.ipxtream.tv.ui.theme.IpxMotion.EaseStandard),
         label = "spotlightFade"
     ) { (currentUrl, currentTitle) ->
-        Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = modifier.fillMaxSize().background(SlateDeep)) {
             if (currentUrl.isNotEmpty()) {
                 // Background dimmed image without GPU-choking blur
                 AsyncImage(
@@ -71,7 +72,7 @@ fun DynamicSpotlight(
                 )
             } else {
                 // Fallback empty solid background
-                Box(modifier = Modifier.fillMaxSize().background(Color.Black))
+                Box(modifier = Modifier.fillMaxSize().background(SlateDeep))
             }
 
             // Dark gradients to blend seamlessly into OLED pitch black
@@ -81,9 +82,9 @@ fun DynamicSpotlight(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color(0x55000000), // Semi-transparent top
-                                Color(0xCC000000), // Darker mid
-                                Color(0xFF000000)  // Pure OLED black bottom
+                                SlateDeep.copy(alpha = 0x55 / 255f), // Semi-transparent top
+                                SlateDeep.copy(alpha = 0xCC / 255f), // Darker mid
+                                SlateDeep  // Pure OLED black bottom
                             ),
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY
@@ -98,8 +99,8 @@ fun DynamicSpotlight(
                     .background(
                         Brush.horizontalGradient(
                             colors = listOf(
-                                Color(0xEE000000),
-                                Color(0x88000000),
+                                SlateDeep.copy(alpha = 0xEE / 255f),
+                                SlateDeep.copy(alpha = 0x88 / 255f),
                                 Color.Transparent
                             )
                         )

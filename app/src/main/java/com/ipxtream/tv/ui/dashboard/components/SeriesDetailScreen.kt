@@ -49,6 +49,9 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import kotlinx.coroutines.delay
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.SlateDeep
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -92,7 +95,7 @@ fun SeriesDetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.Black)
+            .background(SlateDeep)
             .focusProperties { canFocus = !isPlayerOpen }
             .onPreviewKeyEvent { keyEvent ->
                 if (!isPlayerOpen && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
@@ -116,14 +119,14 @@ fun SeriesDetailScreen(
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.horizontalGradient(
-                    colors = listOf(Color(0xFF000000), Color(0xDD000000), Color(0x22000000))
+                    colors = listOf(SlateDeep, SlateDeep.copy(alpha = 0xDD / 255f), SlateDeep.copy(alpha = 0x22 / 255f))
                 )
             )
         )
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, Color(0xDD000000), Color(0xFF000000)),
+                    colors = listOf(Color.Transparent, SlateDeep.copy(alpha = 0xDD / 255f), SlateDeep),
                     startY = 200f
                 )
             )
@@ -172,8 +175,8 @@ fun SeriesDetailScreen(
                             colors = ButtonDefaults.colors(
                                 containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
-                                focusedContainerColor = Color.White,
-                                focusedContentColor = Color.Black
+                                focusedContainerColor = ChipFocused,
+                                focusedContentColor = TextOnFocus
                             ),
                             shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
                             scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
@@ -208,8 +211,8 @@ fun SeriesDetailScreen(
                             colors = ButtonDefaults.colors(
                                 containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
-                                focusedContainerColor = Color.White,
-                                focusedContentColor = Color.Black
+                                focusedContainerColor = ChipFocused,
+                                focusedContentColor = TextOnFocus
                             ),
                             shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
                             scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),

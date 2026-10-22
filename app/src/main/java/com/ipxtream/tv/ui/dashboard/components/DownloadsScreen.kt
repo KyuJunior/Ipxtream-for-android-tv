@@ -32,6 +32,12 @@ import androidx.tv.material3.*
 import com.ipxtream.tv.data.download.DownloadItem
 import com.ipxtream.tv.data.download.DownloadStatus
 import com.ipxtream.tv.ui.theme.*
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.BorderFocus
+import com.ipxtream.tv.ui.theme.SlateDeep
+import com.ipxtream.tv.ui.theme.SlateCard
+import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.AccentCyan
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -87,7 +93,7 @@ fun DownloadsScreen(
                         colors = ButtonDefaults.colors(
                             containerColor = Color.DarkGray.copy(alpha = 0.5f),
                             focusedContainerColor = Color.LightGray,
-                            focusedContentColor = Color.Black
+                            focusedContentColor = TextOnFocus
                         )
                     ) {
                         Text(stringResource(R.string.downloads_clear_done), style = IpxTypography.BodyMedium)
@@ -174,7 +180,7 @@ private fun DownloadManagerCard(
             focusedContainerColor = SlateCard
         ),
         border = CardDefaults.border(
-            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(12.dp))
+            focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
         )
     ) {
         Column(

@@ -59,6 +59,9 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextOnAccent
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.FocusPressed
 
 private const val SUBTITLE_NONE_GROUP = -1
 private const val SUBTITLE_NONE_TRACK = -1
@@ -138,7 +141,7 @@ fun TrackSelectionMenu(
                     .widthIn(min = 360.dp, max = 440.dp)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0xF21C1C1E))
+                    .background(Color(0xF2271C2F))
                     .border(1.dp, Hairline, RoundedCornerShape(24.dp))
                     .padding(vertical = 28.dp)
             ) {
@@ -246,7 +249,7 @@ private fun TrackMenuItem(
 
     // White platter on focus; quiet text otherwise. Selection is the checkmark.
     val textColor = when {
-        isFocused  -> Color.Black
+        isFocused  -> TextOnFocus
         isSelected -> Color.White
         else       -> if (isSupported) TextPrimary.copy(alpha = 0.82f) else TextMuted
     }
@@ -261,8 +264,8 @@ private fun TrackMenuItem(
             .onFocusChanged { isFocused = it.isFocused },
         colors   = ClickableSurfaceDefaults.colors(
             containerColor        = Color.Transparent,
-            focusedContainerColor = Color.White,
-            pressedContainerColor = Color(0xFFD1D1D6)
+            focusedContainerColor = ChipFocused,
+            pressedContainerColor = FocusPressed
         ),
         shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
         scale    = ClickableSurfaceDefaults.scale(focusedScale = 1.02f),
@@ -302,7 +305,7 @@ private fun TrackMenuItem(
                     Text(
                         text  = sublabel,
                         style = IpxTypography.LabelSmall,
-                        color = if (isFocused) Color.Black.copy(alpha = 0.6f) else TextSecondary
+                        color = if (isFocused) TextOnFocus.copy(alpha = 0.6f) else TextSecondary
                     )
                 }
             }

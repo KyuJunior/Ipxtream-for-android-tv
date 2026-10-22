@@ -96,6 +96,7 @@ import com.ipxtream.tv.ui.theme.Hairline
 import com.ipxtream.tv.ui.theme.IpxMotion
 import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.dashboard.components.PremiumButton
+import com.ipxtream.tv.ui.theme.SurfaceElevated2
 
 /**
  * Embedded player composable — the root of the Phase 4 player panel, now
@@ -468,7 +469,7 @@ fun PlayerPanel(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xE61C1C1E))
+                        .background(Color(0xE6271C2F))
                         .border(BorderStroke(1.dp, GlassStroke), RoundedCornerShape(18.dp))
                         .padding(start = 12.dp, end = 22.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -478,7 +479,7 @@ fun PlayerPanel(
                         modifier = Modifier
                             .size(width = 88.dp, height = 56.dp)
                             .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0xFF2C2C2E)),
+                            .background(SurfaceElevated2),
                         contentAlignment = Alignment.Center
                     ) {
                         if (!stream.streamIcon.isNullOrBlank()) {

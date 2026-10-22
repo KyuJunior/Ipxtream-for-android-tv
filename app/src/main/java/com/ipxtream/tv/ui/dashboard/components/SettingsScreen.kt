@@ -47,6 +47,13 @@ import com.ipxtream.tv.BuildConfig
 import com.ipxtream.tv.data.local.*
 import com.ipxtream.tv.ui.dashboard.DashboardUiState
 import com.ipxtream.tv.ui.theme.*
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.BorderFocus
+import com.ipxtream.tv.ui.theme.AccentRed
+import com.ipxtream.tv.ui.theme.SlateDeep
+import com.ipxtream.tv.ui.theme.SlateCard
+import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.AccentCyan
 
 enum class SettingsCategory(@StringRes val titleRes: Int, val icon: ImageVector) {
     GENERAL(R.string.settings_cat_general, Icons.Rounded.Palette),
@@ -241,7 +248,7 @@ fun SettingsScreen(
                                         if (isSelected) BorderStroke(1.dp, AccentCyan.copy(alpha = 0.4f)) else BorderStroke(0.dp, Color.Transparent),
                                         shape = RoundedCornerShape(8.dp)
                                     ),
-                                    focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(8.dp))
+                                    focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(8.dp))
                                 )
                             ) {
                                 Row(
@@ -661,9 +668,9 @@ private fun AccountsSettingsContent(
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
             modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
         ) {
-            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
+            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextOnFocus)
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.accounts_add), fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.accounts_add), fontSize = 12.sp, color = TextOnFocus, fontWeight = FontWeight.Bold)
         }
     }
 
@@ -731,7 +738,7 @@ private fun AccountsSettingsContent(
                                     onClick = { onSwitchAccount(account.server, account.username) },
                                     modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus }
                                 ) {
-                                    Text(stringResource(R.string.accounts_switch), fontSize = 11.sp, color = Color.Black)
+                                    Text(stringResource(R.string.accounts_switch), fontSize = 11.sp, color = TextOnFocus)
                                 }
                             }
                             if (!isDefault) {
@@ -903,7 +910,7 @@ private fun AboutSettingsContent(
                         onClick = onDownloadUpdate,
                         modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
                     ) {
-                        Text(stringResource(R.string.update_download), color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.update_download), color = TextOnFocus, fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = onDismissUpdate,
@@ -1022,7 +1029,7 @@ private fun SettingToggleItem(
         ),
         border = ClickableSurfaceDefaults.border(
             border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(10.dp)),
-            focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(10.dp))
+            focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(10.dp))
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.02f)
     ) {
@@ -1054,7 +1061,7 @@ private fun SettingToggleItem(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(CircleShape)
-                        .background(if (isChecked) Color.Black else Color.White.copy(alpha = 0.6f))
+                        .background(if (isChecked) TextOnFocus else Color.White.copy(alpha = 0.6f))
                 )
             }
         }
@@ -1108,7 +1115,7 @@ private fun <T> SettingSelectorItem(
                             if (isOptionSelected) BorderStroke(1.dp, AccentCyan) else BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                             shape = RoundedCornerShape(6.dp)
                         ),
-                        focusedBorder = Border(BorderStroke(2.dp, Color.White), shape = RoundedCornerShape(6.dp))
+                        focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(6.dp))
                     ),
                     scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f)
                 ) {
@@ -1122,14 +1129,14 @@ private fun <T> SettingSelectorItem(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = if (isOptionFocused) Color.Black else AccentCyan
+                                tint = if (isOptionFocused) TextOnFocus else AccentCyan
                             )
                         }
                         Text(
                             text = labelProvider(option),
                             fontSize = 12.sp,
                             fontWeight = if (isOptionSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isOptionFocused && isOptionSelected) Color.Black else if (isOptionSelected) AccentCyan else TextPrimary
+                            color = if (isOptionFocused && isOptionSelected) TextOnFocus else if (isOptionSelected) AccentCyan else TextPrimary
                         )
                     }
                 }
@@ -1160,7 +1167,7 @@ private fun SettingActionItem(
         ),
         border = ClickableSurfaceDefaults.border(
             border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(10.dp)),
-            focusedBorder = Border(BorderStroke(2.dp, if (isDestructive) Color.Red else Color.White), shape = RoundedCornerShape(10.dp))
+            focusedBorder = Border(BorderStroke(2.dp, if (isDestructive) AccentRed else BorderFocus), shape = RoundedCornerShape(10.dp))
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.02f)
     ) {
@@ -1213,7 +1220,7 @@ private fun LegalInfoDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xE608080C))
+            .background(Color(0xE60D0811))
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -1284,7 +1291,7 @@ private fun LegalInfoDialog(
                         Text(
                             text = stringResource(R.string.action_close),
                             style = IpxTypography.BodyMedium,
-                            color = Color.Black,
+                            color = TextOnFocus,
                             fontWeight = FontWeight.Bold
                         )
                     }

@@ -2,75 +2,85 @@ package com.ipxtream.tv.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─── Canvas & Surfaces (cinematic black, Apple-style neutral greys) ──────────
+// Brand palette from الهوية البصرية/ (Ember / Orchid / Halo / Night). The token names are the
+// pre-rebrand ones, kept so every screen picks up the new values without a rename; e.g.
+// `AccentCyan` is now Ember and `ChipFocused` / `BorderFocus` are Halo.
 
-/** Pure black canvas — primary background of every screen. */
-val SlateDeep        = Color(0xFF000000)
-/** Main surface background for content areas — pure black. */
-val SlatePrimary     = Color(0xFF000000)
-/** Resting card surface on the black canvas. */
-val SlateCard        = Color(0xFF161618)
-/** Raised glass surface — dialogs, focused panels. */
-val SlateGlass       = Color(0xEE1C1C1E)
+// ─── Canvas & Surfaces (plum-tinted Night neutrals) ──────────────────────────
+
+/** Night 950 canvas — primary background of every screen. Not #000: avoids blooming on LCDs. */
+val SlateDeep        = Color(0xFF0D0811)
+/** Main surface background for content areas. */
+val SlatePrimary     = Color(0xFF0D0811)
+/** Resting card surface on the canvas (Night 850). */
+val SlateCard        = Color(0xFF1D1424)
+/** Raised glass surface — dialogs, focused panels (Night 800). */
+val SlateGlass       = Color(0xEE271C2F)
 /** Sidebar / nav panel background. */
-val SlateNav         = Color(0xFF000000)
-/** Elevated surface, one step above [SlateCard]. */
-val SurfaceElevated  = Color(0xFF1C1C1E)
-/** Elevated surface, two steps above [SlateCard]. */
-val SurfaceElevated2 = Color(0xFF2C2C2E)
+val SlateNav         = Color(0xFF0D0811)
+/** Elevated surface, one step above [SlateCard] (Night 800). */
+val SurfaceElevated  = Color(0xFF271C2F)
+/** Elevated surface, two steps above [SlateCard] (Night 700). */
+val SurfaceElevated2 = Color(0xFF362A40)
 
-// ─── Glass material ───────────────────────────────────────────────────────────
+// ─── Glass material (Halo-tinted) ─────────────────────────────────────────────
 
 /** Translucent fill for glass buttons and chips at rest. */
-val GlassFill        = Color(0x2EFFFFFF)
+val GlassFill        = Color(0x2EFFF4EA)
 /** Translucent fill for glass elements while focused. */
-val GlassFillFocused = Color(0x4DFFFFFF)
+val GlassFillFocused = Color(0x4DFFF4EA)
 /** 1dp stroke that defines the edge of a glass element. */
-val GlassStroke      = Color(0x33FFFFFF)
+val GlassStroke      = Color(0x33FFE6D1)
 /** Hairline separators and resting card outlines. */
-val Hairline         = Color(0x1AFFFFFF)
+val Hairline         = Color(0x1AFFE6D1)
 
 // ─── Accent ───────────────────────────────────────────────────────────────────
 
-/** Primary accent (system blue) — active states, progress, links. */
-val AccentCyan       = Color(0xFF0A84FF)
-/** Dimmed accent — unfocused active item indicator. */
-val AccentCyanDim    = Color(0xFF0060C7)
+/** Primary accent — Ember. Active states, progress, primary buttons. Put [TextOnAccent] on it, never white. */
+val AccentCyan       = Color(0xFFFF6A2B)
+/** Dimmed accent — unfocused active item indicator (Ember 700). */
+val AccentCyanDim    = Color(0xFFB83D12)
 /** Semi-transparent accent glow. */
-val AccentCyanGlow   = Color(0x550A84FF)
-/** Warm yellow — ratings and warnings. */
-val AccentAmber      = Color(0xFFFFD60A)
-/** Green — "Live" / "New" badges. */
-val AccentGreen      = Color(0xFF30D158)
-/** Red — live indicator dot and destructive actions. */
-val AccentRed        = Color(0xFFFF453A)
+val AccentCyanGlow   = Color(0x55FF6A2B)
+/** Secondary accent — Orchid. */
+val AccentOrchid     = Color(0xFFB488FF)
+/** Saffron — ratings and warnings. */
+val AccentAmber      = Color(0xFFFFC23D)
+/** Jade — "New" badges, success. */
+val AccentGreen      = Color(0xFF34D69C)
+/** Rose — live indicator dot and destructive actions. */
+val AccentRed        = Color(0xFFFF5470)
 
 // ─── Text ─────────────────────────────────────────────────────────────────────
 
-/** Primary text — soft white, easier on the eye than #FFFFFF at 10 feet. */
-val TextPrimary      = Color(0xFFF5F5F7)
-/** Secondary text — metadata, subtitles, descriptions. */
-val TextSecondary    = Color(0xFFA1A1A6)
-/** Muted text — timestamps, less important labels. */
-val TextMuted        = Color(0xFF6E6E73)
-/** Text on filled accent elements. */
-val TextOnAccent     = Color(0xFFFFFFFF)
+/** Primary text — Night 50, softer than #FFFFFF at 10 feet. */
+val TextPrimary      = Color(0xFFF8F4F6)
+/** Secondary text — metadata, subtitles, descriptions (Night 300). */
+val TextSecondary    = Color(0xFFB8ACBE)
+/** Muted text — timestamps, less important labels (Night 400). */
+val TextMuted        = Color(0xFF8F8296)
+/** Text on filled Ember / status elements (Night 950). */
+val TextOnAccent     = Color(0xFF0D0811)
+/** Text and icons on the Halo focus platter (Night 950). */
+val TextOnFocus      = Color(0xFF0D0811)
 
 // ─── UI Elements ─────────────────────────────────────────────────────────────
 
-/** Divider and border lines. */
-val BorderSubtle     = Color(0xFF2C2C2E)
-/** Focused element border colour. */
-val BorderFocus      = Color(0xFFFFFFFF)
-/** Unfocused category chip fill. */
-val ChipBackground   = Color(0xFF2C2C2E)
-/** Focused chip fill. */
-val ChipFocused      = Color(0xFFFFFFFF)
-/** Watched-progress fill on posters and the player scrubber. */
-val ProgressWatched  = Color(0xFFFFFFFF)
+/** Divider and border lines (Night 700). */
+val BorderSubtle     = Color(0xFF362A40)
+/** Focused element border colour (Halo). */
+val BorderFocus      = Color(0xFFFFE6D1)
+/** Unfocused category chip fill (Night 700). */
+val ChipBackground   = Color(0xFF362A40)
+/** Focus platter for buttons, chips and menu items (Halo). */
+val ChipFocused      = Color(0xFFFFE6D1)
+/** Focus platter while pressed (Halo 300). */
+val FocusPressed     = Color(0xFFFFD2AE)
+/** Watched-progress fill on posters and the player scrubber (Ember). */
+val ProgressWatched  = Color(0xFFFF6A2B)
 /** Track behind [ProgressWatched]. */
-val ProgressRail     = Color(0x4DFFFFFF)
+val ProgressRail     = Color(0x40FFE6D1)
 /** Skeleton loading shimmer base. */
-val ShimmerBase      = Color(0xFF161618)
+val ShimmerBase      = Color(0xFF1D1424)
 /** Skeleton loading shimmer highlight. */
-val ShimmerHighlight = Color(0xFF2C2C2E)
+val ShimmerHighlight = Color(0xFF362A40)

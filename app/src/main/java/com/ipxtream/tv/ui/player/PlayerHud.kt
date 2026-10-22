@@ -105,6 +105,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.FocusPressed
+import com.ipxtream.tv.ui.theme.ProgressWatched
 
 private val HudSidePadding = 64.dp
 private val TnumStyle = IpxTypography.BodyLarge.copy(fontFeatureSettings = "tnum")
@@ -487,11 +491,11 @@ private fun Scrubber(
                 drawRoundRect(Color.White.copy(alpha = 0.22f), Offset(0f, y - h / 2), Size(w, h), r)
                 drawRoundRect(Color.White.copy(alpha = 0.38f), Offset(0f, y - h / 2), Size(w * buffered.coerceIn(0f, 1f), h), r)
                 val x = w * fractionOf(displayMs())
-                drawRoundRect(Color.White, Offset(0f, y - h / 2), Size(x, h), r)
+                drawRoundRect(ProgressWatched, Offset(0f, y - h / 2), Size(x, h), r)
                 val t = thumbSize.toPx() / 2f
                 if (halo > 0f) drawCircle(Color.White.copy(alpha = 0.22f * halo), radius = t * 1.9f, center = Offset(x, y))
                 drawCircle(Color.Black.copy(alpha = 0.35f), radius = t + 1.5f, center = Offset(x, y + 1.5f))
-                drawCircle(Color.White, radius = t, center = Offset(x, y))
+                drawCircle(ChipFocused, radius = t, center = Offset(x, y))
             }
     ) {
         // Time bubble riding above the thumb while the timeline has focus.
@@ -513,7 +517,7 @@ private fun Scrubber(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xE61C1C1E))
+                        .background(Color(0xE6271C2F))
                         .border(1.dp, GlassStroke, RoundedCornerShape(10.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -713,10 +717,10 @@ private fun HudButton(
             colors = ClickableSurfaceDefaults.colors(
                 containerColor        = Color.White.copy(alpha = if (size > 56.dp) 0.16f else 0f),
                 contentColor          = Color.White,
-                focusedContainerColor = Color.White,
-                focusedContentColor   = Color.Black,
-                pressedContainerColor = Color(0xFFD1D1D6),
-                pressedContentColor   = Color.Black
+                focusedContainerColor = ChipFocused,
+                focusedContentColor   = TextOnFocus,
+                pressedContainerColor = FocusPressed,
+                pressedContentColor   = TextOnFocus
             ),
             border = ClickableSurfaceDefaults.border(border = Border.None, focusedBorder = Border.None),
             glow   = ClickableSurfaceDefaults.glow(glow = Glow.None, focusedGlow = Glow.None),

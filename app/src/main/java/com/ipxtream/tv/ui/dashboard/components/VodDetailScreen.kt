@@ -55,6 +55,11 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.SlateDeep
+import com.ipxtream.tv.ui.theme.SlateCard
+import com.ipxtream.tv.ui.theme.TextOnAccent
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -107,7 +112,7 @@ fun VodDetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF07090E))
+            .background(SlateDeep)
             .focusProperties { canFocus = !isPlayerOpen }
             .onPreviewKeyEvent { keyEvent ->
                 if (!isPlayerOpen && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
@@ -132,10 +137,10 @@ fun VodDetailScreen(
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.horizontalGradient(
-                    0.0f to Color(0xFF07090E),
-                    0.48f to Color(0xEE07090E),
-                    0.75f to Color(0x7707090E),
-                    1.0f to Color(0x1807090E)
+                    0.0f to SlateDeep,
+                    0.48f to SlateDeep.copy(alpha = 0xEE / 255f),
+                    0.75f to SlateDeep.copy(alpha = 0x77 / 255f),
+                    1.0f to SlateDeep.copy(alpha = 0x18 / 255f)
                 )
             )
         )
@@ -143,10 +148,10 @@ fun VodDetailScreen(
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    0.0f to Color(0x66000000),
+                    0.0f to SlateDeep.copy(alpha = 0x66 / 255f),
                     0.25f to Color.Transparent,
-                    0.7f to Color(0x4407090E),
-                    1.0f to Color(0xFF07090E)
+                    0.7f to SlateDeep.copy(alpha = 0x44 / 255f),
+                    1.0f to SlateDeep
                 )
             )
         )
@@ -201,7 +206,7 @@ fun VodDetailScreen(
                         Text(
                             text       = year,
                             style      = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
-                            color      = Color(0xFFCBD5E1),
+                            color      = Color(0xFFD9D0DC),
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
@@ -348,7 +353,7 @@ fun VodDetailScreen(
                     Text(
                         text       = plot ?: stringResource(R.string.no_synopsis),
                         style      = IpxTypography.BodyMedium.copy(fontSize = 15.sp, lineHeight = 23.sp),
-                        color      = Color(0xFFBAC7D5),
+                        color      = TextSecondary,
                         maxLines   = 4,
                         overflow   = TextOverflow.Ellipsis
                     )
@@ -431,7 +436,7 @@ fun VodDetailScreen(
                         .height(420.dp)
                         .clip(RoundedCornerShape(18.dp))
                         .border(1.5.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(18.dp))
-                        .background(Color(0xFF10141E))
+                        .background(SlateCard)
                 ) {
                     AsyncImage(
                         model              = posterUrl,
@@ -478,17 +483,17 @@ private fun VodActionButton(
         modifier = modifier,
         colors = if (isPrimary) {
             ButtonDefaults.colors(
-                containerColor        = Color(0xEBFFFFFF),
-                contentColor          = Color.Black,
-                focusedContainerColor = Color.White,
-                focusedContentColor   = Color.Black
+                containerColor        = AccentCyan,
+                contentColor          = TextOnAccent,
+                focusedContainerColor = ChipFocused,
+                focusedContentColor   = TextOnFocus
             )
         } else {
             ButtonDefaults.colors(
                 containerColor        = Color(0x2EFFFFFF),
                 contentColor          = Color.White,
-                focusedContainerColor = Color.White,
-                focusedContentColor   = Color.Black
+                focusedContainerColor = ChipFocused,
+                focusedContentColor   = TextOnFocus
             )
         },
         shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),

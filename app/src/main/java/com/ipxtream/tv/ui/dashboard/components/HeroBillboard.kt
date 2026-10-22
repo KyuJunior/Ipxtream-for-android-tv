@@ -82,6 +82,10 @@ import com.ipxtream.tv.ui.theme.IpxSpacing
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.FocusPressed
+import com.ipxtream.tv.ui.theme.SlateDeep
 
 // =============================================================================
 //  Model
@@ -249,23 +253,23 @@ fun HeroBackdrop(
         Box(
             Modifier.fillMaxHeight().fillMaxWidth(0.7f).background(
                 Brush.horizontalGradient(
-                    0f to Color(0xF2000000),
-                    0.54f to Color(0xA6000000),
+                    0f to SlateDeep.copy(alpha = 0xF2 / 255f),
+                    0.54f to SlateDeep.copy(alpha = 0xA6 / 255f),
                     1f to Color.Transparent
                 )
             )
         )
         Box(
             Modifier.fillMaxWidth().fillMaxHeight(0.22f).background(
-                Brush.verticalGradient(0f to Color(0x99000000), 1f to Color.Transparent)
+                Brush.verticalGradient(0f to SlateDeep.copy(alpha = 0x99 / 255f), 1f to Color.Transparent)
             )
         )
         Box(
             Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.45f).background(
                 Brush.verticalGradient(
                     0f to Color.Transparent,
-                    0.67f to Color(0xCC000000),
-                    1f to Color.Black
+                    0.67f to SlateDeep.copy(alpha = 0xCC / 255f),
+                    1f to SlateDeep
                 )
             )
         )
@@ -483,10 +487,10 @@ fun PremiumButton(
         colors   = ClickableSurfaceDefaults.colors(
             containerColor        = GlassFill,
             contentColor          = Color.White,
-            focusedContainerColor = Color.White,
-            focusedContentColor   = Color.Black,
-            pressedContainerColor = Color(0xFFD1D1D6),
-            pressedContentColor   = Color.Black
+            focusedContainerColor = ChipFocused,
+            focusedContentColor   = TextOnFocus,
+            pressedContainerColor = FocusPressed,
+            pressedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
             border        = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape),
@@ -526,8 +530,8 @@ fun GlassIconButton(
         colors   = ClickableSurfaceDefaults.colors(
             containerColor        = GlassFill,
             contentColor          = Color.White,
-            focusedContainerColor = Color.White,
-            focusedContentColor   = Color.Black
+            focusedContainerColor = ChipFocused,
+            focusedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
             border        = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = CircleShape),

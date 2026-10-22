@@ -126,6 +126,10 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.border
 import androidx.compose.ui.unit.sp
 import com.ipxtream.tv.ui.theme.SlateGlass
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.BorderFocus
+import com.ipxtream.tv.ui.theme.AccentRed
+import com.ipxtream.tv.ui.theme.ProgressWatched
 
 private val GRID_COLUMNS_LIVE   = GridCells.Fixed(3)          // narrower when player is visible
 private val GRID_COLUMNS_POSTER = GridCells.Adaptive(minSize = 140.dp)
@@ -633,7 +637,7 @@ fun DashboardScreen(
                                             title = stringResource(R.string.home_tile_live),
                                             subtitle = stringResource(R.string.home_tile_live_sub),
                                             icon = Icons.Rounded.Tv,
-                                            themeColor = Color(0xFFFF453A),
+                                            themeColor = AccentRed,
                                             onClick = { onSectionSelected(ContentSection.LIVE) },
                                             modifier = Modifier
                                                 .weight(1f)
@@ -652,7 +656,7 @@ fun DashboardScreen(
                                             title = stringResource(R.string.section_movies),
                                             subtitle = stringResource(R.string.home_tile_movies_sub),
                                             icon = Icons.Rounded.Movie,
-                                            themeColor = Color(0xFF0A84FF),
+                                            themeColor = Color(0xFFA574FF),
                                             onClick = { onSectionSelected(ContentSection.VOD) },
                                             modifier = Modifier
                                                 .weight(1f)
@@ -663,7 +667,7 @@ fun DashboardScreen(
                                             title = stringResource(R.string.home_tile_series),
                                             subtitle = stringResource(R.string.home_tile_series_sub),
                                             icon = Icons.Rounded.Slideshow,
-                                            themeColor = Color(0xFFFF9F0A),
+                                            themeColor = AccentCyan,
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
                                             modifier = Modifier
                                                 .weight(1f)
@@ -1054,7 +1058,7 @@ fun DashboardScreen(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xE61C1C1E))
+                    .background(Color(0xE6271C2F))
                     .padding(horizontal = 22.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1120,7 +1124,7 @@ fun DashboardScreen(
                             Text(stringResource(R.string.downloading_pct, (progress * 100).toInt()), style = IpxTypography.BodyMedium, color = TextSecondary)
                             LinearProgressIndicator(
                                 progress = { progress },
-                                color = Color.White,
+                                color = ProgressWatched,
                                 trackColor = Color.White.copy(alpha = 0.2f),
                                 strokeCap = StrokeCap.Round,
                                 modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp))
@@ -1370,7 +1374,7 @@ private fun LibrarySection(
                 scale = androidx.tv.material3.CardDefaults.scale(focusedScale = 1.02f),
                 border = androidx.tv.material3.CardDefaults.border(
                     border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)), shape = RoundedCornerShape(12.dp)),
-                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(12.dp))
+                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
                 )
             ) {
                 Row(
@@ -1405,7 +1409,7 @@ private fun LibrarySection(
                                 .background(AccentCyan)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text(stringResource(R.string.update_download), color = Color.Black, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.update_download), color = TextOnFocus, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Box(
@@ -1540,7 +1544,7 @@ private fun LibraryCard(
                     focusedContainerColor = SlateGlass
                 ),
                 border = androidx.tv.material3.CardDefaults.border(
-                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, Color.White), shape = RoundedCornerShape(12.dp))
+                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
                 )
             ) {
                 Box(Modifier.fillMaxSize()) {
@@ -1558,7 +1562,7 @@ private fun LibraryCard(
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, Color(0xEE0B1520))
+                                    colors = listOf(Color.Transparent, SlateDeep.copy(alpha = 0xEE / 255f))
                                 )
                             )
                     )

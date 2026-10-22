@@ -51,8 +51,8 @@ private val IpxDarkColors = darkColorScheme(
     onSurface        = TextPrimary,
     onSurfaceVariant = TextSecondary,
     outline          = BorderSubtle,
-    error            = Color(0xFFFF5555),
-    onError          = Color.White
+    error            = AccentRed,
+    onError          = TextOnAccent
 )
 
 // ─── Theme Composable ─────────────────────────────────────────────────────────

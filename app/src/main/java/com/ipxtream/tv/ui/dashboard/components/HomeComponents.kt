@@ -39,6 +39,12 @@ import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
 import com.ipxtream.tv.ui.theme.*
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.SlateCard
+import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.ProgressWatched
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -150,8 +156,8 @@ fun HeaderIconButton(
         colors = ClickableSurfaceDefaults.colors(
             containerColor = Color.White.copy(alpha = 0.06f),
             contentColor = tint,
-            focusedContainerColor = Color.White,
-            focusedContentColor = Color.Black
+            focusedContainerColor = ChipFocused,
+            focusedContentColor = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
             border = Border(BorderStroke(1.dp, Hairline), shape = CircleShape),
@@ -207,7 +213,7 @@ fun UserProfileCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Brush.verticalGradient(listOf(Color(0xFFA1A1A6), Color(0xFF636366)))),
+                    .background(Brush.verticalGradient(listOf(Color(0xFFB488FF), Color(0xFF6E3BD0)))),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

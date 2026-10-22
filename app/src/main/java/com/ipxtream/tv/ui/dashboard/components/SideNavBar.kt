@@ -84,6 +84,9 @@ import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateNav
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.FocusPressed
 
 /**
  * Data representation of a section item in the side navigation drawer.
@@ -140,7 +143,7 @@ fun SideNavBar(
             }
             .fillMaxHeight()
             .background(
-                if (isExpanded) Brush.horizontalGradient(listOf(Color(0xFA0A0A0B), Color(0xF0111113)))
+                if (isExpanded) Brush.horizontalGradient(listOf(Color(0xFA0D0811), Color(0xF0150E1B)))
                 else Brush.horizontalGradient(listOf(SlateNav, SlateNav))
             )
             .drawBehind {
@@ -243,7 +246,7 @@ private fun NavItem(
     )
 
     val contentColor = when {
-        isFocused -> Color.Black
+        isFocused -> TextOnFocus
         isActive  -> Color.White
         else      -> TextSecondary
     }
@@ -282,7 +285,7 @@ private fun NavItem(
             .semantics { role = Role.Tab },
         colors = ClickableSurfaceDefaults.colors(
             containerColor        = containerColor,
-            focusedContainerColor = Color.White
+            focusedContainerColor = ChipFocused
         ),
         border = ClickableSurfaceDefaults.border(
             border        = Border.None,
@@ -333,13 +336,13 @@ private fun BrandGlyph(size: androidx.compose.ui.unit.Dp) {
         modifier = Modifier
             .size(size)
             .clip(RoundedCornerShape(size * 0.28f))
-            .background(Brush.verticalGradient(listOf(Color.White, Color(0xFFD1D1D6)))),
+            .background(Brush.verticalGradient(listOf(ChipFocused, FocusPressed))),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             imageVector = Icons.Rounded.PlayArrow,
             contentDescription = null,
-            tint = Color.Black,
+            tint = TextOnFocus,
             modifier = Modifier.size(size * 0.62f)
         )
     }

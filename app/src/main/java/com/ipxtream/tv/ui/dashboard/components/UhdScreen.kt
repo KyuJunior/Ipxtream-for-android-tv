@@ -56,6 +56,9 @@ import com.ipxtream.tv.ui.theme.IpxSpacing
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.ProgressWatched
 
 private enum class UhdKind { MOVIES, SERIES }
 
@@ -341,8 +344,8 @@ private fun PillChip(
         colors   = ClickableSurfaceDefaults.colors(
             containerColor        = if (selected) Color(0x33FFFFFF) else Color.Transparent,
             contentColor          = if (selected) Color.White else TextSecondary,
-            focusedContainerColor = Color.White,
-            focusedContentColor   = Color.Black
+            focusedContainerColor = ChipFocused,
+            focusedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
             border        = if (selected || !quiet) Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape) else Border.None,
@@ -394,7 +397,7 @@ private fun ScanStatus(scan: UhdScanState, onScanLibrary: () -> Unit, onStopScan
                     Modifier
                         .fillMaxHeight()
                         .fillMaxWidth((scan.checked.toFloat() / scan.total).coerceIn(0f, 1f))
-                        .background(Color.White)
+                        .background(ProgressWatched)
                 )
             }
         }
