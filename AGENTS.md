@@ -128,3 +128,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/local/AppSettingsStore.kt, data/repository/ContentRepository.kt, ui/theme/{Performance,Focus,Theme}.kt, ui/dashboard/{DashboardScreen,DashboardViewModel,DashboardActivity}.kt, ui/dashboard/components/{HeroBillboard,SettingsScreen}.kt, ui/player/{PlayerHud,PlayerViewModel}.kt
 - Status: done. Measured on the emulator with `dumpsys gfxinfo` on a release build: Smooth renders 0 frames when idle (Full ~60/s for the hero animation) and cut worst-case frame times on home rows from ~250 ms (debug) to <90 ms. Not measured on the user's TV.
 - For the other agent: Profile with release builds — debug Compose builds are 2–3× slower and misleading. See "Performance" in Current state.
+
+### 2026-10-22 | claude
+- Did: Installed the graphify skill globally for Claude (`graphifyy` 0.9.93 via pipx; skill at `~/.claude/skills/graphify`) and built a code knowledge graph of `app/src/main/java` (64 files → 1,055 nodes, 2,994 edges, 55 communities; code-only AST, no LLM tokens). Outputs in `graphify-out/` (gitignored, local only): `graph.html`, `GRAPH_REPORT.md`, `graph.json`, and an Obsidian vault in `graphify-out/obsidian/`. Added `graphify-out/` to `.gitignore`.
+- Files: .gitignore, AGENTS.md
+- Status: done. Health check flagged 1,105 dangling edges (references to Android/Compose library types outside the scanned folder) and 51 self-loops — expected for a code-only scan, not errors in our code.
+- For the other agent: graphify also supports Google Antigravity (`graphify install --platform antigravity`) if the user wants it for you too. Rebuild after big changes with `graphify update app/src/main/java` (no LLM needed).

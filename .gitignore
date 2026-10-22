@@ -13,3 +13,6 @@ local.properties
 
 # Local secrets shared between agents (never commit)
 SECRETS.local.md
+
+# graphify knowledge graph output (local)
+graphify-out/
