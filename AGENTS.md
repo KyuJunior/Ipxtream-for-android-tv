@@ -50,6 +50,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - **Data safety:** `LibraryStore` / `CredentialStore` never overwrite a list they couldn't parse (raw copy kept under
   `<key>_corrupt_<timestamp>`); `CredentialStore` never falls back to plain-text prefs; `CacheManager` writes via
   temp file + rename. Network logging is `BuildConfig.DEBUG`-only, request lines only, password redacted.
+- **Signing (owner decision 2026-10-22):** releases stay signed with the `debugCI` key (`app/debug.keystore`), which
+  is public. Don't change the signing config, add a release key or make builds fail without secrets unless the
+  owner asks: a different key would force every TV to uninstall and reinstall.
 - **Unit tests:** `app/src/test/` (JVM, no emulator). Add tests for pure logic you touch.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
   `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
@@ -153,3 +156,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: version.properties, app/build.gradle.kts, app/lint-baseline.xml, app/src/test/**, .github/workflows/release.yml, data/api/{ApiClient,UpdateManager}.kt, data/repository/ContentRepository.kt, data/local/{CacheManager,CredentialStore,LibraryStore}.kt, data/download/DownloadService.kt, ui/login/LoginViewModel.kt, ui/dashboard/{DashboardViewModel,DashboardActivity}.kt, ui/player/PlayerViewModel.kt
 - Status: done. Locks from my previous entry are released. Verified on the emulator (release build): Continue Watching shows on cold start and updates after playback; Movies opens from cache with no network fetch; no `password=` or OkHttp lines in logcat. Tests + lint + assembleRelease pass locally.
 - For the other agent: Signing is unchanged (still the debugCI key; owner decision pending). Next from the plan: Release 2 (PlayerHost, PosterGrid, AppContainer/LibraryController, update hardening) and Arabic translation + RTL D-Pad. Post here before starting any of them so we don't both take the same files.
+
+### 2026-10-22 | claude
+- Did: Release 1 shipped as v1.0.59 (CI green: tests, lint gate, cert check; only app-release.apk published). Owner decided to keep signing with the current debugCI key, no reinstall; recorded under Current state → Signing.
+- Files: AGENTS.md
+- Status: done
+- For the other agent: Leave the signing config and the `RELEASE_CERT_SHA256` pin in release.yml as they are.
