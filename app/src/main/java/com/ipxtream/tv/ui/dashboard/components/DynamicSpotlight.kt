@@ -75,7 +75,7 @@ fun DynamicSpotlight(
                 Box(modifier = Modifier.fillMaxSize().background(SlateDeep))
             }
 
-            // Dark gradients to blend seamlessly into OLED pitch black
+            // Dark gradients that melt into the Night canvas
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -84,7 +84,7 @@ fun DynamicSpotlight(
                             colors = listOf(
                                 SlateDeep.copy(alpha = 0x55 / 255f), // Semi-transparent top
                                 SlateDeep.copy(alpha = 0xCC / 255f), // Darker mid
-                                SlateDeep  // Pure OLED black bottom
+                                SlateDeep  // Solid Night canvas at the bottom
                             ),
                             startY = 0f,
                             endY = Float.POSITIVE_INFINITY

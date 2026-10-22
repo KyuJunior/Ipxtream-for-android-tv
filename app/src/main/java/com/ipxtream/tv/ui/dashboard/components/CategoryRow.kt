@@ -39,7 +39,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 
 private val ChipShape = RoundedCornerShape(50)
 
@@ -47,7 +47,7 @@ private val ChipShape = RoundedCornerShape(50)
  * Horizontal scrollable row of category filter chips.
  *
  * The first chip is always "All" (selectedCategoryId == null).
- * When a chip is selected, it fills with [AccentCyan] and the text turns dark.
+ * When a chip is selected, it fills with [Accent] and the text turns dark.
  * When focused (but not selected), the chip shows a cyan border + slight scale.
  *
  * ### D-Pad:

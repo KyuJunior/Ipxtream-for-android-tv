@@ -47,6 +47,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.Hairline
 import com.ipxtream.tv.ui.theme.IpxMotion
 import androidx.compose.foundation.border
@@ -141,7 +142,7 @@ fun TrackSelectionMenu(
                     .widthIn(min = 360.dp, max = 440.dp)
                     .fillMaxHeight()
                     .clip(RoundedCornerShape(24.dp))
-                    .background(Color(0xF2271C2F))
+                    .background(SurfaceElevated.copy(alpha = 0xF2 / 255f))
                     .border(1.dp, Hairline, RoundedCornerShape(24.dp))
                     .padding(vertical = 28.dp)
             ) {
@@ -247,7 +248,7 @@ private fun TrackMenuItem(
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    // White platter on focus; quiet text otherwise. Selection is the checkmark.
+    // Halo platter on focus; quiet text otherwise. Selection is the checkmark.
     val textColor = when {
         isFocused  -> TextOnFocus
         isSelected -> Color.White

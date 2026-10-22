@@ -48,7 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.SlateGlass

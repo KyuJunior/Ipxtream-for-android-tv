@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.bidi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -121,7 +122,7 @@ private val TnumStyle = IpxTypography.BodyLarge.copy(fontFeatureSettings = "tnum
  * - Bottom: a focusable scrubber (D-Pad Left/Right scrubs with acceleration, the
  *   seek commits after a short pause, a time bubble rides the thumb), elapsed and
  *   remaining time, then transport controls centred with secondary actions on the
- *   edges. Focused buttons turn into white platters and show their name underneath.
+ *   edges. Focused buttons turn into Halo platters and show their name underneath.
  * - Everything fades and glides in on the shared [IpxMotion] curves; the scrubber
  *   position is interpolated per frame so it never ticks in one-second jumps.
  */
@@ -517,7 +518,7 @@ private fun Scrubber(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xE6271C2F))
+                        .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
                         .border(1.dp, GlassStroke, RoundedCornerShape(10.dp))
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -677,7 +678,7 @@ private fun ControlsRow(
 }
 
 /**
- * Round transport button. Transparent at rest, white platter with a black glyph on
+ * Round transport button. Transparent at rest, Halo platter with a dark glyph on
  * focus, a spring scale, and its name revealed underneath without shifting layout.
  */
 @OptIn(ExperimentalTvMaterial3Api::class)

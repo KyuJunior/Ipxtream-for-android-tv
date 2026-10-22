@@ -69,8 +69,8 @@ import androidx.tv.material3.Button
 import androidx.tv.material3.ButtonDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
-import com.ipxtream.tv.ui.theme.AccentCyan
-import com.ipxtream.tv.ui.theme.AccentCyanGlow
+import com.ipxtream.tv.ui.theme.Accent
+import com.ipxtream.tv.ui.theme.AccentGlow
 import com.ipxtream.tv.ui.theme.AccentAmber
 import com.ipxtream.tv.ui.theme.BorderSubtle
 import com.ipxtream.tv.ui.theme.IpxTypography
@@ -232,7 +232,7 @@ fun LoginScreen(
                 Spacer(Modifier.height(18.dp))
                 androidx.compose.foundation.Image(
                     painter = androidx.compose.ui.res.painterResource(R.drawable.ic_brand_wordmark),
-                    contentDescription = "IPXtream",
+                    contentDescription = androidx.compose.ui.res.stringResource(R.string.brand_name),
                     modifier = Modifier.height(30.dp)
                 )
                 Spacer(Modifier.height(6.dp))
@@ -330,19 +330,22 @@ fun LoginScreen(
             Box(
                 modifier = Modifier.graphicsLayer { alpha = btnAlpha; translationY = (1f - btnAlpha) * 15.dp.toPx() }
             ) {
+                val canSubmit = !isLoading && server.isNotBlank() && username.isNotBlank() && password.isNotBlank()
+                // Dark text belongs on the Ember fill only; the disabled fill is dark glass.
+                val onButton = if (canSubmit) TextOnAccent else TextSecondary
                 Button(
                     onClick  = {
                         if (!isLoading) onLogin(server.trim(), username.trim(), password)
                     },
-                    enabled  = !isLoading && server.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
+                    enabled  = canSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
                         .focusRequester(buttonFocuser),
                     shape    = ButtonDefaults.shape(RoundedCornerShape(50)),
                     colors   = ButtonDefaults.colors(
-                        containerColor        = AccentCyan,
-                        focusedContainerColor = AccentCyan,
+                        containerColor        = Accent,
+                        focusedContainerColor = Accent,
                         disabledContainerColor = SlateGlass
                     ),
                     scale = ButtonDefaults.scale(focusedScale = 1.03f)
@@ -355,16 +358,16 @@ fun LoginScreen(
                         ) {
                             CircularProgressIndicator(
                                 modifier  = Modifier.size(18.dp),
-                                color     = TextOnAccent,
+                                color     = onButton,
                                 strokeWidth = 2.dp
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text(stringResource(R.string.login_connecting), color = TextOnAccent, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.login_connecting), color = onButton, fontWeight = FontWeight.SemiBold)
                         }
                     } else {
                         Text(
                             stringResource(R.string.login_sign_in),
-                            color      = TextOnAccent,
+                            color      = onButton,
                             fontWeight = FontWeight.SemiBold,
                             fontSize   = 16.sp,
                             textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
@@ -413,7 +416,7 @@ private fun LoginField(
         Text(
             text  = label,
             style = IpxTypography.LabelSmall,
-            color = if (isFocused) AccentCyan else TextMuted
+            color = if (isFocused) Accent else TextMuted
         )
         Spacer(Modifier.height(6.dp))
         OutlinedTextField(
@@ -439,7 +442,7 @@ private fun LoginField(
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                             contentDescription = stringResource(if (passwordVisible) R.string.login_hide_password else R.string.login_show_password),
-                            tint = if (isFocused) AccentCyan else TextMuted
+                            tint = if (isFocused) Accent else TextMuted
                         )
                     }
                 }
@@ -447,10 +450,10 @@ private fun LoginField(
             colors = OutlinedTextFieldDefaults.colors(
                 focusedTextColor      = TextPrimary,
                 unfocusedTextColor    = TextSecondary,
-                focusedBorderColor    = AccentCyan,
+                focusedBorderColor    = Accent,
                 unfocusedBorderColor  = BorderSubtle,
-                cursorColor           = AccentCyan,
-                focusedLabelColor     = AccentCyan,
+                cursorColor           = Accent,
+                focusedLabelColor     = Accent,
                 focusedContainerColor = SlateCard.copy(alpha = 0.85f),
                 unfocusedContainerColor = SlateCard.copy(alpha = 0.4f),
                 disabledContainerColor  = SlateCard.copy(alpha = 0.1f)

@@ -41,6 +41,7 @@
     <string name="aspect_fit">ملاءمة الشاشة (الأصلي)</string>
     <string name="aspect_zoom">تكبير 16:9 (قص)</string>
     <string name="badge_live">مباشر</string>
+    <string name="brand_name">آي بي إكستريم</string>
     <string name="buffer_balanced">متوازن (موصى به)</string>
     <string name="buffer_fast_start">بدء سريع (تأخير منخفض)</string>
     <string name="buffer_high">تخزين مؤقت عالٍ (واي فاي ضعيف)</string>

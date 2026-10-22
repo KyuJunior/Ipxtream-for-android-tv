@@ -3,6 +3,8 @@ package com.ipxtream.tv.ui.dashboard
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.rounded.SystemUpdate
 import com.ipxtream.tv.ui.dashboard.components.PosterGrid
+import com.ipxtream.tv.ui.theme.SurfaceElevated
+import com.ipxtream.tv.ui.theme.AccentOrchid
 import com.ipxtream.tv.ui.theme.bidi
 import com.ipxtream.tv.R
 import androidx.compose.ui.res.stringResource
@@ -102,7 +104,7 @@ import com.ipxtream.tv.ui.dashboard.components.VodPosterCard
 import com.ipxtream.tv.ui.player.PlayerPanel
 import com.ipxtream.tv.ui.player.PlayerUiState
 import com.ipxtream.tv.ui.player.PlayerViewModel
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlatePrimary
@@ -656,7 +658,7 @@ fun DashboardScreen(
                                             title = stringResource(R.string.section_movies),
                                             subtitle = stringResource(R.string.home_tile_movies_sub),
                                             icon = Icons.Rounded.Movie,
-                                            themeColor = Color(0xFFA574FF),
+                                            themeColor = AccentOrchid,
                                             onClick = { onSectionSelected(ContentSection.VOD) },
                                             modifier = Modifier
                                                 .weight(1f)
@@ -667,7 +669,7 @@ fun DashboardScreen(
                                             title = stringResource(R.string.home_tile_series),
                                             subtitle = stringResource(R.string.home_tile_series_sub),
                                             icon = Icons.Rounded.Slideshow,
-                                            themeColor = AccentCyan,
+                                            themeColor = Accent,
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
                                             modifier = Modifier
                                                 .weight(1f)
@@ -1058,7 +1060,7 @@ fun DashboardScreen(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xE6271C2F))
+                    .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
                     .padding(horizontal = 22.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1384,7 +1386,7 @@ private fun LibrarySection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.library_app_updates), style = IpxTypography.TitleMedium, color = AccentCyan)
+                        Text(stringResource(R.string.library_app_updates), style = IpxTypography.TitleMedium, color = Accent)
                         Spacer(Modifier.height(4.dp))
                         val currentVersion = com.ipxtream.tv.BuildConfig.VERSION_NAME
                         if (uiState.isCheckingForUpdate) {
@@ -1399,17 +1401,17 @@ private fun LibrarySection(
                     if (uiState.isCheckingForUpdate) {
                         androidx.compose.material3.CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            color = AccentCyan,
+                            color = Accent,
                             strokeWidth = 2.dp
                         )
                     } else if (uiState.updateRelease != null) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(AccentCyan)
+                                .background(Accent)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text(stringResource(R.string.update_download), color = TextOnFocus, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.update_download), color = TextOnAccent, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Box(
@@ -1432,7 +1434,7 @@ private fun LibrarySection(
         } else {
             if (uiState.historyList.isNotEmpty()) {
                 item {
-                    Text(stringResource(R.string.library_resume), style = IpxTypography.TitleMedium, color = AccentCyan)
+                    Text(stringResource(R.string.library_resume), style = IpxTypography.TitleMedium, color = Accent)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1447,7 +1449,7 @@ private fun LibrarySection(
 
             if (uiState.favoritesList.isNotEmpty()) {
                 item {
-                    Text(stringResource(R.string.library_favorites), style = IpxTypography.TitleMedium, color = AccentCyan)
+                    Text(stringResource(R.string.library_favorites), style = IpxTypography.TitleMedium, color = Accent)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1587,7 +1589,7 @@ private fun LibraryCard(
                                 LinearProgressIndicator(
                                     progress = { fraction },
                                     modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
-                                    color = AccentCyan,
+                                    color = Accent,
                                     trackColor = Color.White.copy(alpha = 0.2f),
                                     strokeCap = StrokeCap.Round
                                 )

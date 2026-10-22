@@ -53,7 +53,7 @@ import com.ipxtream.tv.ui.theme.AccentRed
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.TextSecondary
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 
 enum class SettingsCategory(@StringRes val titleRes: Int, val icon: ImageVector) {
     GENERAL(R.string.settings_cat_general, Icons.Rounded.Palette),
@@ -140,13 +140,13 @@ fun SettingsScreen(
                         modifier = Modifier
                             .size(36.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(AccentCyan.copy(alpha = 0.2f)),
+                            .background(Accent.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Settings,
                             contentDescription = null,
-                            tint = AccentCyan,
+                            tint = Accent,
                             modifier = Modifier.size(22.dp)
                         )
                     }
@@ -240,12 +240,12 @@ fun SettingsScreen(
                                     },
                                 shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(8.dp)),
                                 colors = ClickableSurfaceDefaults.colors(
-                                    containerColor = if (isSelected) AccentCyan.copy(alpha = 0.15f) else Color.Transparent,
+                                    containerColor = if (isSelected) Accent.copy(alpha = 0.15f) else Color.Transparent,
                                     focusedContainerColor = Color.White.copy(alpha = 0.2f)
                                 ),
                                 border = ClickableSurfaceDefaults.border(
                                     border = Border(
-                                        if (isSelected) BorderStroke(1.dp, AccentCyan.copy(alpha = 0.4f)) else BorderStroke(0.dp, Color.Transparent),
+                                        if (isSelected) BorderStroke(1.dp, Accent.copy(alpha = 0.4f)) else BorderStroke(0.dp, Color.Transparent),
                                         shape = RoundedCornerShape(8.dp)
                                     ),
                                     focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(8.dp))
@@ -261,7 +261,7 @@ fun SettingsScreen(
                                     Icon(
                                         imageVector = category.icon,
                                         contentDescription = stringResource(category.titleRes),
-                                        tint = if (isSelected || isFocused) AccentCyan else TextSecondary,
+                                        tint = if (isSelected || isFocused) Accent else TextSecondary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Text(
@@ -482,7 +482,7 @@ private fun GeneralSettingsContent(
     )
 
     Spacer(Modifier.height(8.dp))
-    Text(stringResource(R.string.settings_side_nav_sections), style = IpxTypography.TitleMedium, color = AccentCyan)
+    Text(stringResource(R.string.settings_side_nav_sections), style = IpxTypography.TitleMedium, color = Accent)
 
     SettingToggleItem(
         title = stringResource(R.string.settings_show_whats_new),
@@ -710,10 +710,10 @@ private fun AccountsSettingsContent(
                                     Box(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(4.dp))
-                                            .background(AccentCyan.copy(alpha = 0.2f))
+                                            .background(Accent.copy(alpha = 0.2f))
                                             .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
-                                        Text(stringResource(R.string.accounts_active), fontSize = 11.sp, color = AccentCyan, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.accounts_active), fontSize = 11.sp, color = Accent, fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 if (isDefault) {
@@ -834,7 +834,7 @@ private fun AboutSettingsContent(
             .padding(16.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.about_client), style = IpxTypography.TitleMedium, color = AccentCyan)
+            Text(stringResource(R.string.about_client), style = IpxTypography.TitleMedium, color = Accent)
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                 Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), style = IpxTypography.BodySmall, color = TextPrimary)
                 Text(stringResource(R.string.about_build_type, BuildConfig.BUILD_TYPE), style = IpxTypography.BodySmall, color = TextSecondary)
@@ -867,12 +867,12 @@ private fun AboutSettingsContent(
                     Text(
                         stringResource(R.string.update_downloading_pct, (progress * 100).toInt()),
                         style = IpxTypography.BodyMedium,
-                        color = AccentCyan,
+                        color = Accent,
                         modifier = Modifier.focusRequester(progressFocus).focusable()
                     )
                     androidx.compose.material3.LinearProgressIndicator(
                         progress = { progress },
-                        color = AccentCyan,
+                        color = Accent,
                         trackColor = Color.White.copy(alpha = 0.15f),
                         strokeCap = StrokeCap.Round,
                         modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp))
@@ -972,7 +972,7 @@ private fun AboutSettingsContent(
             modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
             colors = ButtonDefaults.colors(
                 containerColor = SlateCard,
-                focusedContainerColor = AccentCyan
+                focusedContainerColor = Accent
             )
         ) {
             Text(stringResource(R.string.legal_terms_short), style = IpxTypography.BodySmall)
@@ -983,7 +983,7 @@ private fun AboutSettingsContent(
             modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
             colors = ButtonDefaults.colors(
                 containerColor = SlateCard,
-                focusedContainerColor = AccentCyan
+                focusedContainerColor = Accent
             )
         ) {
             Text(stringResource(R.string.legal_privacy_title), style = IpxTypography.BodySmall)
@@ -999,7 +999,7 @@ private fun AboutSettingsContent(
 @Composable
 private fun SectionHeader(title: String, subtitle: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-        Text(text = title, style = IpxTypography.TitleLarge, color = AccentCyan)
+        Text(text = title, style = IpxTypography.TitleLarge, color = Accent)
         Spacer(Modifier.height(2.dp))
         Text(text = subtitle, style = IpxTypography.BodySmall, color = TextMuted)
     }
@@ -1053,7 +1053,7 @@ private fun SettingToggleItem(
                     .width(48.dp)
                     .height(26.dp)
                     .clip(CircleShape)
-                    .background(if (isChecked) AccentCyan else Color.White.copy(alpha = 0.15f))
+                    .background(if (isChecked) Accent else Color.White.copy(alpha = 0.15f))
                     .padding(3.dp),
                 contentAlignment = if (isChecked) Alignment.CenterEnd else Alignment.CenterStart
             ) {
@@ -1107,12 +1107,12 @@ private fun <T> SettingSelectorItem(
                         .onFocusChanged { isOptionFocused = it.isFocused },
                     shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(6.dp)),
                     colors = ClickableSurfaceDefaults.colors(
-                        containerColor = if (isOptionSelected) AccentCyan.copy(alpha = 0.2f) else SlateDeep,
-                        focusedContainerColor = if (isOptionSelected) AccentCyan else Color.White.copy(alpha = 0.25f)
+                        containerColor = if (isOptionSelected) Accent.copy(alpha = 0.2f) else SlateDeep,
+                        focusedContainerColor = if (isOptionSelected) Accent else Color.White.copy(alpha = 0.25f)
                     ),
                     border = ClickableSurfaceDefaults.border(
                         border = Border(
-                            if (isOptionSelected) BorderStroke(1.dp, AccentCyan) else BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
+                            if (isOptionSelected) BorderStroke(1.dp, Accent) else BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
                             shape = RoundedCornerShape(6.dp)
                         ),
                         focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(6.dp))
@@ -1129,14 +1129,14 @@ private fun <T> SettingSelectorItem(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = if (isOptionFocused) TextOnFocus else AccentCyan
+                                tint = if (isOptionFocused) TextOnAccent else Accent
                             )
                         }
                         Text(
                             text = labelProvider(option),
                             fontSize = 12.sp,
                             fontWeight = if (isOptionSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isOptionFocused && isOptionSelected) TextOnFocus else if (isOptionSelected) AccentCyan else TextPrimary
+                            color = if (isOptionFocused && isOptionSelected) TextOnAccent else if (isOptionSelected) Accent else TextPrimary
                         )
                     }
                 }
@@ -1188,13 +1188,13 @@ private fun SettingActionItem(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(6.dp))
-                    .background(if (isDestructive) Color.Red.copy(alpha = 0.2f) else AccentCyan.copy(alpha = 0.15f))
+                    .background(if (isDestructive) Color.Red.copy(alpha = 0.2f) else Accent.copy(alpha = 0.15f))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = actionLabel,
                     fontSize = 12.sp,
-                    color = if (isDestructive) Color.Red else AccentCyan,
+                    color = if (isDestructive) Color.Red else Accent,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1220,7 +1220,7 @@ private fun LegalInfoDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xE60D0811))
+            .background(SlateDeep.copy(alpha = 0xE6 / 255f))
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -1253,7 +1253,7 @@ private fun LegalInfoDialog(
                     Text(
                         text = title,
                         style = IpxTypography.TitleLarge.copy(fontSize = 24.sp),
-                        color = AccentCyan
+                        color = Accent
                     )
                     Spacer(Modifier.height(16.dp))
                     Column(
@@ -1284,14 +1284,14 @@ private fun LegalInfoDialog(
                             .focusRequester(closeFocusRequester),
                         shape = ButtonDefaults.shape(RoundedCornerShape(8.dp)),
                         colors = ButtonDefaults.colors(
-                            containerColor = AccentCyan,
-                            focusedContainerColor = AccentCyan
+                            containerColor = Accent,
+                            focusedContainerColor = Accent
                         )
                     ) {
                         Text(
                             text = stringResource(R.string.action_close),
                             style = IpxTypography.BodyMedium,
-                            color = TextOnFocus,
+                            color = TextOnAccent,
                             fontWeight = FontWeight.Bold
                         )
                     }

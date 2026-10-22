@@ -49,7 +49,7 @@ import coil.compose.AsyncImage
 import com.ipxtream.tv.data.model.StreamItem
 import com.ipxtream.tv.data.model.VodInfoResponse
 import com.ipxtream.tv.ui.theme.AccentAmber
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
@@ -133,7 +133,7 @@ fun VodDetailScreen(
         )
 
         // ─── Double Cinematic Gradients ──────────────────────────────────────
-        // Horizontal: solid OLED black on the left, fading gently to reveal backdrop art on the right
+        // Horizontal: solid Night canvas on the left, fading gently to reveal backdrop art on the right
         Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.horizontalGradient(
@@ -483,7 +483,7 @@ private fun VodActionButton(
         modifier = modifier,
         colors = if (isPrimary) {
             ButtonDefaults.colors(
-                containerColor        = AccentCyan,
+                containerColor        = Accent,
                 contentColor          = TextOnAccent,
                 focusedContainerColor = ChipFocused,
                 focusedContentColor   = TextOnFocus

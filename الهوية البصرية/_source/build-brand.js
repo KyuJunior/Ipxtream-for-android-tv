@@ -5,6 +5,8 @@
 // Usage (from any folder that has the two npm packages installed):
 //   npm i harfbuzzjs@0.4.7 @resvg/resvg-js@2.6.2
 //   node build-brand.js <fontsDir> <outDir>
+// When <outDir> is the repo's الهوية البصرية folder, icon/android-res/** is also copied into
+// app/src/main/res — re-run this instead of editing those drawables by hand.
 // fontsDir must contain Lexend.ttf and ReadexPro.ttf (variable fonts from Google Fonts, OFL).
 
 const fs = require('fs');
@@ -351,7 +353,9 @@ async function main() {
   write('icon/icon-legacy-round.svg', legacy('round'));
 
   // Adaptive layers (108 × 108 dp; the mark stays inside the 66 dp safe circle).
-  const AD = 108, adMarkW = 54;   // half-diagonal of the mark ≈ 31.6 dp < 33 dp
+  // At 52 dp wide the X's outer corners, including the rounded stroke, reach ≈ 32.1 dp from the
+  // centre: inside the 33 dp safe radius, so no launcher mask clips the tips (54 dp reached ≈ 33.4).
+  const AD = 108, adMarkW = 52;
   write('icon/adaptive/ic_launcher_background.svg', svgDoc(AD, AD,
     bgGrad('bg', AD, AD) + `<rect width="${AD}" height="${AD}" fill="url(#bg)"/><rect width="${AD}" height="${AD}" fill="url(#bgg)"/>`, { title: 'Adaptive icon background' }));
   write('icon/adaptive/ic_launcher_foreground.svg', svgDoc(AD, AD, markSvg(AD / 2, AD / 2, adMarkW, P.ember[500], P.halo[200]), { title: 'Adaptive icon foreground' }));
@@ -451,6 +455,21 @@ async function main() {
   writePaletteMd();
 
   fs.writeFileSync(path.join(OUT, '_source/contrast.json'), JSON.stringify({ dark: contrastRows('dark'), light: contrastRows('light') }, null, 1));
+
+  // ─── Copy the Android resources into the app, so the app never drifts from the brand files ──
+  const appRes = path.join(OUT, '..', 'app', 'src', 'main', 'res');
+  if (fs.existsSync(appRes)) {
+    // Plain recursive copy: fs.cpSync crashes Node on Windows for this non-ASCII folder.
+    const copyDir = (src, dst) => {
+      fs.mkdirSync(dst, { recursive: true });
+      for (const e of fs.readdirSync(src, { withFileTypes: true })) {
+        const s = path.join(src, e.name), d = path.join(dst, e.name);
+        if (e.isDirectory()) copyDir(s, d); else fs.copyFileSync(s, d);
+      }
+    };
+    copyDir(path.join(OUT, 'icon', 'android-res'), appRes);
+    console.log(`copied icon/android-res → ${appRes}`);
+  }
   console.log(`${written.length} files written`);
 }
 

@@ -2,9 +2,9 @@ package com.ipxtream.tv.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Brand palette from الهوية البصرية/ (Ember / Orchid / Halo / Night). The token names are the
-// pre-rebrand ones, kept so every screen picks up the new values without a rename; e.g.
-// `AccentCyan` is now Ember and `ChipFocused` / `BorderFocus` are Halo.
+// Brand palette from الهوية البصرية/ (Ember / Orchid / Halo / Night), named by role.
+// `Accent` is Ember (put `TextOnAccent` on it); focus platters are `ChipFocused` / `BorderFocus`
+// (Halo, with `TextOnFocus` on them). Use these tokens, not raw colour literals.
 
 // ─── Canvas & Surfaces (plum-tinted Night neutrals) ──────────────────────────
 
@@ -16,6 +16,8 @@ val SlatePrimary     = Color(0xFF0D0811)
 val SlateCard        = Color(0xFF1D1424)
 /** Raised glass surface — dialogs, focused panels (Night 800). */
 val SlateGlass       = Color(0xEE271C2F)
+/** Panels a step below cards — expanded side menu, channel tiles (Night 900). */
+val SurfaceDim       = Color(0xFF150E1B)
 /** Sidebar / nav panel background. */
 val SlateNav         = Color(0xFF0D0811)
 /** Elevated surface, one step above [SlateCard] (Night 800). */
@@ -37,13 +39,15 @@ val Hairline         = Color(0x1AFFE6D1)
 // ─── Accent ───────────────────────────────────────────────────────────────────
 
 /** Primary accent — Ember. Active states, progress, primary buttons. Put [TextOnAccent] on it, never white. */
-val AccentCyan       = Color(0xFFFF6A2B)
+val Accent           = Color(0xFFFF6A2B)
 /** Dimmed accent — unfocused active item indicator (Ember 700). */
-val AccentCyanDim    = Color(0xFFB83D12)
+val AccentDim        = Color(0xFFB83D12)
 /** Semi-transparent accent glow. */
-val AccentCyanGlow   = Color(0x55FF6A2B)
+val AccentGlow       = Color(0x55FF6A2B)
 /** Secondary accent — Orchid. */
 val AccentOrchid     = Color(0xFFB488FF)
+/** Deep Orchid (Orchid 700) — gradient ends. */
+val AccentOrchidDeep = Color(0xFF6E3BD0)
 /** Saffron — ratings and warnings. */
 val AccentAmber      = Color(0xFFFFC23D)
 /** Jade — "New" badges, success. */

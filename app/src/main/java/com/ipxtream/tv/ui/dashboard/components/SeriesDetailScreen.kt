@@ -31,7 +31,7 @@ import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeasonItem
 import com.ipxtream.tv.data.model.SeriesInfoResponse
 import com.ipxtream.tv.data.model.SeriesItem
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentAmber
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextMuted

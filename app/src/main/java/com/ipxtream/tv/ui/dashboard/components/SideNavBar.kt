@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.SurfaceDim
+import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.directionalKeys
 import com.ipxtream.tv.R
 import androidx.compose.ui.res.painterResource
@@ -81,7 +83,7 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.ipxtream.tv.ui.dashboard.ContentSection
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateNav
 import com.ipxtream.tv.ui.theme.TextPrimary
@@ -144,7 +146,7 @@ fun SideNavBar(
             }
             .fillMaxHeight()
             .background(
-                if (isExpanded) Brush.horizontalGradient(listOf(Color(0xFA0D0811), Color(0xF0150E1B)))
+                if (isExpanded) Brush.horizontalGradient(listOf(SlateDeep.copy(alpha = 0xFA / 255f), SurfaceDim.copy(alpha = 0xF0 / 255f)))
                 else Brush.horizontalGradient(listOf(SlateNav, SlateNav))
             )
             .drawBehind {
@@ -180,7 +182,7 @@ fun SideNavBar(
                         BrandGlyph(size = 28.dp)
                         Image(
                             painter = painterResource(R.drawable.ic_brand_wordmark),
-                            contentDescription = "IPXtream",
+                            contentDescription = stringResource(R.string.brand_name),
                             modifier = Modifier.height(15.dp)
                         )
                     }

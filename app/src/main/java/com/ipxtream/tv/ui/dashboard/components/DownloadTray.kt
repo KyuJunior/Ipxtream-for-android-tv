@@ -48,7 +48,7 @@ import androidx.tv.material3.Text
 import com.ipxtream.tv.data.download.DownloadItem
 import com.ipxtream.tv.data.download.DownloadStatus
 import com.ipxtream.tv.ui.theme.AccentAmber
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentGreen
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateCard
@@ -120,7 +120,7 @@ fun DownloadTray(
             Text(
                 text      = "⬇ " + stringResource(R.string.section_downloads),
                 style     = IpxTypography.TitleMedium,
-                color     = AccentCyan,
+                color     = Accent,
                 fontWeight = FontWeight.SemiBold
             )
 
@@ -129,7 +129,7 @@ fun DownloadTray(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(AccentCyan)
+                        .background(Accent)
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
@@ -149,7 +149,7 @@ fun DownloadTray(
                         .weight(1f)
                         .height(4.dp)
                         .clip(RoundedCornerShape(2.dp)),
-                    color      = AccentCyan,
+                    color      = Accent,
                     trackColor = Color(0x33FFFFFF),
                     strokeCap  = StrokeCap.Round,
                     gapSize    = 0.dp,
@@ -255,7 +255,7 @@ private fun DownloadRow(
                 color      = when (item.status) {
                     DownloadStatus.COMPLETED  -> AccentGreen
                     DownloadStatus.FAILED     -> AccentAmber
-                    else                      -> AccentCyan
+                    else                      -> Accent
                 },
                 trackColor = Color(0x22FFFFFF),
                 strokeCap  = StrokeCap.Round,
@@ -311,7 +311,7 @@ private fun DownloadRow(
 private fun StatusBadge(status: DownloadStatus) {
     val (label, color) = when (status) {
         DownloadStatus.PENDING     -> stringResource(R.string.dl_queued) to TextMuted
-        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_active) to AccentCyan
+        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_active) to Accent
         DownloadStatus.PAUSED      -> stringResource(R.string.dl_paused) to AccentAmber
         DownloadStatus.COMPLETED   -> stringResource(R.string.dl_done)   to AccentGreen
         DownloadStatus.FAILED      -> stringResource(R.string.dl_failed) to AccentAmber
@@ -326,12 +326,14 @@ private fun TrayIconButton(label: String, onClick: () -> Unit) {
         onClick = onClick,
         colors  = ButtonDefaults.colors(
             containerColor        = Color(0x22FFFFFF),
-            focusedContainerColor = AccentCyan
+            contentColor          = TextPrimary,
+            focusedContainerColor = Accent,
+            focusedContentColor   = TextOnAccent
         ),
         scale   = ButtonDefaults.scale(focusedScale = 1.06f),
         modifier = Modifier.height(28.dp)
     ) {
-        Text(label, style = IpxTypography.LabelSmall, color = TextPrimary, fontSize = 11.sp)
+        Text(label, style = IpxTypography.LabelSmall, fontSize = 11.sp)
     }
 }
 

@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.SurfaceDim
 import com.ipxtream.tv.ui.theme.bidi
 import com.ipxtream.tv.R
 import androidx.compose.ui.res.stringResource
@@ -111,7 +112,7 @@ fun LiveChannelCard(
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color(0xFF271C2F), Color(0xFF150E1B))))
+                .background(Brush.verticalGradient(listOf(SurfaceElevated, SurfaceDim)))
                 .border(1.dp, Hairline, CardShape)
         ) {
             //  Channel logo / thumbnail
@@ -303,7 +304,7 @@ private fun PosterPlaceholder(title: String) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF271C2F), Color(0xFF150E1B)))),
+            .background(Brush.verticalGradient(listOf(SurfaceElevated, SurfaceDim))),
         contentAlignment = Alignment.Center
     ) {
         Text(

@@ -41,7 +41,7 @@ object IpxTypography {
 // ─── Colour Scheme ────────────────────────────────────────────────────────────
 
 private val IpxDarkColors = darkColorScheme(
-    primary          = AccentCyan,
+    primary          = Accent,
     onPrimary        = TextOnAccent,
     primaryContainer = SlateGlass,
     background       = SlateDeep,
@@ -95,7 +95,7 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
             // TV M3 theme (for Card, Surface focus states, etc.)
             TvMaterialTheme(
                 colorScheme = androidx.tv.material3.darkColorScheme(
-                    primary          = AccentCyan,
+                    primary          = Accent,
                     onPrimary        = TextOnAccent,
                     background       = SlateDeep,
                     surface          = SlatePrimary,

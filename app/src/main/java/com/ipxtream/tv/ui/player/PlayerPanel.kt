@@ -62,7 +62,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentGreen
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateDeep
@@ -469,7 +469,7 @@ fun PlayerPanel(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(18.dp))
-                        .background(Color(0xE6271C2F))
+                        .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
                         .border(BorderStroke(1.dp, GlassStroke), RoundedCornerShape(18.dp))
                         .padding(start = 12.dp, end = 22.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

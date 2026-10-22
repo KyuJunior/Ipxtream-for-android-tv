@@ -37,7 +37,7 @@ import com.ipxtream.tv.ui.theme.BorderFocus
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.TextSecondary
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -92,7 +92,7 @@ fun DownloadsScreen(
                         modifier = Modifier.focusRequester(clearButtonFocusRequester),
                         colors = ButtonDefaults.colors(
                             containerColor = Color.DarkGray.copy(alpha = 0.5f),
-                            focusedContainerColor = Color.LightGray,
+                            focusedContainerColor = ChipFocused,
                             focusedContentColor = TextOnFocus
                         )
                     ) {
@@ -216,7 +216,7 @@ private fun DownloadManagerCard(
                     color = when (item.status) {
                         DownloadStatus.COMPLETED -> AccentGreen
                         DownloadStatus.FAILED -> Color.Red
-                        else -> AccentCyan
+                        else -> Accent
                     },
                     trackColor = Color.White.copy(alpha = 0.1f),
                     strokeCap = StrokeCap.Round,
@@ -284,7 +284,7 @@ private fun DownloadManagerCard(
 private fun ScreenStatusBadge(status: DownloadStatus) {
     val (label, color) = when (status) {
         DownloadStatus.PENDING -> stringResource(R.string.dl_queued) to TextMuted
-        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_downloading) to AccentCyan
+        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_downloading) to Accent
         DownloadStatus.PAUSED -> stringResource(R.string.dl_paused) to AccentAmber
         DownloadStatus.COMPLETED -> stringResource(R.string.dl_finished) to AccentGreen
         DownloadStatus.FAILED -> stringResource(R.string.dl_failed) to Color.Red

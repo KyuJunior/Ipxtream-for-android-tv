@@ -43,7 +43,7 @@ import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.TextSecondary
-import com.ipxtream.tv.ui.theme.AccentCyan
+import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.ProgressWatched
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -99,7 +99,7 @@ fun TopHeader(
                 onClick = onCacheAll,
                 icon = Icons.Rounded.Cloud,
                 contentDescription = stringResource(R.string.action_cache_all),
-                tint = if (isCachingAll) AccentCyan else TextPrimary
+                tint = if (isCachingAll) Accent else TextPrimary
             )
             // Refresh
             HeaderIconButton(
@@ -149,7 +149,7 @@ fun HeaderIconButton(
     modifier: Modifier = Modifier,
     tint: Color = TextPrimary
 ) {
-    // Frosted circle at rest, solid white platter with a black glyph on focus.
+    // Frosted circle at rest, Halo platter with a dark glyph on focus.
     Surface(
         onClick = onClick,
         modifier = modifier.size(42.dp),
@@ -213,7 +213,7 @@ fun UserProfileCard(
                 modifier = Modifier
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Brush.verticalGradient(listOf(Color(0xFFB488FF), Color(0xFF6E3BD0)))),
+                    .background(Brush.verticalGradient(listOf(AccentOrchid, AccentOrchidDeep))),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -253,14 +253,14 @@ fun UserProfileCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(
                             modifier = Modifier.size(10.dp),
-                            color = AccentCyan,
+                            color = Accent,
                             strokeWidth = 1.5.dp
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             text = stringResource(R.string.update_checking),
                             style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
-                            color = AccentCyan
+                            color = Accent
                         )
                     }
                 } else if (updateRelease != null) {
@@ -303,7 +303,7 @@ fun UserProfileCard(
                                 fontWeight = FontWeight.Bold,
                                 textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline
                             ),
-                            color = AccentCyan
+                            color = Accent
                         )
                     }
                 }
