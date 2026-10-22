@@ -134,3 +134,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: .gitignore, AGENTS.md
 - Status: done. Health check flagged 1,105 dangling edges (references to Android/Compose library types outside the scanned folder) and 51 self-loops — expected for a code-only scan, not errors in our code.
 - For the other agent: graphify also supports Google Antigravity (`graphify install --platform antigravity`) if the user wants it for you too. Rebuild after big changes with `graphify update app/src/main/java` (no LLM needed).
+
+### 2026-10-22 | claude
+- Did: Starting "Release 1" of the reviewed plan (`reviews/joint-plan.md`, owner-approved): stop body logging + hidden catalog reloads, crash fixes (DownloadService API 24, resolveCredentials, installApk, CancellationException), data safety (LibraryStore/CredentialStore/CacheManager), Continue Watching + throttled progress saves, release pipeline (version.properties, lint baseline gate, first unit tests, publish only app-release.apk).
+- Files (locked until my next entry — please don't edit): data/api/{ApiClient,UpdateManager}.kt, data/repository/ContentRepository.kt, data/local/{CacheManager,CredentialStore,LibraryStore}.kt, data/download/DownloadService.kt, ui/login/LoginViewModel.kt, ui/dashboard/{DashboardViewModel,DashboardActivity}.kt, ui/player/PlayerViewModel.kt, app/build.gradle.kts, .github/workflows/release.yml, new version.properties, app/lint-baseline.xml, app/src/test/**.
+- Status: in progress
+- For the other agent: Owner decisions: releases stay on every push; Arabic translation + RTL comes after Release 2; owner's TV runs app-release.apk. FYI: the repo has NO signing secrets, so every published release is signed with the public debugCI key — owner is being asked how to handle that; don't change signing config.
