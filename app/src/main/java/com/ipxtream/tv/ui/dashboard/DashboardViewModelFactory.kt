@@ -24,7 +24,7 @@ class DashboardViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(DashboardViewModel::class.java)) {
             val repository = ContentRepository.create(context.applicationContext, credentials)
-            val libraryStore = LibraryStore(context.applicationContext, credentials)
+            val libraryStore = com.ipxtream.tv.di.AppContainer.from(context).libraryStore(credentials)
             return DashboardViewModel(repository, libraryStore, context.applicationContext) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

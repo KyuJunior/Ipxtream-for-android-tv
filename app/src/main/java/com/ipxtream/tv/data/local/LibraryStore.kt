@@ -1,5 +1,8 @@
 package com.ipxtream.tv.data.local
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
@@ -26,6 +29,10 @@ data class LibraryItem(
 
 /**
  * Thread-safe local storage for Favorites and Watch History.
+ *
+ * Lists are parsed once and kept in memory; [favorites] / [history] emit on every change, so
+ * screens observe them instead of reading the file. Get the shared instance from
+ * [com.ipxtream.tv.di.AppContainer.libraryStore], never construct one per screen.
  *
  * Scopes the shared preferences to the specific server and username to ensure
  * multi-user isolation on shared TV hardware.
@@ -56,6 +63,11 @@ class LibraryStore(
 
     private val prefsName = "ipxtream_library_${serverSlug}_${credentials.username}"
 
+    private val _favorites = MutableStateFlow(readList(KEY_FAVORITES))
+    private val _history = MutableStateFlow(readList(KEY_HISTORY))
+    val favorites: StateFlow<List<LibraryItem>> = _favorites.asStateFlow()
+    val history: StateFlow<List<LibraryItem>> = _history.asStateFlow()
+
     private fun readList(key: String): List<LibraryItem> {
         val json = prefs.getString(key, null) ?: return emptyList()
         return try {
@@ -68,6 +80,8 @@ class LibraryStore(
     }
 
     private fun writeList(key: String, items: List<LibraryItem>) {
+        // Memory first: the session keeps working even when the file can't be written.
+        if (key == KEY_FAVORITES) _favorites.value = items else _history.value = items
         if ("$prefsName/$key" in writeBlocked) {
             Log.w(TAG, "Not saving '$key': stored list was unreadable this session")
             return
@@ -87,7 +101,7 @@ class LibraryStore(
     // ─── Favorites API ────────────────────────────────────────────────────────
 
     @Synchronized
-    fun getFavorites(): List<LibraryItem> = readList(KEY_FAVORITES)
+    fun getFavorites(): List<LibraryItem> = _favorites.value
 
     @Synchronized
     fun addFavorite(item: LibraryItem) {
@@ -114,7 +128,7 @@ class LibraryStore(
     // ─── Watch History API ───────────────────────────────────────────────────
 
     @Synchronized
-    fun getHistory(): List<LibraryItem> = readList(KEY_HISTORY)
+    fun getHistory(): List<LibraryItem> = _history.value
 
     @Synchronized
     fun saveHistoryItem(item: LibraryItem) {
@@ -141,6 +155,7 @@ class LibraryStore(
 
     @Synchronized
     fun clearHistory() {
+        _history.value = emptyList()
         prefs.edit().remove(KEY_HISTORY).apply()
     }
 }

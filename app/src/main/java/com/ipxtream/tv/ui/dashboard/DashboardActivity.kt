@@ -1,5 +1,12 @@
 package com.ipxtream.tv.ui.dashboard
 
+import com.ipxtream.tv.ui.player.summary
+import com.ipxtream.tv.ui.player.PlaybackSummary
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -63,30 +70,34 @@ class DashboardActivity : ComponentActivity() {
             finish()
             return
         }
-        dashboardViewModel.checkForUpdates()
+        dashboardViewModel.scheduleStartupUpdateCheck()
+
+        // Feed the real decoded resolution back into the 4K measurements. Collected here, not in
+        // composition, so the player's per-second ticks never recompose the dashboard.
+        lifecycleScope.launch {
+            playerViewModel.uiState
+                .map { listOf(it.activeStream, it.activeEpisode, it.activeSeries, it.videoWidth, it.videoHeight) to it }
+                .distinctUntilChangedBy { it.first }
+                .collect { (_, s) ->
+                    dashboardViewModel.recordPlaybackResolution(
+                        stream = s.activeStream,
+                        series = if (s.activeEpisode != null) s.activeSeries else null,
+                        width  = s.videoWidth,
+                        height = s.videoHeight
+                    )
+                }
+        }
+        val playbackFlow = playerViewModel.uiState.map { it.summary() }.distinctUntilChanged()
 
         setContent {
             IpxTvTheme {
                 val dashState     by dashboardViewModel.uiState.collectAsState()
-                val playerState   by playerViewModel.uiState.collectAsState()
-
-                // Feed the real decoded resolution back into the 4K measurements.
-                androidx.compose.runtime.LaunchedEffect(
-                    playerState.activeStream?.streamId, playerState.activeSeries?.seriesId,
-                    playerState.videoWidth, playerState.videoHeight
-                ) {
-                    dashboardViewModel.recordPlaybackResolution(
-                        stream = playerState.activeStream,
-                        series = if (playerState.activeEpisode != null) playerState.activeSeries else null,
-                        width  = playerState.videoWidth,
-                        height = playerState.videoHeight
-                    )
-                }
+                val playback      by playbackFlow.collectAsState(PlaybackSummary())
                 val downloadItems by dashboardViewModel.downloadItems.collectAsState()
 
                 DashboardScreen(
                     uiState            = dashState,
-                    playerUiState      = playerState,
+                    playback           = playback,
                     exoPlayer          = playerViewModel.exoPlayer,
                     playerViewModel    = playerViewModel,
                     downloadItems      = downloadItems,
@@ -197,7 +208,7 @@ class DashboardActivity : ComponentActivity() {
                 dashboardViewModel.closeDetails()
                 return true
             }
-            if (state.updateRelease != null) {
+            if (state.isUpdateDialogOpen) {
                 dashboardViewModel.dismissUpdate()
                 return true
             }
@@ -225,7 +236,7 @@ class DashboardActivity : ComponentActivity() {
             return AuthCredentials(server, username, password)
         }
 
-        return CredentialStore(applicationContext).loadCredentials()
+        return com.ipxtream.tv.di.AppContainer.from(this).credentialStore.loadCredentials()
     }
 
     companion object {

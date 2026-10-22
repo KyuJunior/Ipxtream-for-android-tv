@@ -50,7 +50,7 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        credentialStore = CredentialStore(applicationContext)
+        credentialStore = com.ipxtream.tv.di.AppContainer.from(this).credentialStore
 
         viewModel = ViewModelProvider(
             this,

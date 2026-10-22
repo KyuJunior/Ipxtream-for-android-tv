@@ -51,7 +51,7 @@ class DashboardViewModel(
 ) : ViewModel() {
 
     private val updateManager = com.ipxtream.tv.data.api.UpdateManager(context)
-    private val credentialStore = com.ipxtream.tv.data.local.CredentialStore(context)
+    private val credentialStore = com.ipxtream.tv.di.AppContainer.from(context).credentialStore
     val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore.getInstance(context)
 
     private val _uiState = MutableStateFlow(DashboardUiState(settings = appSettingsStore.settings.value))
@@ -110,10 +110,15 @@ class DashboardViewModel(
                 _uiState.update { it.copy(settings = newSettings) }
             }
         }
-        // Load the default section on first creation. activeSection already starts as HOME,
-        // so selectSection() returns early: load Continue Watching and favorites directly.
+        // Favorites and history are live: the player's progress saves and any toggle show up
+        // without reloading (this also fills Continue Watching on a cold start).
+        viewModelScope.launch {
+            libraryStore.favorites.collect { list -> _uiState.update { it.copy(favoritesList = list) } }
+        }
+        viewModelScope.launch {
+            libraryStore.history.collect { list -> _uiState.update { it.copy(historyList = list) } }
+        }
         selectSection(ContentSection.HOME)
-        refreshLibraryLists()
         refreshAccountsState()
         loadHomeData()
     }
@@ -510,14 +515,31 @@ class DashboardViewModel(
     //  In-App Updater management
     // =========================================================================
 
-    fun checkForUpdates() {
+    private var startupCheckScheduled = false
+
+    /**
+     * Startup check, 30 s after launch so it never competes with loading the catalog or
+     * steals focus; a found update shows a banner, not a dialog. Survives Activity recreation.
+     */
+    fun scheduleStartupUpdateCheck() {
+        if (startupCheckScheduled) return
+        startupCheckScheduled = true
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(30_000)
+            checkForUpdates(manual = false)
+        }
+    }
+
+    /** [manual]: the user asked, so an available update opens the dialog. */
+    fun checkForUpdates(manual: Boolean = true) {
         if (_uiState.value.isCheckingForUpdate) return
         _uiState.update { it.copy(isCheckingForUpdate = true, updateErrorMessage = null) }
         viewModelScope.launch {
             val release = updateManager.checkForUpdates()
             _uiState.update { it.copy(
                 isCheckingForUpdate = false,
-                updateRelease = release
+                updateRelease = release,
+                showUpdateDialog = manual && release != null
             ) }
         }
     }
@@ -532,7 +554,8 @@ class DashboardViewModel(
         _uiState.update { it.copy(updateDownloadProgress = 0f, updateErrorMessage = null) }
 
         viewModelScope.launch {
-            val destinationFile = java.io.File(context.externalCacheDir ?: context.cacheDir, "ipxtream_update.apk")
+            // Private storage: other apps can't swap the file before it's installed.
+            val destinationFile = java.io.File(java.io.File(context.cacheDir, "updates").apply { mkdirs() }, "ipxtream_update.apk")
             if (destinationFile.exists()) destinationFile.delete()
 
             val success = updateManager.downloadUpdate(
@@ -543,7 +566,13 @@ class DashboardViewModel(
                 }
             )
 
-            if (success) {
+            if (success && !updateManager.isTrustedUpdate(destinationFile)) {
+                destinationFile.delete()
+                _uiState.update { it.copy(
+                    updateDownloadProgress = null,
+                    updateErrorMessage = text(R.string.update_verify_failed)
+                ) }
+            } else if (success) {
                 _uiState.update { it.copy(updateDownloadProgress = null) }
                 if (!updateManager.installApk(destinationFile)) {
                     _uiState.update { it.copy(
@@ -560,7 +589,7 @@ class DashboardViewModel(
     }
 
     fun dismissUpdate() {
-        _uiState.update { it.copy(updateRelease = null, updateErrorMessage = null) }
+        _uiState.update { it.copy(updateRelease = null, showUpdateDialog = false, updateErrorMessage = null) }
     }
 
     /** UI text resolved in the in-app language (application context alone uses the system language). */

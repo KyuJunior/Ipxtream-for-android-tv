@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard
 
+import kotlinx.coroutines.launch
+import androidx.compose.material.icons.rounded.SystemUpdate
+import com.ipxtream.tv.ui.dashboard.components.PosterGrid
 import com.ipxtream.tv.ui.theme.bidi
 import com.ipxtream.tv.R
 import androidx.compose.ui.res.stringResource
@@ -153,7 +156,7 @@ private val GRID_COLUMNS_POSTER = GridCells.Adaptive(minSize = 140.dp)
  * - PlayerView's built-in controller handles DPAD_UP/DOWN/OK within the player.
  *
  * @param uiState            Dashboard state from [DashboardViewModel].
- * @param playerUiState      Player state from [PlayerViewModel].
+ * @param playback           What is playing (changes per title, not per second).
  * @param exoPlayer          Live ExoPlayer instance (null only before first stream load).
  * @param onSectionSelected  Section nav callback.
  * @param onCategorySelected Category chip callback.
@@ -166,7 +169,7 @@ private val GRID_COLUMNS_POSTER = GridCells.Adaptive(minSize = 140.dp)
 @Composable
 fun DashboardScreen(
     uiState:            DashboardUiState,
-    playerUiState:      PlayerUiState,
+    playback:           com.ipxtream.tv.ui.player.PlaybackSummary,
     exoPlayer:          ExoPlayer?,
     playerViewModel:    PlayerViewModel,
     downloadItems:      List<DownloadItem>,
@@ -241,8 +244,19 @@ fun DashboardScreen(
     val userProfileFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
 
+    // My Library's first card leaves composition when the list is scrolled; scroll back first.
+    val libraryListState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val focusScope = androidx.compose.runtime.rememberCoroutineScope()
+
     val focusContentForSection: () -> Unit = {
         val ok: Boolean = when (uiState.activeSection) {
+            ContentSection.MY_LIBRARY -> {
+                focusScope.launch {
+                    libraryListState.scrollToItem(0)
+                    runCatching { firstItemFocusRequester.requestFocus() }
+                }
+                true
+            }
             ContentSection.HOME -> {
                 if (uiState.searchQuery.isNotBlank()) {
                     runCatching { searchFirstCardFocusRequester.requestFocus() }.isSuccess
@@ -265,8 +279,8 @@ fun DashboardScreen(
         }
     }
 
-    val showFullScreenPlayer = uiState.hasActivePlayback && !playerUiState.isLive && exoPlayer != null
-    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.updateRelease != null || showFullScreenPlayer
+    val showFullScreenPlayer = uiState.hasActivePlayback && !playback.isLive && exoPlayer != null
+    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.isUpdateDialogOpen || showFullScreenPlayer
     val isDetailsOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
 
     androidx.activity.compose.BackHandler(enabled = showFullScreenPlayer) {
@@ -369,8 +383,8 @@ fun DashboardScreen(
     }
 
     var hadUpdateDialog by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.updateRelease) {
-        if (uiState.updateRelease != null) {
+    LaunchedEffect(uiState.isUpdateDialogOpen) {
+        if (uiState.isUpdateDialogOpen) {
             hadUpdateDialog = true
             runCatching { updateDialogFocusRequester.requestFocus() }
         } else if (hadUpdateDialog) {
@@ -383,20 +397,20 @@ fun DashboardScreen(
     val liveChannelList = remember(uiState.displayedStreams, uiState.streams) {
         if (uiState.displayedStreams.isNotEmpty()) uiState.displayedStreams else uiState.streams
     }
-    val currentLiveIndex = remember(playerUiState.activeStream, uiState.selectedStream, liveChannelList) {
-        val activeId = playerUiState.activeStream?.streamId ?: uiState.selectedStream?.streamId
+    val currentLiveIndex = remember(playback.activeStream, uiState.selectedStream, liveChannelList) {
+        val activeId = playback.activeStream?.streamId ?: uiState.selectedStream?.streamId
         if (activeId != null) {
             liveChannelList.indexOfFirst { it.streamId == activeId }
         } else -1
     }
-    val nextChannelAction: (() -> Unit)? = if (playerUiState.isLive && liveChannelList.isNotEmpty()) {
+    val nextChannelAction: (() -> Unit)? = if (playback.isLive && liveChannelList.isNotEmpty()) {
         {
             val nextIdx = if (currentLiveIndex >= 0) (currentLiveIndex + 1) % liveChannelList.size else 0
             onStreamSelected(liveChannelList[nextIdx])
         }
     } else null
 
-    val prevChannelAction: (() -> Unit)? = if (playerUiState.isLive && liveChannelList.isNotEmpty()) {
+    val prevChannelAction: (() -> Unit)? = if (playback.isLive && liveChannelList.isNotEmpty()) {
         {
             val prevIdx = if (currentLiveIndex > 0) currentLiveIndex - 1 else liveChannelList.size - 1
             onStreamSelected(liveChannelList[prevIdx])
@@ -404,7 +418,7 @@ fun DashboardScreen(
     } else null
 
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep).trackFocusTravel()) {
-        val showSplitPlayer = uiState.hasActivePlayback && playerUiState.isLive && exoPlayer != null
+        val showSplitPlayer = uiState.hasActivePlayback && playback.isLive && exoPlayer != null
 
         Row(
             modifier = Modifier
@@ -701,7 +715,9 @@ fun DashboardScreen(
                                 items = uiState.whatsNewItems,
                                 onStreamSelected = onStreamSelected,
                                 onSeriesSelected = onSeriesSelected,
-                                onEpisodePlay = onEpisodePlay
+                                onEpisodePlay = onEpisodePlay,
+                                firstItemFocusRequester = firstItemFocusRequester,
+                                sideNavFocusRequester = sideNavFocusRequester
                             )
                         }
                     }
@@ -752,6 +768,7 @@ fun DashboardScreen(
                     ContentSection.MY_LIBRARY -> {
                         LibrarySection(
                             uiState = uiState,
+                            listState = libraryListState,
                             firstItemFocusRequester = firstItemFocusRequester,
                             searchBarFocusRequester = searchBarFocusRequester,
                             onStreamSelected = onStreamSelected,
@@ -882,9 +899,8 @@ fun DashboardScreen(
                         .fillMaxSize()
                         .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
                 ) {
-                    PlayerPanel(
+                    com.ipxtream.tv.ui.player.PlayerHost(
                         exoPlayer     = exoPlayer,
-                        uiState       = playerUiState,
                         viewModel     = playerViewModel,
                         onStop        = onPlayerStop,
                         onNextChannel = nextChannelAction,
@@ -963,12 +979,12 @@ fun DashboardScreen(
                 val allEpisodes = remember(uiState.seriesInfo) {
                     uiState.seriesInfo?.allEpisodes() ?: emptyList()
                 }
-                val currentEpIndex = remember(playerUiState.activeEpisode, allEpisodes) {
-                    if (playerUiState.activeEpisode != null) {
-                        allEpisodes.indexOfFirst { it.id == playerUiState.activeEpisode.id }
+                val currentEpIndex = remember(playback.activeEpisode, allEpisodes) {
+                    if (playback.activeEpisode != null) {
+                        allEpisodes.indexOfFirst { it.id == playback.activeEpisode.id }
                     } else -1
                 }
-                val seriesForEpisode = playerUiState.activeSeries ?: uiState.detailSeriesItem
+                val seriesForEpisode = playback.activeSeries ?: uiState.detailSeriesItem
 
                 val nextEpAction: (() -> Unit)? = if (currentEpIndex in 0 until allEpisodes.size - 1 && seriesForEpisode != null) {
                     val nextEp = allEpisodes[currentEpIndex + 1]
@@ -985,14 +1001,13 @@ fun DashboardScreen(
                     { onEpisodePlay(seriesForEpisode, prevEp) }
                 } else null
 
-                val episodesClickAction: (() -> Unit)? = if (playerUiState.activeEpisode != null) {
+                val episodesClickAction: (() -> Unit)? = if (playback.activeEpisode != null) {
                     { onPlayerStop() }
                 } else null
 
                 Box(modifier = Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Color.Black)) {
-                    PlayerPanel(
+                    com.ipxtream.tv.ui.player.PlayerHost(
                         exoPlayer       = exoPlayer,
-                        uiState         = playerUiState,
                         viewModel       = playerViewModel,
                         onStop          = onPlayerStop,
                         onNextEpisode   = nextEpAction,
@@ -1007,8 +1022,45 @@ fun DashboardScreen(
             }
         }
 
+        // ─── Update banner (automatic check): informs, never takes focus ─────
+        var showUpdateBanner by remember { mutableStateOf(false) }
+        LaunchedEffect(uiState.updateRelease?.tagName) {
+            if (uiState.updateRelease != null && !uiState.showUpdateDialog) {
+                showUpdateBanner = true
+                kotlinx.coroutines.delay(10_000)
+            }
+            showUpdateBanner = false
+        }
+        androidx.compose.animation.AnimatedVisibility(
+            visible  = showUpdateBanner && !showFullScreenPlayer,
+            enter    = androidx.compose.animation.fadeIn(tween(IpxMotion.Standard)),
+            exit     = androidx.compose.animation.fadeOut(tween(IpxMotion.Standard)),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 36.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xE61C1C1E))
+                    .padding(horizontal = 22.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Rounded.SystemUpdate,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text  = stringResource(R.string.update_banner, uiState.updateRelease?.tagName ?: ""),
+                    style = IpxTypography.BodyMedium,
+                    color = Color.White
+                )
+            }
+        }
+
         // ─── Update Dialog overlay ───────────────────────────────────────────
-        if (uiState.updateRelease != null) {
+        if (uiState.isUpdateDialogOpen && uiState.updateRelease != null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -1120,49 +1172,31 @@ private fun StreamGrid(
     showChannelNumbers:        Boolean = true
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
-            columns        = if (section == ContentSection.LIVE) GRID_COLUMNS_LIVE else GRID_COLUMNS_POSTER,
-            state          = rememberLazyGridState(),
-            modifier       = Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
-            verticalArrangement   = Arrangement.spacedBy(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            itemsIndexed(streams, key = { index, s -> "st_${s.streamId}_$index" }) { index, stream ->
-                var isFocused by remember { mutableStateOf(false) }
-                val isLeftColumn = if (section == ContentSection.LIVE) (index % 3 == 0) else (index % 5 == 0 || index == 0)
-                val isTopRow = if (section == ContentSection.LIVE) (index < 3) else (index < 5)
-
-                val mod = Modifier
-                    .onFocusChanged { state ->
-                        isFocused = state.isFocused
-                        if (isFocused) onItemFocused(stream)
-                    }
-                    .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
-                    .focusProperties {
-                        if (isLeftColumn && sideNavFocusRequester != null) {
-                            start = sideNavFocusRequester
-                        }
-                        if (isTopRow && categoryRowFocusRequester != null) {
-                            up = categoryRowFocusRequester
-                        }
-                    }
-
-                if (section == ContentSection.LIVE) {
-                    LiveChannelCard(
-                        stream = stream,
-                        onClick = { onStreamSelected(stream) },
-                        modifier = mod,
-                        showChannelNumber = showChannelNumbers
-                    )
-                } else {
-                    VodPosterCard(
-                        stream = stream,
-                        onClick = { onStreamSelected(stream) },
-                        modifier = mod,
-                        watchProgress = watchProgress(stream.streamId.toString())
-                    )
-                }
+        PosterGrid(
+            items                   = streams,
+            id                      = { "st_${it.streamId}" },
+            columns                 = if (section == ContentSection.LIVE) GRID_COLUMNS_LIVE else GRID_COLUMNS_POSTER,
+            firstItemFocusRequester = firstItemFocusRequester,
+            sideNavFocusRequester   = sideNavFocusRequester,
+            upFocusRequester        = categoryRowFocusRequester,
+            onItemFocused           = onItemFocused,
+            contentPadding          = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
+            modifier                = Modifier.weight(1f)
+        ) { stream, mod, open ->
+            if (section == ContentSection.LIVE) {
+                LiveChannelCard(
+                    stream = stream,
+                    onClick = { open(); onStreamSelected(stream) },
+                    modifier = mod,
+                    showChannelNumber = showChannelNumbers
+                )
+            } else {
+                VodPosterCard(
+                    stream = stream,
+                    onClick = { open(); onStreamSelected(stream) },
+                    modifier = mod,
+                    watchProgress = watchProgress(stream.streamId.toString())
+                )
             }
         }
 
@@ -1194,41 +1228,23 @@ private fun SeriesGrid(
     watchProgress:             (String) -> Float? = { null }
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
-            columns        = GRID_COLUMNS_POSTER,
-            state          = rememberLazyGridState(),
-            modifier       = Modifier.weight(1f),
-            contentPadding = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
-            verticalArrangement   = Arrangement.spacedBy(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(18.dp)
-        ) {
-            itemsIndexed(seriesList, key = { index, s -> "se_${s.seriesId}_$index" }) { index, series ->
-                var isFocused by remember { mutableStateOf(false) }
-                val isLeftColumn = (index % 5 == 0 || index == 0)
-                val isTopRow = (index < 5)
-
-                val mod = Modifier
-                    .onFocusChanged { state ->
-                        isFocused = state.isFocused
-                        if (isFocused) onItemFocused(series)
-                    }
-                    .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
-                    .focusProperties {
-                        if (isLeftColumn && sideNavFocusRequester != null) {
-                            start = sideNavFocusRequester
-                        }
-                        if (isTopRow && categoryRowFocusRequester != null) {
-                            up = categoryRowFocusRequester
-                        }
-                    }
-                    
-                SeriesPosterCard(
-                    series = series,
-                    onClick = { onSeriesSelected(series) },
-                    modifier = mod,
-                    watchProgress = watchProgress(series.seriesId.toString())
-                )
-            }
+        PosterGrid(
+            items                   = seriesList,
+            id                      = { "se_${it.seriesId}" },
+            columns                 = GRID_COLUMNS_POSTER,
+            firstItemFocusRequester = firstItemFocusRequester,
+            sideNavFocusRequester   = sideNavFocusRequester,
+            upFocusRequester        = categoryRowFocusRequester,
+            onItemFocused           = onItemFocused,
+            contentPadding          = PaddingValues(bottom = 24.dp, start = IpxSpacing.Gutter, top = 24.dp, end = IpxSpacing.Gutter),
+            modifier                = Modifier.weight(1f)
+        ) { series, mod, open ->
+            SeriesPosterCard(
+                series = series,
+                onClick = { open(); onSeriesSelected(series) },
+                modifier = mod,
+                watchProgress = watchProgress(series.seriesId.toString())
+            )
         }
 
         PaginationBar(
@@ -1299,6 +1315,7 @@ private fun EmptyPromptMessage(message: String) {
 @Composable
 private fun LibrarySection(
     uiState: DashboardUiState,
+    listState: androidx.compose.foundation.lazy.LazyListState,
     firstItemFocusRequester: FocusRequester,
     searchBarFocusRequester: FocusRequester,
     onStreamSelected: (StreamItem) -> Unit,
@@ -1309,7 +1326,8 @@ private fun LibrarySection(
     onRefresh: () -> Unit
 ) {
     androidx.compose.foundation.lazy.LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        modifier = Modifier.fillMaxSize().focusProperties { canFocus = false },
         contentPadding = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -1584,23 +1602,27 @@ private fun WhatsNewGrid(
     onStreamSelected: (StreamItem) -> Unit,
     onSeriesSelected: (SeriesItem) -> Unit,
     onEpisodePlay: (SeriesItem, EpisodeItem) -> Unit,
+    firstItemFocusRequester: FocusRequester,
+    sideNavFocusRequester: FocusRequester?,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 140.dp),
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(items.size, key = { index -> "wn_${items[index].id}_$index" }) { index ->
-            val item = items[index]
-            ContinueWatchingCard(
-                item = item,
-                onStreamSelected = onStreamSelected,
-                onSeriesSelected = onSeriesSelected,
-                onEpisodePlay = onEpisodePlay
-            )
-        }
+    PosterGrid(
+        items                   = items,
+        id                      = { "wn_${it.type}_${it.id}" },
+        columns                 = GridCells.Adaptive(minSize = 140.dp),
+        firstItemFocusRequester = firstItemFocusRequester,
+        sideNavFocusRequester   = sideNavFocusRequester,
+        contentPadding          = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
+        spacingH                = 16.dp,
+        spacingV                = 16.dp,
+        modifier                = modifier.fillMaxSize()
+    ) { item, mod, open ->
+        ContinueWatchingCard(
+            item = item,
+            onStreamSelected = { open(); onStreamSelected(it) },
+            onSeriesSelected = { open(); onSeriesSelected(it) },
+            onEpisodePlay = { s, e -> open(); onEpisodePlay(s, e) },
+            modifier = mod
+        )
     }
 }

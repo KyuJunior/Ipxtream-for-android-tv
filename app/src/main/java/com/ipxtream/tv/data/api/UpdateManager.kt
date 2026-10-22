@@ -110,12 +110,12 @@ class UpdateManager(private val context: Context) {
                 }
                 val body = response.body ?: return@withContext false
                 val totalBytes = body.contentLength()
+                var totalRead = 0L
                 
                 body.byteStream().use { input ->
                     FileOutputStream(destinationFile).use { output ->
                         val buffer = ByteArray(8192)
                         var bytesRead: Int
-                        var totalRead = 0L
                         while (input.read(buffer).also { bytesRead = it } != -1) {
                             output.write(buffer, 0, bytesRead)
                             totalRead += bytesRead
@@ -125,6 +125,12 @@ class UpdateManager(private val context: Context) {
                             }
                         }
                     }
+                    // A dropped connection can end the stream early without an error.
+                    if (totalBytes > 0 && totalRead != totalBytes) {
+                        Log.e(tag, "Update download incomplete: $totalRead of $totalBytes bytes")
+                        destinationFile.delete()
+                        return@withContext false
+                    }
                 }
                 return@withContext true
             }
@@ -133,6 +139,44 @@ class UpdateManager(private val context: Context) {
             if (destinationFile.exists()) destinationFile.delete()
             return@withContext false
         }
+    }
+
+    /**
+     * True when [apkFile] is this app (same package) signed with the same key as the installed
+     * copy. Anything else is refused, so a tampered or wrong download is never installed.
+     * If a device can't report the archive's signer, the package check alone applies: Android
+     * itself refuses an update signed with a different key, and failing here would block
+     * every future update on that TV.
+     */
+    fun isTrustedUpdate(apkFile: File): Boolean = try {
+        val pm = context.packageManager
+        @Suppress("DEPRECATION")
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES
+        else android.content.pm.PackageManager.GET_SIGNATURES
+        val archive = pm.getPackageArchiveInfo(apkFile.path, flags)
+        val installed = pm.getPackageInfo(context.packageName, flags)
+        val archiveCerts = archive?.let { signerDigests(it) }.orEmpty()
+        when {
+            archive == null || archive.packageName != context.packageName -> false
+            archiveCerts.isEmpty() -> {
+                Log.w(tag, "Update signer unreadable on this device; relying on the system installer")
+                true
+            }
+            else -> archiveCerts == signerDigests(installed)
+        }
+    } catch (e: Exception) {
+        Log.e(tag, "Could not verify update: ${e.message}", e)
+        false
+    }
+
+    private fun signerDigests(info: android.content.pm.PackageInfo): Set<String> {
+        @Suppress("DEPRECATION")
+        val signatures = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            info.signingInfo?.apkContentsSigners
+        else info.signatures
+        val sha = java.security.MessageDigest.getInstance("SHA-256")
+        return signatures.orEmpty().map { sig -> sha.digest(sig.toByteArray()).joinToString("") { "%02x".format(it) } }.toSet()
     }
 
     /** Hands the APK to the system installer. False when the device has no installer we may use. */

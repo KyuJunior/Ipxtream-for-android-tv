@@ -4,6 +4,8 @@
     <string name="about_build_type">نوع البناء: %1$s</string>
     <string name="about_checking_github">جارٍ البحث عن أحدث إصدار…</string>
     <string name="about_client">تطبيق IPXtream TV</string>
+    <string name="about_crash_hint">محفوظ على هذا التلفاز فقط. امسحه بعد الإبلاغ عنه.</string>
+    <string name="about_last_crash">آخر تعطّل: %1$s</string>
     <string name="about_software_update">تحديث البرنامج</string>
     <string name="about_target">المنصة: Android TV</string>
     <string name="about_version">الإصدار: v%1$s</string>
@@ -18,6 +20,7 @@
     <string name="action_back">رجوع</string>
     <string name="action_cache_all">حفظ الكل</string>
     <string name="action_cancel">إلغاء</string>
+    <string name="action_clear">مسح</string>
     <string name="action_close">إغلاق</string>
     <string name="action_details">التفاصيل</string>
     <string name="action_download">تنزيل</string>
@@ -194,7 +197,7 @@
     <string name="settings_autoplay_next">تشغيل الحلقة التالية تلقائيًا</string>
     <string name="settings_autoplay_next_sub">تشغيل الحلقة التالية تلقائيًا عند انتهاء الحلقة الحالية.</string>
     <string name="settings_buffer">ملف التخزين المؤقت للبث</string>
-    <string name="settings_buffer_sub">وازن بين ثبات البث على الشبكة وسرعة بدء التشغيل.</string>
+    <string name="settings_buffer_sub">وازن بين ثبات البث على الشبكة وسرعة بدء التشغيل. يُطبَّق عند تشغيل التطبيق في المرة القادمة.</string>
     <string name="settings_cat_about">حول التطبيق والتحديثات</string>
     <string name="settings_cat_accounts">إدارة الحسابات</string>
     <string name="settings_cat_audio">الصوت والترجمة</string>
@@ -294,6 +297,7 @@
     <string name="uhd_try_different">جرّب عنوانًا آخر.</string>
     <string name="untitled">بدون عنوان</string>
     <string name="update_available">تحديث متاح</string>
+    <string name="update_banner">الإصدار %1$s متاح. ثبّته من الإعدادات › حول التطبيق والتحديثات.</string>
     <string name="update_check">التحقق من التحديثات</string>
     <string name="update_check_short">تحقّق</string>
     <string name="update_checking">جارٍ التحقق…</string>
@@ -305,6 +309,7 @@
     <string name="update_new_version">الإصدار %1$s متاح الآن!</string>
     <string name="update_running_latest">أنت تستخدم أحدث إصدار (v%1$s).</string>
     <string name="update_up_to_date">محدّث</string>
+    <string name="update_verify_failed">التحديث الذي تم تنزيله غير موقّع من IPXtream، لذلك تم حذفه ولم يُثبَّت.</string>
     <string name="vod_cast">البطولة</string>
     <string name="vod_country">البلد</string>
     <string name="vod_director">الإخراج</string>

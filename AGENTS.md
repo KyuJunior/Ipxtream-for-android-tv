@@ -45,6 +45,14 @@ Both agents MUST read this whole file at the start of every task and append to t
   Resolved to `LocalReducedEffects` (`ui/theme/Performance.kt`) at the theme root. New animations or heavy
   effects must check `LocalReducedEffects.current` and fall back to something cheap. `AppSettingsStore` is a
   singleton — always use `AppSettingsStore.getInstance(context)`, never `AppSettingsStore(context)`.
+- **Shared state (manual DI):** `di/AppContainer` (via `AppContainer.from(context)`) owns the one `CredentialStore`
+  and one `LibraryStore` per account. Never construct those directly. `LibraryStore.favorites/history` are
+  `StateFlow`s, so screens update live (the player's progress saves reach Continue Watching on their own).
+- **Grids:** use `ui/dashboard/components/PosterGrid` for any poster/channel grid (no container focus, real
+  column/row for the side-menu/Up jumps, focus returns to the last opened item). Player state is collected inside
+  `ui/player/PlayerHost`; the dashboard only sees `PlaybackSummary` (changes per title, not per second).
+- **Updates:** the startup check runs 30 s after launch and shows a banner; the dialog appears only for a check
+  the user starts. Downloads go to `cacheDir/updates/` and must match this app's package and signing key.
 - **TV focus gotcha:** Lazy grids/rows holding focusable cards need `focusProperties { canFocus = false }` on the
   container, or D-Pad lands on the container with no visible focus.
 - **Data safety:** `LibraryStore` / `CredentialStore` never overwrite a list they couldn't parse (raw copy kept under
@@ -193,3 +201,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files (locked until my next entry — please don't edit): `ui/dashboard/**`, `ui/player/**`, `data/local/{LibraryStore,CredentialStore}.kt`, `data/api/UpdateManager.kt`, new `di/**`, `IpxApplication.kt`, `AndroidManifest.xml`, `res/xml/**`, `res/values*/strings.xml`.
 - Status: in progress
 - For the other agent: none
+
+### 2026-10-22 | claude
+- Did: Release 2 of `reviews/joint-plan.md`. (1) `PlayerHost`: player state is collected inside the player; the dashboard gets a per-title `PlaybackSummary`, so it no longer recomposes every second during playback; the 4K resolution feedback runs from a flow in `DashboardActivity`. (2) Buffer Profile setting now sets ExoPlayer's buffers (read at player creation, so it applies on next app start; the setting says so). (3) `PosterGrid` for Movies/Series/Live/What's New: Left from the 6th poster no longer jumps to the menu, focus is visible, closing details returns to the opened poster, What's New gets proper focus. (4) `AppContainer` + live `LibraryStore` flows; credential storage warmed up off the main thread; local crash log (`data/local/CrashLog`, last 5, passwords masked) shown in Settings → About with a Clear button. (5) Updates: private download dir, size check, package + signing-cert check, startup check delayed 30 s with a banner instead of a modal, focus no longer falls to the search field during a download. Also: My Library's "go to content" works when the list is scrolled.
+- Files: IpxApplication.kt, di/AppContainer.kt, data/local/{CrashLog,LibraryStore}.kt, data/api/UpdateManager.kt, ui/player/{PlayerHost,PlayerViewModel}.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardUiState,DashboardViewModel,DashboardViewModelFactory}.kt, ui/dashboard/components/{PosterGrid,SettingsScreen}.kt, ui/login/LoginActivity.kt, res/values*/strings.xml
+- Status: done. Locks from my previous entry are released. Verified on the emulator (release build): grid focus paths, favorites appearing live in My Library, banner after 30 s without focus loss, wrong-package APK refused, live and VOD playback. Not verified: an actual self-update install on the TV (same package/key path), and the buffer profile's effect on real streams.
+- For the other agent: The Live TV split view (player on the right) squeezes the dashboard header to the middle of the left pane; that's how it already looked before Release 2 — candidate for a layout pass.

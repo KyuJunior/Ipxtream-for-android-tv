@@ -66,13 +66,17 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         )
     }
 
+    // Settings → Streaming Buffer Profile. ExoPlayer can't change buffers on a live player,
+    // so the profile is read when the player is created (next app start).
+    private val bufferProfile = appSettingsStore.settings.value.bufferProfile
+
     private val loadControl = DefaultLoadControl.Builder()
         .setAllocator(DefaultAllocator(/* trimOnReset = */ true, C.DEFAULT_BUFFER_SEGMENT_SIZE))
         .setBufferDurationsMs(
-            /* minBufferMs = */ 15_000,
-            /* maxBufferMs = */ 50_000,
-            /* bufferForPlaybackMs = */ 1_500,
-            /* bufferForPlaybackAfterRebufferMs = */ 3_000
+            /* minBufferMs = */ bufferProfile.minBufferMs,
+            /* maxBufferMs = */ bufferProfile.maxBufferMs,
+            /* bufferForPlaybackMs = */ bufferProfile.playbackBufferMs,
+            /* bufferForPlaybackAfterRebufferMs = */ (bufferProfile.playbackBufferMs * 2).coerceAtMost(bufferProfile.minBufferMs)
         )
         .setBackBuffer(/* backBufferDurationMs = */ 20_000, /* retainBackBufferFromKeyframe = */ true)
         .setPrioritizeTimeOverSizeThresholds(true)
@@ -140,7 +144,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun loadStream(stream: StreamItem, credentials: AuthCredentials) {
         this.credentials = credentials
-        val store = LibraryStore(getApplication(), credentials)
+        val store = com.ipxtream.tv.di.AppContainer.from(getApplication()).libraryStore(credentials)
         this.libraryStore = store
         val streamType = stream.streamType ?: if (stream.isLive) "live" else "movie"
         val isFav = store.isFavorite(stream.streamId.toString(), streamType)
@@ -170,7 +174,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     fun loadEpisode(episode: EpisodeItem, series: SeriesItem, credentials: AuthCredentials) {
         this.credentials = credentials
-        val store = LibraryStore(getApplication(), credentials)
+        val store = com.ipxtream.tv.di.AppContainer.from(getApplication()).libraryStore(credentials)
         this.libraryStore = store
         val isFav = store.isFavorite(episode.id, "episode")
 

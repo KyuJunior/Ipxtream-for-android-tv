@@ -98,6 +98,8 @@ data class DashboardUiState(
     // ─── App Update State ───
     val isCheckingForUpdate: Boolean = false,
     val updateRelease:       com.ipxtream.tv.data.model.GitHubRelease? = null,
+    /** True only for a check the user started; the automatic startup check shows a banner instead. */
+    val showUpdateDialog:    Boolean = false,
     val updateDownloadProgress: Float? = null, // null means not downloading, 0.0-1.0 progress
     val updateErrorMessage:  String? = null,
 
@@ -130,6 +132,8 @@ data class DashboardUiState(
     // ─── Pagination ───
     val currentPage:         Int = 0
 ) {
+    val isUpdateDialogOpen: Boolean get() = updateRelease != null && showUpdateDialog
+
     companion object {
         /** Maximum items per page to keep the grid performant. */
         const val PAGE_SIZE = 15

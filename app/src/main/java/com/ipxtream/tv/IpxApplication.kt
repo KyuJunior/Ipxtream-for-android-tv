@@ -12,6 +12,21 @@ import coil.memory.MemoryCache
  * memory caching capped for TV sticks, and disk caching ignoring server no-cache headers.
  */
 class IpxApplication : Application(), ImageLoaderFactory {
+
+    val container: com.ipxtream.tv.di.AppContainer by lazy { com.ipxtream.tv.di.AppContainer(this) }
+
+    override fun onCreate() {
+        super.onCreate()
+        // Keep a local copy of any crash (Settings → About), then let the system handle it.
+        val systemHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+            runCatching { com.ipxtream.tv.data.local.CrashLog.record(this, thread, error) }
+            systemHandler?.uncaughtException(thread, error)
+        }
+        // Opening encrypted storage takes a while on slow boxes; do it before the UI needs it.
+        Thread({ runCatching { container.credentialStore } }, "credential-warmup").start()
+    }
+
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
             .memoryCache {

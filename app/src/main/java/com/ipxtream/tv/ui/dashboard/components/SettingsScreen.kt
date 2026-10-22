@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.foundation.focusable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -839,7 +840,16 @@ private fun AboutSettingsContent(
                 }
                 uiState.updateDownloadProgress != null -> {
                     val progress = uiState.updateDownloadProgress
-                    Text(stringResource(R.string.update_downloading_pct, (progress * 100).toInt()), style = IpxTypography.BodyMedium, color = AccentCyan)
+                    // The Download button disappears while downloading; park focus on the progress
+                    // text so it doesn't fall to the search field (which opens the keyboard).
+                    val progressFocus = remember { FocusRequester() }
+                    LaunchedEffect(Unit) { runCatching { progressFocus.requestFocus() } }
+                    Text(
+                        stringResource(R.string.update_downloading_pct, (progress * 100).toInt()),
+                        style = IpxTypography.BodyMedium,
+                        color = AccentCyan,
+                        modifier = Modifier.focusRequester(progressFocus).focusable()
+                    )
                     androidx.compose.material3.LinearProgressIndicator(
                         progress = { progress },
                         color = AccentCyan,
@@ -851,9 +861,6 @@ private fun AboutSettingsContent(
                 uiState.updateRelease != null -> {
                     val release = uiState.updateRelease
                     Text(stringResource(R.string.update_new_version, release.tagName), style = IpxTypography.BodyMedium, color = AccentGreen, fontWeight = FontWeight.Bold)
-                    if (!release.body.isNullOrBlank()) {
-                        Text(release.body, style = IpxTypography.BodySmall, color = TextSecondary, maxLines = 4)
-                    }
                 }
                 else -> {
                     Text(stringResource(R.string.update_running_latest, BuildConfig.VERSION_NAME), style = IpxTypography.BodyMedium, color = TextSecondary)
@@ -862,6 +869,19 @@ private fun AboutSettingsContent(
 
             if (uiState.updateErrorMessage != null) {
                 Text(uiState.updateErrorMessage, style = IpxTypography.BodySmall, color = Color.Red)
+            }
+
+            // When a download ends (installer opened, or an error), give focus back to the buttons.
+            val downloading = uiState.updateDownloadProgress != null
+            var wasDownloading by remember { mutableStateOf(false) }
+            LaunchedEffect(downloading) {
+                if (downloading) {
+                    wasDownloading = true
+                } else if (wasDownloading) {
+                    wasDownloading = false
+                    kotlinx.coroutines.delay(50)
+                    runCatching { initialFocus.requestFocus() }
+                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -887,6 +907,40 @@ private fun AboutSettingsContent(
                         Text(if (uiState.isCheckingForUpdate) stringResource(R.string.update_checking) else stringResource(R.string.update_check))
                     }
                 }
+            }
+        }
+    }
+
+    // Most recent crash, kept locally by IpxApplication (nothing is uploaded).
+    val crashContext = androidx.compose.ui.platform.LocalContext.current
+    var lastCrash by remember { mutableStateOf(com.ipxtream.tv.data.local.CrashLog.latest(crashContext)) }
+    lastCrash?.let { crash ->
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(SlateCard)
+                .padding(16.dp)
+        ) {
+            val time = remember(crash.timeMs) {
+                java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+                    .format(java.util.Date(crash.timeMs))
+            }
+            Text(stringResource(R.string.about_last_crash, time), style = IpxTypography.TitleMedium, color = Color.White)
+            Text(stringResource(R.string.about_crash_hint), style = IpxTypography.BodySmall, color = TextMuted)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = crash.text.lineSequence().take(8).joinToString("\n"),
+                style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
+                color = TextSecondary,
+                maxLines = 8
+            )
+            Spacer(Modifier.height(8.dp))
+            Button(
+                onClick = { com.ipxtream.tv.data.local.CrashLog.clear(crashContext); lastCrash = null },
+                modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus }
+            ) {
+                Text(stringResource(R.string.action_clear))
             }
         }
     }
