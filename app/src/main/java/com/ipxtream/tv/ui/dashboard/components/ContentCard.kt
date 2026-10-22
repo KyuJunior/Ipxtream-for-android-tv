@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -150,7 +153,7 @@ fun LiveChannelCard(
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 Text(
-                    text     = stream.name,
+                    text     = bidi(stream.name),
                     style    = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.SemiBold, letterSpacing = 0.sp),
                     color    = if (isFocused) Color.White else TextPrimary.copy(alpha = 0.85f),
                     maxLines = 1,
@@ -304,7 +307,7 @@ private fun PosterPlaceholder(title: String) {
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text      = title,
+            text      = bidi(title),
             style     = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.SemiBold),
             color     = TextPrimary.copy(alpha = 0.55f),
             maxLines  = 3,
@@ -372,7 +375,7 @@ private fun LiveBadge(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.width(5.dp))
             Text(
-                text  = "LIVE",
+                text  = stringResource(R.string.badge_live),
                 style = IpxTypography.LabelSmall,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,

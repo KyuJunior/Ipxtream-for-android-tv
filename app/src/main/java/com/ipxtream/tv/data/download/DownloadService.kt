@@ -1,5 +1,6 @@
 package com.ipxtream.tv.data.download
 
+import com.ipxtream.tv.R
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -84,7 +85,7 @@ class DownloadService : Service() {
         createNotificationChannel()
         // Start in foreground immediately to avoid ANR (Android requires this
         // within 5 seconds of startForegroundService()).
-        startForeground(NOTIFICATION_ID, buildNotification("IPXtream Downloads", "Ready"))
+        startForeground(NOTIFICATION_ID, buildNotification(text(R.string.notif_channel), text(R.string.notif_ready)))
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -243,7 +244,7 @@ class DownloadService : Service() {
             )
         }
 
-        updateNotification(item.title, "Starting…")
+        updateNotification(item.title, text(R.string.notif_starting))
 
         var lastNotificationMs = System.currentTimeMillis()
 
@@ -287,7 +288,7 @@ class DownloadService : Service() {
                         totalBytes       = result.totalBytesWritten
                     )
                 }
-                updateNotification(item.title, "Download Complete")
+                updateNotification(item.title, text(R.string.notif_complete))
             }
 
             is HttpDownloader.DownloadResult.Error -> {
@@ -314,14 +315,16 @@ class DownloadService : Service() {
     //  Notification helpers
     // =========================================================================
 
+    private fun text(id: Int): String = com.ipxtream.tv.util.LocaleHelper.localized(this).getString(id)
+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "IPXtream Downloads",
+                text(R.string.notif_channel),
                 NotificationManager.IMPORTANCE_LOW   // No sound or pop-up
             ).apply {
-                description = "Shows active download progress"
+                description = text(R.string.notif_channel_desc)
                 setShowBadge(false)
             }
             getSystemService(NotificationManager::class.java)

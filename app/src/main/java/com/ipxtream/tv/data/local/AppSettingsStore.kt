@@ -1,5 +1,7 @@
 package com.ipxtream.tv.data.local
 
+import com.ipxtream.tv.R
+import androidx.annotation.StringRes
 import android.content.Context
 import android.content.SharedPreferences
 import coil.Coil
@@ -8,33 +10,33 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-enum class BufferProfile(val label: String, val minBufferMs: Int, val maxBufferMs: Int, val playbackBufferMs: Int) {
-    FAST_START("Fast Start (Low Latency)", 8_000, 25_000, 1_000),
-    BALANCED("Balanced (Recommended)", 15_000, 50_000, 2_000),
-    HIGH_BUFFER("High Buffer (Weak Wi-Fi)", 30_000, 90_000, 5_000)
+enum class BufferProfile(@StringRes val labelRes: Int, val minBufferMs: Int, val maxBufferMs: Int, val playbackBufferMs: Int) {
+    FAST_START(R.string.buffer_fast_start, 8_000, 25_000, 1_000),
+    BALANCED(R.string.buffer_balanced, 15_000, 50_000, 2_000),
+    HIGH_BUFFER(R.string.buffer_high, 30_000, 90_000, 5_000)
 }
 
-enum class AspectRatioMode(val label: String) {
-    FIT("Fit to Screen (Original)"),
-    FILL("Stretch to Fill"),
-    ZOOM("Zoom 16:9 (Crop)")
+enum class AspectRatioMode(@StringRes val labelRes: Int) {
+    FIT(R.string.aspect_fit),
+    FILL(R.string.aspect_fill),
+    ZOOM(R.string.aspect_zoom)
 }
 
-enum class DecoderMode(val label: String) {
-    HARDWARE_FIRST("Hardware Accelerated (Optimal)"),
-    SOFTWARE_ONLY("Software Decoder Only (Compatibility)")
+enum class DecoderMode(@StringRes val labelRes: Int) {
+    HARDWARE_FIRST(R.string.decoder_hardware),
+    SOFTWARE_ONLY(R.string.decoder_software)
 }
 
-enum class SubtitleTextSize(val label: String, val sizeSp: Float) {
-    SMALL("Small (14sp)", 14f),
-    NORMAL("Normal (18sp)", 18f),
-    LARGE("Large (24sp)", 24f)
+enum class SubtitleTextSize(@StringRes val labelRes: Int, val sizeSp: Float) {
+    SMALL(R.string.subtitle_size_small, 14f),
+    NORMAL(R.string.subtitle_size_normal, 18f),
+    LARGE(R.string.subtitle_size_large, 24f)
 }
 
-enum class PerformanceMode(val label: String) {
-    AUTO("Automatic (Recommended)"),
-    FULL("Full Effects"),
-    SMOOTH("Smooth (Reduced Effects)")
+enum class PerformanceMode(@StringRes val labelRes: Int) {
+    AUTO(R.string.performance_auto),
+    FULL(R.string.performance_full),
+    SMOOTH(R.string.performance_smooth)
 }
 
 enum class AppLanguage(val code: String, val displayName: String) {

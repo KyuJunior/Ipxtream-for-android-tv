@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -140,7 +143,7 @@ fun SeriesDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = seriesItem.name, 
+                        text = bidi(seriesItem.name), 
                         style = IpxTypography.DisplayLarge.copy(fontSize = 56.sp), 
                         color = TextPrimary,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Black
@@ -188,13 +191,13 @@ fun SeriesDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                    contentDescription = if (isFavorite) "Remove from Favorites" else "Add to Favorites",
+                                    contentDescription = stringResource(if (isFavorite) R.string.favorites_remove else R.string.favorites_add),
                                     tint = if (isFavorite) Color.Red else Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = if (isFavorite) "Liked" else "Like",
+                                    text = stringResource(if (isFavorite) R.string.action_liked else R.string.action_like),
                                     style = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
@@ -224,13 +227,13 @@ fun SeriesDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "Back",
+                                    contentDescription = stringResource(R.string.action_back),
                                     tint = Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = "Back",
+                                    text = stringResource(R.string.action_back),
                                     style = IpxTypography.TitleMedium.copy(fontSize = 15.sp),
                                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                                 )
@@ -258,7 +261,7 @@ fun SeriesDetailScreen(
             if (isLoadingSeriesInfo) {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text("Loading seasons...", style = IpxTypography.TitleLarge, color = TextPrimary)
+                        Text(stringResource(R.string.series_loading_seasons), style = IpxTypography.TitleLarge, color = TextPrimary)
                     }
                 }
             } else if (seasons.isNotEmpty()) {
@@ -275,7 +278,7 @@ fun SeriesDetailScreen(
                                     runCatching { episodesFocusRequester.requestFocus() }
                                 }
                             ) {
-                                Text("Season ${season.seasonNumber}")
+                                Text(stringResource(R.string.season_n, season.seasonNumber))
                             }
                         }
                     }
@@ -310,7 +313,7 @@ fun SeriesDetailScreen(
             } else {
                 item {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text("No episodes found.", style = IpxTypography.TitleMedium, color = TextMuted)
+                        Text(stringResource(R.string.series_no_episodes), style = IpxTypography.TitleMedium, color = TextMuted)
                     }
                 }
             }
@@ -347,7 +350,7 @@ private fun EpisodeCard(
         ) {
             Column {
                 Text(
-                    text = "${episode.episodeNum}. ${episode.title.takeIf { it.isNotBlank() } ?: "Episode ${episode.episodeNum}"}",
+                    text = "${episode.episodeNum}. ${episode.title.takeIf { it.isNotBlank() } ?: stringResource(R.string.episode_n, episode.episodeNum)}",
                     style = IpxTypography.TitleMedium,
                     color = TextPrimary,
                     maxLines = 1,
@@ -364,8 +367,8 @@ private fun EpisodeCard(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("▶  Play", style = IpxTypography.LabelSmall, color = TextPrimary)
-                Text("Long-press to download", style = IpxTypography.LabelSmall, color = TextMuted)
+                Text("▶  " + stringResource(R.string.action_play), style = IpxTypography.LabelSmall, color = TextPrimary)
+                Text(stringResource(R.string.long_press_download), style = IpxTypography.LabelSmall, color = TextMuted)
             }
         }
     }

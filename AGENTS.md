@@ -53,6 +53,13 @@ Both agents MUST read this whole file at the start of every task and append to t
 - **Signing (owner decision 2026-10-22):** releases stay signed with the `debugCI` key (`app/debug.keystore`), which
   is public. Don't change the signing config, add a release key or make builds fail without secrets unless the
   owner asks: a different key would force every TV to uninstall and reinstall.
+- **Languages / RTL:** all UI text lives in `res/values/strings.xml` with Arabic in `res/values-ar/strings.xml`
+  (`StringResourcesTest` fails CI if a key or `%1$s` placeholder is missing from either). In Compose use
+  `stringResource(R.string.x)`; outside Compose (ViewModels, services) use `LocaleHelper.localized(context)`,
+  because the application context ignores the in-app language. French/Spanish/German show English text for now.
+  Arabic mirrors the layout, so: focus jumps toward the side menu use `focusProperties { start = … }` (never
+  `left`), key handlers use `directionalKeys().start/.end` (`ui/theme/Rtl.kt`) instead of DirectionLeft/Right,
+  provider text (titles, server, username) goes through `bidi(text)`, and the player timeline/transport stay LTR.
 - **Unit tests:** `app/src/test/` (JVM, no emulator). Add tests for pure logic you touch.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
   `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
@@ -168,3 +175,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files (locked until my next entry — please don't edit): all of `app/src/main/java/com/ipxtream/tv/ui/**`, `data/local/AppSettingsStore.kt`, `data/model/SeasonItem.kt`, `data/download/{DownloadService,HttpDownloader}.kt`, `util/LocaleHelper.kt`, `app/src/main/res/values*/strings.xml`, `AndroidManifest.xml`.
 - Status: in progress
 - For the other agent: After this lands, new UI text must go in `strings.xml` (+ the Arabic file), never as a literal in Kotlin.
+
+### 2026-10-22 | claude
+- Did: Arabic translation + RTL navigation. Moved ~310 UI strings into `strings.xml` with Arabic in `values-ar` (settings, home, details, 4K, downloads, login, player, error messages, notifications, legal text). Enum labels (`BufferProfile`, `PerformanceMode`, `ContentSection`, `SettingsCategory`, …) now carry `@StringRes` ids. Arabic uses Western digits (`ar-u-nu-latn`). Left/Right handlers in the side menu, search bar, hero and settings follow layout direction; settings/grid jumps to the menu use `start`. Player scrubber and controls stay left-to-right (Material rule), the track sheet closes toward the start. Provider titles keep their own direction (`bidi()`), pagination arrows auto-mirror. "Time left" on library cards now shows remaining time (was showing the watched position). New `StringResourcesTest`.
+- Files: res/values/strings.xml, res/values-ar/strings.xml, ui/theme/Rtl.kt, util/LocaleHelper.kt, data/local/AppSettingsStore.kt, data/download/DownloadService.kt, ui/login/*, ui/player/{PlayerHud,PlayerPanel,PlayerViewModel,TrackSelectionMenu}.kt, ui/dashboard/{DashboardScreen,DashboardUiState,DashboardViewModel}.kt, ui/dashboard/components/*, app/src/test/.../StringResourcesTest.kt
+- Status: done. Locks from my previous entry are released. Verified on the emulator (release build) in Arabic: settings, home, side menu, library, player HUD; Left/Right between menu, settings panes and content; then switched back to English. Not translated yet: low-level download error texts from `HttpDownloader` (shown only when a download fails).
+- For the other agent: Read the new "Languages / RTL" bullet in Current state before adding UI.

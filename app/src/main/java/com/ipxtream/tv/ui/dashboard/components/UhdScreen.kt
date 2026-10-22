@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import androidx.annotation.StringRes
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,11 +59,11 @@ import com.ipxtream.tv.ui.theme.TextSecondary
 
 private enum class UhdKind { MOVIES, SERIES }
 
-private enum class UhdSort(val label: String) {
-    RECENT("Recently added"),
-    RATING("Top rated"),
-    TITLE("A–Z"),
-    YEAR("Release year")
+private enum class UhdSort(@StringRes val labelRes: Int) {
+    RECENT(R.string.uhd_sort_recent),
+    RATING(R.string.uhd_sort_rating),
+    TITLE(R.string.uhd_sort_title),
+    YEAR(R.string.uhd_sort_year)
 }
 
 private val UHD_PREFIX = Regex("""(?i)^\s*(4k|uhd)\s*[-:|]\s*""")
@@ -166,16 +169,16 @@ fun UhdScreen(
     Column(modifier = modifier.fillMaxSize()) {
         // ── Header ────────────────────────────────────────────────────────────
         Column(Modifier.padding(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 8.dp)) {
-            Text("ULTRA HD", style = IpxTypography.Eyebrow, color = TextSecondary)
+            Text(stringResource(R.string.uhd_eyebrow), style = IpxTypography.Eyebrow, color = TextSecondary)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
-                Text("4K Collection", style = IpxTypography.DisplayLarge.copy(fontSize = 40.sp), color = Color.White)
+                Text(stringResource(R.string.uhd_title), style = IpxTypography.DisplayLarge.copy(fontSize = 40.sp), color = Color.White)
                 Spacer(Modifier.width(16.dp))
                 Text(
                     text = when {
-                        isLoading -> "Loading library…"
-                        query.isNotBlank() -> "$count of $total ${if (kind == UhdKind.MOVIES) "movies" else "series"}"
-                        else -> "$total ${if (kind == UhdKind.MOVIES) "movies" else "series"} · ${sort.label}"
+                        isLoading -> stringResource(R.string.uhd_loading)
+                        query.isNotBlank() -> stringResource(R.string.uhd_count_filtered, count, total, stringResource(if (kind == UhdKind.MOVIES) R.string.uhd_kind_movies else R.string.uhd_kind_series))
+                        else -> stringResource(R.string.uhd_count_sorted, total, stringResource(if (kind == UhdKind.MOVIES) R.string.uhd_kind_movies else R.string.uhd_kind_series), stringResource(sort.labelRes))
                     },
                     style = IpxTypography.BodyLarge,
                     color = TextSecondary,
@@ -196,17 +199,17 @@ fun UhdScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             PillChip(
-                label    = "Movies  ${movies.size}",
+                label    = stringResource(R.string.uhd_tab_movies, movies.size),
                 selected = kind == UhdKind.MOVIES,
                 onClick  = { kindName = UhdKind.MOVIES.name },
                 modifier = Modifier
                     .then(if (lastOpenedKey == null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
-                    .focusProperties { left = sideNavFocusRequester }
+                    .focusProperties { start = sideNavFocusRequester }
                     .then(toGrid)
             )
             Spacer(Modifier.width(10.dp))
             PillChip(
-                label    = "Series  ${series.size}",
+                label    = stringResource(R.string.uhd_tab_series, series.size),
                 selected = kind == UhdKind.SERIES,
                 onClick  = { kindName = UhdKind.SERIES.name },
                 modifier = toGrid
@@ -218,7 +221,7 @@ fun UhdScreen(
 
             UhdSort.entries.forEach { s ->
                 PillChip(
-                    label    = s.label,
+                    label    = stringResource(s.labelRes),
                     selected = sort == s,
                     onClick  = { sortName = s.name },
                     quiet    = true,
@@ -233,7 +236,7 @@ fun UhdScreen(
                 SearchBar(
                     query         = query,
                     onQueryChange = { query = it },
-                    placeholder   = "Search 4K titles"
+                    placeholder   = stringResource(R.string.uhd_search_hint)
                 )
             }
         }
@@ -246,7 +249,7 @@ fun UhdScreen(
                 isLoading -> {}
                 count == 0 -> EmptyUhdMessage(
                     filtered = query.isNotBlank(),
-                    kindLabel = if (kind == UhdKind.MOVIES) "movies" else "series",
+                    kindLabel = stringResource(if (kind == UhdKind.MOVIES) R.string.uhd_kind_movies else R.string.uhd_kind_series),
                     scanning = scan.isRunning,
                     canScanLibrary = scan.unchecked > 0
                 )
@@ -297,9 +300,9 @@ private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String, scanning: Bool
     ) {
         Text(
             text = when {
-                filtered -> "No matches"
-                scanning -> "Measuring video resolution…"
-                else     -> "No verified 4K $kindLabel yet"
+                filtered -> stringResource(R.string.uhd_no_matches)
+                scanning -> stringResource(R.string.uhd_measuring)
+                else     -> stringResource(R.string.uhd_none_verified, kindLabel)
             },
             style = IpxTypography.HeadlineMedium,
             color = TextPrimary
@@ -307,10 +310,10 @@ private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String, scanning: Bool
         Spacer(Modifier.height(8.dp))
         Text(
             text = when {
-                filtered       -> "Try a different title."
-                scanning       -> "Titles appear here as soon as their file is confirmed to be 2160p."
-                canScanLibrary -> "None of the titles labelled 4K measured as real 4K. Check the entire library to find the ones that are."
-                else           -> "Your whole library has been checked and no $kindLabel are encoded in 4K."
+                filtered       -> stringResource(R.string.uhd_try_different)
+                scanning       -> stringResource(R.string.uhd_appear_hint)
+                canScanLibrary -> stringResource(R.string.uhd_none_labelled)
+                else           -> stringResource(R.string.uhd_library_checked_none, kindLabel)
             },
             style = IpxTypography.BodyLarge,
             color = TextSecondary,
@@ -366,16 +369,16 @@ private fun ScanStatus(scan: UhdScanState, onScanLibrary: () -> Unit, onStopScan
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Control first, so D-Pad Up from the chips below lands on it.
         when {
-            scan.phase == UhdScanPhase.LIBRARY -> PillChip(label = "Pause check", selected = false, onClick = onStopScan)
-            !scan.isRunning && scan.unchecked > 0 -> PillChip(label = "Check entire library", selected = false, onClick = onScanLibrary)
+            scan.phase == UhdScanPhase.LIBRARY -> PillChip(label = stringResource(R.string.uhd_pause_check), selected = false, onClick = onStopScan)
+            !scan.isRunning && scan.unchecked > 0 -> PillChip(label = stringResource(R.string.uhd_check_library), selected = false, onClick = onScanLibrary)
         }
         if (scan.phase == UhdScanPhase.LIBRARY || (!scan.isRunning && scan.unchecked > 0)) Spacer(Modifier.width(16.dp))
         val text = when (scan.phase) {
-            UhdScanPhase.LABELLED -> "Verifying titles labelled 4K · ${"%,d".format(scan.checked)} of ${"%,d".format(scan.total)}"
-            UhdScanPhase.LIBRARY  -> "Checking your library · ${"%,d".format(scan.checked)} of ${"%,d".format(scan.total)} · ${scan.found} in 4K"
+            UhdScanPhase.LABELLED -> stringResource(R.string.uhd_scan_labelled, scan.checked, scan.total)
+            UhdScanPhase.LIBRARY  -> stringResource(R.string.uhd_scan_library, scan.checked, scan.total, scan.found)
             UhdScanPhase.IDLE     -> if (scan.unchecked > 0)
-                "Measured from each file. ${"%,d".format(scan.unchecked)} titles not checked yet."
-            else "Measured from each file · entire library checked"
+                stringResource(R.string.uhd_scan_idle, scan.unchecked)
+            else stringResource(R.string.uhd_scan_done)
         }
         Text(text, style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"), color = TextSecondary)
         if (scan.isRunning && scan.total > 0) {

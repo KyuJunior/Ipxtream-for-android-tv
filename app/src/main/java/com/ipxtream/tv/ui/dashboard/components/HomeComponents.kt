@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -70,7 +73,7 @@ fun TopHeader(
             SearchBar(
                 query = query,
                 onQueryChange = onQueryChange,
-                placeholder = "Search channels, movies, and series...",
+                placeholder = stringResource(R.string.search_home_hint),
                 modifier = searchModifier,
                 onDownNavigation = onSearchDown,
                 onLeftNavigation = onSearchLeft
@@ -89,32 +92,32 @@ fun TopHeader(
             HeaderIconButton(
                 onClick = onCacheAll,
                 icon = Icons.Rounded.Cloud,
-                contentDescription = "Cache All",
+                contentDescription = stringResource(R.string.action_cache_all),
                 tint = if (isCachingAll) AccentCyan else TextPrimary
             )
             // Refresh
             HeaderIconButton(
                 onClick = onRefresh,
                 icon = Icons.Rounded.Refresh,
-                contentDescription = "Refresh Server"
+                contentDescription = stringResource(R.string.action_refresh_server)
             )
             // Settings
             HeaderIconButton(
                 onClick = onSettings,
                 icon = Icons.Rounded.Settings,
-                contentDescription = "Settings"
+                contentDescription = stringResource(R.string.section_settings)
             )
             // Switch Account
             HeaderIconButton(
                 onClick = onSwitchAccount,
                 icon = Icons.Rounded.People,
-                contentDescription = "Switch Account"
+                contentDescription = stringResource(R.string.action_switch_account)
             )
             // Logout
             HeaderIconButton(
                 onClick = onLogout,
                 icon = Icons.AutoMirrored.Rounded.ExitToApp,
-                contentDescription = "Logout"
+                contentDescription = stringResource(R.string.action_logout)
             )
         }
         
@@ -176,7 +179,7 @@ fun UserProfileCard(
     onCheckForUpdates: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val username = activeAccount?.username ?: "Guest"
+    val username = activeAccount?.username ?: stringResource(R.string.account_guest)
     val serverUrl = activeAccount?.server?.removePrefix("http://")?.removePrefix("https://")?.take(22) ?: "offline"
     val initials = username.take(2).uppercase()
     val currentVersion = "v" + com.ipxtream.tv.BuildConfig.VERSION_NAME
@@ -219,12 +222,12 @@ fun UserProfileCard(
             // User & Server Details
             Column {
                 Text(
-                    text = username,
+                    text = bidi(username),
                     style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
                 Text(
-                    text = serverUrl,
+                    text = bidi(serverUrl),
                     style = IpxTypography.BodySmall.copy(fontSize = 11.sp),
                     color = TextSecondary
                 )
@@ -249,7 +252,7 @@ fun UserProfileCard(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Checking...",
+                            text = stringResource(R.string.update_checking),
                             style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
                             color = AccentCyan
                         )
@@ -264,7 +267,7 @@ fun UserProfileCard(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Update Available",
+                            text = stringResource(R.string.update_available),
                             style = IpxTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
@@ -282,13 +285,13 @@ fun UserProfileCard(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Up to date",
+                            text = stringResource(R.string.update_up_to_date),
                             style = IpxTypography.BodySmall.copy(fontSize = 10.sp),
                             color = AccentGreen
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            text = "Check",
+                            text = stringResource(R.string.update_check_short),
                             style = IpxTypography.BodySmall.copy(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
@@ -505,7 +508,7 @@ fun ContinueWatchingCard(
                 verticalArrangement = Arrangement.Bottom
             ) {
                 Text(
-                    text = item.name,
+                    text = bidi(item.name),
                     style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White,
                     maxLines = 2,
@@ -592,7 +595,7 @@ fun ContinueWatchingRow(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(top = IpxSpacing.RowGap)) {
-        ShelfTitle("Continue Watching")
+        ShelfTitle(stringResource(R.string.continue_watching))
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(horizontal = IpxSpacing.Gutter, vertical = 18.dp)

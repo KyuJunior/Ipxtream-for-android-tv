@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -79,7 +81,7 @@ private const val SUBTITLE_NONE_TRACK = -1
  * @param areSubtitlesEnabled Whether subtitles are currently active.
  * @param onSelectAudio      Callback with (groupIndex, trackIndex).
  * @param onSelectSubtitle   Callback with (groupIndex, trackIndex).
- * @param onDisableSubtitles Called when the user picks "(None)".
+ * @param onDisableSubtitles Called when the user picks stringResource(R.string.track_none).
  * @param onDismiss          Called when the panel should close.
  */
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -97,7 +99,7 @@ fun TrackSelectionMenu(
 ) {
     val isVisible    = menuType != TrackMenuType.NONE
     val isAudioMenu  = menuType == TrackMenuType.AUDIO
-    val title        = if (isAudioMenu) "Audio Track" else "Subtitles"
+    val title        = stringResource(if (isAudioMenu) R.string.track_audio_title else R.string.hud_subtitles)
     val firstFocuser = remember { FocusRequester() }
     val listState    = rememberLazyListState()
 
@@ -141,14 +143,14 @@ fun TrackSelectionMenu(
                     .padding(vertical = 28.dp)
             ) {
                 Text(
-                    text     = if (isAudioMenu) "AUDIO" else "SUBTITLES",
+                    text     = stringResource(if (isAudioMenu) R.string.track_eyebrow_audio else R.string.track_eyebrow_subs),
                     style    = IpxTypography.Eyebrow,
                     color    = TextSecondary,
                     modifier = Modifier.padding(horizontal = 28.dp)
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text     = if (isAudioMenu) "Choose a language" else "Choose subtitles",
+                    text     = stringResource(if (isAudioMenu) R.string.track_choose_language else R.string.track_choose_subs),
                     style    = IpxTypography.HeadlineMedium,
                     color    = Color.White,
                     modifier = Modifier.padding(horizontal = 28.dp)
@@ -162,11 +164,11 @@ fun TrackSelectionMenu(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     if (!isAudioMenu) {
-                        // "(None)" — disable subtitles option (subtitle menu only)
+                        // stringResource(R.string.track_none) — disable subtitles option (subtitle menu only)
                         item(key = "none") {
                             TrackMenuItem(
-                                label       = "(None)",
-                                sublabel    = "Turn off subtitles",
+                                label       = stringResource(R.string.track_none),
+                                sublabel    = stringResource(R.string.track_subs_off),
                                 isSelected  = !areSubtitlesEnabled,
                                 isSupported = true,
                                 isFocusTarget = true,
@@ -180,8 +182,8 @@ fun TrackSelectionMenu(
                     if (isAudioMenu && tracks.isEmpty()) {
                         item(key = "audio_default") {
                             TrackMenuItem(
-                                label       = "Default Audio",
-                                sublabel    = "Original stereo/surround stream",
+                                label       = stringResource(R.string.track_default_audio),
+                                sublabel    = stringResource(R.string.track_default_audio_sub),
                                 isSelected  = true,
                                 isSupported = true,
                                 isFocusTarget = true,
@@ -192,8 +194,8 @@ fun TrackSelectionMenu(
                     } else if (!isAudioMenu && tracks.isEmpty()) {
                         item(key = "sub_empty") {
                             TrackMenuItem(
-                                label       = "No Subtitles",
-                                sublabel    = "No subtitle streams detected",
+                                label       = stringResource(R.string.track_no_subs),
+                                sublabel    = stringResource(R.string.track_no_subs_sub),
                                 isSelected  = false,
                                 isSupported = false,
                                 isFocusTarget = false,
@@ -208,7 +210,7 @@ fun TrackSelectionMenu(
                             track == tracks.firstOrNull()
                         TrackMenuItem(
                             label          = track.label,
-                            sublabel       = if (!track.isSupported) "Not supported" else null,
+                            sublabel       = if (!track.isSupported) stringResource(R.string.track_not_supported) else null,
                             isSelected     = track.isSelected,
                             isSupported    = track.isSupported,
                             isFocusTarget  = isFirstAudioItem,
@@ -281,7 +283,7 @@ private fun TrackMenuItem(
                 if (isSelected) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.track_selected),
                         tint = textColor,
                         modifier = Modifier.size(20.dp)
                     )

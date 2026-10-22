@@ -1,5 +1,11 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.ui.theme.bidi
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.runtime.CompositionLocalProvider
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -185,6 +191,9 @@ fun PlayerHud(
                 slideOutVertically(tween(IpxMotion.Standard, easing = IpxMotion.EaseStandard)) { it / 4 },
             modifier = Modifier.align(Alignment.BottomCenter)
         ) {
+            // Timeline and transport read left-to-right in every language (Material bidi rule
+            // for media controls), so Left always rewinds and Right always fast-forwards.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -236,6 +245,7 @@ fun PlayerHud(
                     onHideAndFocusRoot = onHideAndFocusRoot
                 )
             }
+            }
         }
     }
 }
@@ -248,14 +258,13 @@ fun PlayerHud(
 private fun HudTopBar(uiState: PlayerUiState) {
     val context = LocalContext.current
     val settings by remember(context) { AppSettingsStore.getInstance(context).settings }.collectAsState()
-    val isArabic = remember { Locale.getDefault().language == "ar" }
 
     val mainTitle = uiState.activeSeries?.name ?: uiState.activeStreamName ?: ""
     val ep = uiState.activeEpisode
     val eyebrow = when {
-        ep != null -> if (isArabic) "الموسم ${ep.season} · الحلقة ${ep.episodeNum}" else "SEASON ${ep.season} · EPISODE ${ep.episodeNum}"
-        uiState.isLive -> uiState.activeStream?.num?.takeIf { it > 0 }?.let { "CHANNEL $it" }
-        else -> "MOVIE"
+        ep != null -> stringResource(R.string.hud_season_episode, ep.season, ep.episodeNum)
+        uiState.isLive -> uiState.activeStream?.num?.takeIf { it > 0 }?.let { stringResource(R.string.hud_channel, it) }
+        else -> stringResource(R.string.hud_movie)
     }
     val episodeTitle = ep?.title?.takeIf { it.isNotBlank() && !it.equals(mainTitle, ignoreCase = true) }
 
@@ -290,7 +299,7 @@ private fun HudTopBar(uiState: PlayerUiState) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text     = mainTitle,
+                text     = bidi(mainTitle),
                 style    = IpxTypography.HeadlineMedium.copy(fontSize = 34.sp, lineHeight = 40.sp, letterSpacing = (-0.6).sp),
                 color    = Color.White,
                 maxLines = 1,
@@ -299,7 +308,7 @@ private fun HudTopBar(uiState: PlayerUiState) {
             if (episodeTitle != null) {
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    text     = episodeTitle,
+                    text     = bidi(episodeTitle),
                     style    = IpxTypography.BodyLarge.copy(fontSize = 18.sp),
                     color    = Color.White.copy(alpha = 0.78f),
                     maxLines = 1,
@@ -318,7 +327,7 @@ private fun HudTopBar(uiState: PlayerUiState) {
             )
             if (!uiState.isLive && uiState.durationMs > 0L) {
                 Text(
-                    text  = (if (isArabic) "ينتهي " else "Ends at ") + clockFormat.format(Date(now + remainingMs)),
+                    text  = stringResource(R.string.hud_ends_at, clockFormat.format(Date(now + remainingMs))),
                     style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"),
                     color = TextSecondary
                 )
@@ -376,7 +385,7 @@ internal fun LivePill(modifier: Modifier = Modifier) {
     ) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(Color.White))
         Spacer(Modifier.width(5.dp))
-        Text("LIVE", style = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp), color = Color.White)
+        Text(stringResource(R.string.badge_live), style = IpxTypography.LabelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp), color = Color.White)
     }
 }
 
@@ -542,7 +551,7 @@ private fun LiveRail() {
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth()) {
             Spacer(Modifier.weight(1f))
-            Text("Live", style = TnumStyle, color = TextSecondary)
+            Text(stringResource(R.string.hud_live), style = TnumStyle, color = TextSecondary)
         }
     }
 }
@@ -622,8 +631,8 @@ private fun ControlsRow(
             modifier = Modifier.align(Alignment.TopStart),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            HudButton(Icons.Rounded.Close, "Close", onClose)
-            if (!uiState.isLive) HudButton(Icons.Rounded.RestartAlt, "Start over", onReplay)
+            HudButton(Icons.Rounded.Close, stringResource(R.string.action_close), onClose)
+            if (!uiState.isLive) HudButton(Icons.Rounded.RestartAlt, stringResource(R.string.hud_start_over), onReplay)
         }
 
         // Centre: transport
@@ -632,18 +641,18 @@ private fun ControlsRow(
             horizontalArrangement = Arrangement.spacedBy(18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isSeries) HudButton(Icons.Rounded.SkipPrevious, "Previous episode", onPrev)
-            if (!uiState.isLive) HudButton(Icons.Rounded.Replay10, "Back 10s", onSeekBack10)
+            if (isSeries) HudButton(Icons.Rounded.SkipPrevious, stringResource(R.string.hud_prev_episode), onPrev)
+            if (!uiState.isLive) HudButton(Icons.Rounded.Replay10, stringResource(R.string.hud_back_10), onSeekBack10)
             HudButton(
                 icon           = if (uiState.isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                label          = if (uiState.isPlaying) "Pause" else "Play",
+                label          = stringResource(if (uiState.isPlaying) R.string.action_pause else R.string.action_play),
                 onClick        = onTogglePlayPause,
                 focusRequester = playButtonFocus,
                 size           = 64.dp,
                 iconSize       = 34.dp
             )
-            if (!uiState.isLive) HudButton(Icons.Rounded.Forward10, "Forward 10s", onSeekForward10)
-            if (isSeries) HudButton(Icons.Rounded.SkipNext, "Next episode", onNext)
+            if (!uiState.isLive) HudButton(Icons.Rounded.Forward10, stringResource(R.string.hud_forward_10), onSeekForward10)
+            if (isSeries) HudButton(Icons.Rounded.SkipNext, stringResource(R.string.hud_next_episode), onNext)
         }
 
         // Right: episodes, language, library
@@ -651,12 +660,12 @@ private fun ControlsRow(
             modifier = Modifier.align(Alignment.TopEnd),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (onEpisodesClick != null && isSeries) HudButton(Icons.Rounded.VideoLibrary, "Episodes", onEpisodesClick)
-            HudButton(Icons.Rounded.Subtitles, "Subtitles", onShowSubMenu, active = uiState.areSubtitlesEnabled)
-            HudButton(Icons.Rounded.GraphicEq, "Audio", onShowAudioMenu)
+            if (onEpisodesClick != null && isSeries) HudButton(Icons.Rounded.VideoLibrary, stringResource(R.string.action_episodes), onEpisodesClick)
+            HudButton(Icons.Rounded.Subtitles, stringResource(R.string.hud_subtitles), onShowSubMenu, active = uiState.areSubtitlesEnabled)
+            HudButton(Icons.Rounded.GraphicEq, stringResource(R.string.hud_audio), onShowAudioMenu)
             HudButton(
                 icon    = if (uiState.isCurrentFavorite) Icons.Rounded.Favorite else Icons.Rounded.FavoriteBorder,
-                label   = if (uiState.isCurrentFavorite) "In My Library" else "Add to My Library",
+                label   = stringResource(if (uiState.isCurrentFavorite) R.string.hud_in_library else R.string.library_add),
                 onClick = onToggleFavorite
             )
         }

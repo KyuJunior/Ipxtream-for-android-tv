@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.dashboard
 
+import com.ipxtream.tv.R
 import com.ipxtream.tv.data.local.ResolutionStore
 import com.ipxtream.tv.data.local.VideoRes
 import com.ipxtream.tv.data.repository.ResolutionScanner
@@ -546,13 +547,13 @@ class DashboardViewModel(
                 _uiState.update { it.copy(updateDownloadProgress = null) }
                 if (!updateManager.installApk(destinationFile)) {
                     _uiState.update { it.copy(
-                        updateErrorMessage = "This TV couldn't open the installer. Allow installs from this app in Settings, then try again."
+                        updateErrorMessage = text(R.string.update_installer_failed)
                     ) }
                 }
             } else {
                 _uiState.update { it.copy(
                     updateDownloadProgress = null,
-                    updateErrorMessage = "Failed to download update file. Please try again."
+                    updateErrorMessage = text(R.string.update_download_failed)
                 ) }
             }
         }
@@ -561,6 +562,10 @@ class DashboardViewModel(
     fun dismissUpdate() {
         _uiState.update { it.copy(updateRelease = null, updateErrorMessage = null) }
     }
+
+    /** UI text resolved in the in-app language (application context alone uses the system language). */
+    private fun text(id: Int, vararg args: Any): String =
+        com.ipxtream.tv.util.LocaleHelper.localized(context).getString(id, *args)
 
     // ─── New Home & Cache Logic ───
 
@@ -755,7 +760,7 @@ class DashboardViewModel(
                     newItems.add(
                         LibraryItem(
                             id = movie.streamId.toString(),
-                            name = movie.name ?: "Untitled Movie",
+                            name = movie.name ?: text(R.string.untitled),
                             type = "movie",
                             iconUrl = movie.streamIcon,
                             categoryId = movie.categoryId,
@@ -877,12 +882,12 @@ class DashboardViewModel(
                 repository.getSeries(categoryId = null, forceRefresh = true)
                 
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "All content cached successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, text(R.string.cache_all_done), android.widget.Toast.LENGTH_SHORT).show()
                 }
             } catch (e: java.lang.Exception) {
                 android.util.Log.e("DashboardViewModel", "Error prefetching cache: ${e.message}", e)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(context, "Error caching content: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(context, text(R.string.cache_all_failed, e.message ?: ""), android.widget.Toast.LENGTH_SHORT).show()
                 }
             } finally {
                 _uiState.update { it.copy(isCachingAll = false) }
@@ -1107,7 +1112,7 @@ class DashboardViewModel(
     private fun handleContentError(error: Throwable) {
         _uiState.update { it.copy(
             isLoadingContent = false,
-            error            = error.localizedMessage ?: "Failed to load content."
+            error            = error.localizedMessage ?: text(R.string.content_load_failed)
         ) }
     }
 

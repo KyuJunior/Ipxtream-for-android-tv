@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.login
 
+import com.ipxtream.tv.R
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ipxtream.tv.data.api.ApiClient
@@ -27,8 +28,12 @@ import java.io.IOException
  * @param credentialStore Encrypted credential persistence layer.
  */
 class LoginViewModel(
-    private val credentialStore: CredentialStore
+    private val credentialStore: CredentialStore,
+    private val appContext: android.content.Context
 ) : ViewModel() {
+
+    private fun text(id: Int, vararg args: Any): String =
+        com.ipxtream.tv.util.LocaleHelper.localized(appContext).getString(id, *args)
 
     // -------------------------------------------------------------------------
     // State
@@ -81,26 +86,26 @@ class LoginViewModel(
                 } else {
                     // The server responded but rejected the credentials.
                     _uiState.value = LoginUiState.Error(
-                        "Authentication failed. Please check your username and password."
+                        text(R.string.login_auth_failed)
                     )
                 }
 
             } catch (e: HttpException) {
                 val msg = when (e.code()) {
-                    401, 403 -> "Invalid credentials or expired subscription."
-                    429 -> "Too many requests. Please wait a moment before trying again."
-                    in 500..599 -> "The IPTV provider's server is currently offline."
-                    else -> "Server error ${e.code()}: ${e.message()}"
+                    401, 403 -> text(R.string.login_invalid)
+                    429 -> text(R.string.login_too_many)
+                    in 500..599 -> text(R.string.login_server_offline)
+                    else -> text(R.string.login_server_error, e.code(), e.message())
                 }
                 _uiState.value = LoginUiState.Error(msg)
             } catch (e: IOException) {
                 // Covers: no network, DNS failure, socket timeout, malformed URL.
                 _uiState.value = LoginUiState.Error(
-                    "Network error. Check the server URL and your internet connection."
+                    text(R.string.login_network)
                 )
             } catch (e: Exception) {
                 _uiState.value = LoginUiState.Error(
-                    e.localizedMessage ?: "An unexpected error occurred."
+                    e.localizedMessage ?: text(R.string.login_unexpected)
                 )
             }
         }

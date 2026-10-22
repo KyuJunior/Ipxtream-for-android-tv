@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.directionalKeys
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
@@ -195,7 +198,7 @@ fun SideNavBar(
                 val isActive = item.section == activeSection
 
                 NavItem(
-                    title               = item.section.displayName,
+                    title               = stringResource(item.section.titleRes),
                     icon                = item.icon,
                     isExpanded          = isExpanded,
                     isActive            = isActive,
@@ -244,6 +247,7 @@ private fun NavItem(
     }
 
     val navItemShape = RoundedCornerShape(12.dp)
+    val keys = directionalKeys()
 
     Surface(
         onClick  = onSelected,
@@ -256,7 +260,7 @@ private fun NavItem(
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) {
                     when (event.key) {
-                        Key.DirectionRight -> {
+                        keys.end -> {
                             onNavigateToContent()
                             true
                         }

@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,8 +15,8 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextSecondary
@@ -51,16 +53,16 @@ fun PaginationBar(
             modifier = Modifier.padding(end = 12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp).padding(end = 4.dp)
             )
-            Text("Previous")
+            Text(stringResource(R.string.page_previous))
         }
 
         // -- Page indicator --
         Text(
-            text  = "Page ${currentPage + 1} of $totalPages",
+            text  = stringResource(R.string.page_of, currentPage + 1, totalPages),
             style = IpxTypography.BodyMedium,
             color = TextSecondary,
             modifier = Modifier.padding(horizontal = 16.dp)
@@ -72,9 +74,9 @@ fun PaginationBar(
             enabled  = hasNextPage,
             modifier = Modifier.padding(start = 12.dp)
         ) {
-            Text("Next")
+            Text(stringResource(R.string.page_next))
             Icon(
-                imageVector = Icons.Default.ArrowForward,
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
                 modifier = Modifier.size(16.dp).padding(start = 4.dp)
             )

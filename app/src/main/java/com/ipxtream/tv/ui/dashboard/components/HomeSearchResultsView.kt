@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -65,7 +67,7 @@ fun HomeSearchResultsView(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Searching \"$searchQuery\"…",
+                text = stringResource(R.string.search_searching, searchQuery),
                 style = IpxTypography.TitleMedium,
                 color = TextSecondary
             )
@@ -91,7 +93,7 @@ fun HomeSearchResultsView(
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = "No movies or TV series matched \"$searchQuery\"",
+                    text = stringResource(R.string.search_no_results, searchQuery),
                     style = IpxTypography.TitleMedium,
                     color = TextSecondary
                 )
@@ -112,13 +114,13 @@ fun HomeSearchResultsView(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = "Search Results for \"$searchQuery\"",
+                    text = stringResource(R.string.search_results_for, searchQuery),
                     style = IpxTypography.TitleLarge.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
                 Spacer(Modifier.width(16.dp))
                 Text(
-                    text = "$totalMoviesCount movies • $totalSeriesCount series",
+                    text = stringResource(R.string.search_counts, totalMoviesCount, totalSeriesCount),
                     style = IpxTypography.BodyMedium,
                     color = TextSecondary
                 )
@@ -130,7 +132,7 @@ fun HomeSearchResultsView(
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "Movies ($totalMoviesCount)",
+                        text = stringResource(R.string.search_movies_count, totalMoviesCount),
                         style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -150,7 +152,7 @@ fun HomeSearchResultsView(
                                     .focusProperties {
                                         up = searchBarFocusRequester
                                         if (index == 0) {
-                                            left = sideNavFocusRequester
+                                            start = sideNavFocusRequester
                                         }
                                     }
                                     .then(
@@ -169,7 +171,7 @@ fun HomeSearchResultsView(
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = "TV Series ($totalSeriesCount)",
+                        text = stringResource(R.string.search_series_count, totalSeriesCount),
                         style = IpxTypography.TitleMedium.copy(fontWeight = FontWeight.Bold),
                         color = Color.White,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -191,7 +193,7 @@ fun HomeSearchResultsView(
                                             up = searchBarFocusRequester
                                         }
                                         if (index == 0) {
-                                            left = sideNavFocusRequester
+                                            start = sideNavFocusRequester
                                         }
                                     }
                                     .then(

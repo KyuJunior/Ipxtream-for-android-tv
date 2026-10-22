@@ -20,13 +20,14 @@ import com.ipxtream.tv.data.local.CredentialStore
  * This will be replaced by Hilt in a later phase if dependency injection is added.
  */
 class LoginViewModelFactory(
-    private val credentialStore: CredentialStore
+    private val credentialStore: CredentialStore,
+    private val appContext: android.content.Context
 ) : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LoginViewModel::class.java)) {
-            return LoginViewModel(credentialStore) as T
+            return LoginViewModel(credentialStore, appContext) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

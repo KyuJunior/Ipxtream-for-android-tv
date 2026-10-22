@@ -1,5 +1,10 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.ui.theme.directionalKeys
+import androidx.compose.ui.AbsoluteAlignment
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import android.view.ViewGroup
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -235,6 +240,7 @@ fun PlayerPanel(
 
     // ── Live TV Channel Surfing Banner ─────────────────────────────────────────
     var showChannelBanner by remember { mutableStateOf(false) }
+    val keys = directionalKeys()
     var lastChannelId by remember { mutableStateOf<Int?>(null) }
 
     androidx.compose.runtime.LaunchedEffect(uiState.activeStream?.streamId) {
@@ -319,7 +325,7 @@ fun PlayerPanel(
                     // Track menu is open — only intercept BACK; menu list handles navigation.
                     uiState.isTrackMenuOpen -> {
                         viewModel.onHudInteraction()
-                        if (event.key == Key.Back || event.key == Key.DirectionLeft) {
+                        if (event.key == Key.Back || event.key == keys.start) {
                             viewModel.dismissTrackMenu()
                             true  // consumed
                         } else false
@@ -499,7 +505,7 @@ fun PlayerPanel(
                             }
                         }
                         Text(
-                            text = stream.name,
+                            text = bidi(stream.name),
                             style = IpxTypography.TitleLarge,
                             color = Color.White,
                             maxLines = 1,
@@ -584,7 +590,7 @@ fun PlayerPanel(
             modifier = Modifier.fillMaxSize()
         ) {
             ErrorOverlay(
-                message      = uiState.error ?: "Unknown playback error.",
+                message      = uiState.error ?: stringResource(R.string.player_unknown_error),
                 focusTarget  = overlayFocus,
                 onRetry      = { exoPlayer.prepare(); exoPlayer.play() },
                 onClose      = onStop
@@ -600,7 +606,7 @@ fun PlayerPanel(
         ) {
             EndedOverlay(
                 title         = uiState.activeSeries?.name ?: uiState.activeStreamName ?: "",
-                nextLabel     = if (onNextEpisode != null) nextEpisodeLabel ?: "Next episode" else null,
+                nextLabel     = if (onNextEpisode != null) nextEpisodeLabel ?: stringResource(R.string.hud_next_episode) else null,
                 autoPlay      = appSettings.autoPlayNextEpisode,
                 focusTarget   = overlayFocus,
                 onPlayNext    = { onNextEpisode?.invoke() },
@@ -637,8 +643,8 @@ private fun FeedbackFlash(feedback: HudFeedback?, modifier: Modifier = Modifier)
     Box(
         modifier = modifier,
         contentAlignment = when (feedback.side) {
-            -1   -> Alignment.CenterStart
-            1    -> Alignment.CenterEnd
+            -1   -> AbsoluteAlignment.CenterLeft   // rewind / forward glyphs follow the LTR timeline
+            1    -> AbsoluteAlignment.CenterRight
             else -> Alignment.Center
         }
     ) {
@@ -690,7 +696,7 @@ private fun ErrorOverlay(
                 .padding(horizontal = 40.dp, vertical = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Can't play this right now", style = IpxTypography.HeadlineMedium, color = Color.White)
+            Text(stringResource(R.string.player_cant_play), style = IpxTypography.HeadlineMedium, color = Color.White)
             Spacer(Modifier.height(10.dp))
             Text(
                 text = message,
@@ -700,8 +706,8 @@ private fun ErrorOverlay(
             )
             Spacer(Modifier.height(28.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                PremiumButton(label = "Try Again", icon = null, onClick = onRetry, modifier = Modifier.focusRequester(focusTarget))
-                PremiumButton(label = "Close", icon = null, onClick = onClose)
+                PremiumButton(label = stringResource(R.string.action_try_again), icon = null, onClick = onRetry, modifier = Modifier.focusRequester(focusTarget))
+                PremiumButton(label = stringResource(R.string.action_close), icon = null, onClick = onClose)
             }
         }
     }
@@ -759,7 +765,7 @@ private fun EndedOverlay(
             horizontalAlignment = Alignment.End
         ) {
             if (nextLabel != null) {
-                Text("UP NEXT", style = IpxTypography.Eyebrow, color = TextSecondary)
+                Text(stringResource(R.string.player_up_next), style = IpxTypography.Eyebrow, color = TextSecondary)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = nextLabel,
@@ -771,16 +777,16 @@ private fun EndedOverlay(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    text = if (autoPlay && !cancelled) "Starts in $secondsLeft s" else title,
+                    text = if (autoPlay && !cancelled) stringResource(R.string.player_starts_in, secondsLeft) else title,
                     style = IpxTypography.BodyLarge.copy(fontFeatureSettings = "tnum"),
                     color = TextSecondary
                 )
                 Spacer(Modifier.height(24.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     if (autoPlay && !cancelled) {
-                        PremiumButton(label = "Cancel", icon = null, onClick = { cancelled = true })
+                        PremiumButton(label = stringResource(R.string.action_cancel), icon = null, onClick = { cancelled = true })
                     } else {
-                        PremiumButton(label = "Close", icon = null, onClick = onClose)
+                        PremiumButton(label = stringResource(R.string.action_close), icon = null, onClick = onClose)
                     }
                     Box(
                         modifier = Modifier.drawBehind {
@@ -807,7 +813,7 @@ private fun EndedOverlay(
                         }
                     ) {
                         PremiumButton(
-                            label = "Play Next",
+                            label = stringResource(R.string.player_play_next),
                             icon = Icons.Rounded.SkipNext,
                             onClick = onPlayNext,
                             modifier = Modifier.focusRequester(focusTarget)
@@ -815,10 +821,10 @@ private fun EndedOverlay(
                     }
                 }
             } else {
-                Text("FINISHED", style = IpxTypography.Eyebrow, color = TextSecondary)
+                Text(stringResource(R.string.player_finished), style = IpxTypography.Eyebrow, color = TextSecondary)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    text = title,
+                    text = bidi(title),
                     style = IpxTypography.HeadlineMedium,
                     color = Color.White,
                     maxLines = 2,
@@ -827,9 +833,9 @@ private fun EndedOverlay(
                 )
                 Spacer(Modifier.height(24.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                    PremiumButton(label = "Close", icon = null, onClick = onClose)
+                    PremiumButton(label = stringResource(R.string.action_close), icon = null, onClick = onClose)
                     PremiumButton(
-                        label = "Watch Again",
+                        label = stringResource(R.string.player_watch_again),
                         icon = Icons.Rounded.PlayArrow,
                         onClick = onReplay,
                         modifier = Modifier.focusRequester(focusTarget)

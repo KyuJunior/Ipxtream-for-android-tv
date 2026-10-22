@@ -1,5 +1,10 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.ui.theme.directionalKeys
+import androidx.annotation.StringRes
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -41,13 +46,13 @@ import com.ipxtream.tv.data.local.*
 import com.ipxtream.tv.ui.dashboard.DashboardUiState
 import com.ipxtream.tv.ui.theme.*
 
-enum class SettingsCategory(val title: String, val icon: ImageVector) {
-    GENERAL("General & UI", Icons.Rounded.Palette),
-    PLAYBACK("Playback & Player", Icons.Rounded.PlayCircle),
-    AUDIO_SUBS("Audio & Subtitles", Icons.Rounded.Subtitles),
-    ACCOUNTS("Accounts Manager", Icons.Rounded.ManageAccounts),
-    DATA("Data & Storage", Icons.Rounded.Storage),
-    ABOUT("About & Updates", Icons.Rounded.Info)
+enum class SettingsCategory(@StringRes val titleRes: Int, val icon: ImageVector) {
+    GENERAL(R.string.settings_cat_general, Icons.Rounded.Palette),
+    PLAYBACK(R.string.settings_cat_playback, Icons.Rounded.PlayCircle),
+    AUDIO_SUBS(R.string.settings_cat_audio, Icons.Rounded.Subtitles),
+    ACCOUNTS(R.string.settings_cat_accounts, Icons.Rounded.ManageAccounts),
+    DATA(R.string.settings_cat_data, Icons.Rounded.Storage),
+    ABOUT(R.string.settings_cat_about, Icons.Rounded.Info)
 }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
@@ -84,12 +89,15 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedCategory by remember { mutableStateOf(SettingsCategory.GENERAL) }
+    val keys = directionalKeys()
     val leftNavFocusRequester = remember { FocusRequester() }
     val rightContentFocusRequester = remember { FocusRequester() }
 
     var showTermsDialog by remember { mutableStateOf(false) }
     var showPrivacyDialog by remember { mutableStateOf(false) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
+    val imageCacheClearedMsg = stringResource(R.string.feedback_image_cache_cleared)
+    val historyClearedMsg = stringResource(R.string.feedback_history_cleared)
 
     LaunchedEffect(feedbackMessage) {
         if (feedbackMessage != null) {
@@ -134,7 +142,7 @@ fun SettingsScreen(
                         )
                     }
                     Text(
-                        text = "System Settings",
+                        text = stringResource(R.string.settings_title),
                         style = IpxTypography.DisplayLarge.copy(fontSize = 28.sp),
                         color = TextPrimary
                     )
@@ -204,7 +212,7 @@ fun SettingsScreen(
                                         }
                                     }
                                     .onPreviewKeyEvent { event ->
-                                        if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionRight) {
+                                        if (event.type == KeyEventType.KeyDown && event.key == keys.end) {
                                             runCatching { rightContentFocusRequester.requestFocus() }
                                             true
                                         } else false
@@ -231,12 +239,12 @@ fun SettingsScreen(
                                 ) {
                                     Icon(
                                         imageVector = category.icon,
-                                        contentDescription = category.title,
+                                        contentDescription = stringResource(category.titleRes),
                                         tint = if (isSelected || isFocused) AccentCyan else TextSecondary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Text(
-                                        text = category.title,
+                                        text = stringResource(category.titleRes),
                                         style = IpxTypography.BodyMedium,
                                         color = if (isSelected || isFocused) TextPrimary else TextSecondary,
                                         fontWeight = if (isSelected || isFocused) FontWeight.Bold else FontWeight.Normal
@@ -328,11 +336,11 @@ fun SettingsScreen(
                                     onToggleAutoRefresh = onToggleAutoRefreshCache,
                                     onClearImageCache = {
                                         onClearImageCache()
-                                        feedbackMessage = "Poster & image cache cleared successfully"
+                                        feedbackMessage = imageCacheClearedMsg
                                     },
                                     onClearWatchHistory = {
                                         onClearWatchHistory()
-                                        feedbackMessage = "Watch history cleared successfully"
+                                        feedbackMessage = historyClearedMsg
                                     }
                                 )
                             }
@@ -356,43 +364,16 @@ fun SettingsScreen(
 
         if (showTermsDialog) {
             LegalInfoDialog(
-                title = "Terms and Conditions",
-                content = """IPXtream TV Terms and Conditions
-
-1. Acceptance of Terms
-By installing and using IPXtream TV, you agree to these terms. If you do not agree, uninstall and do not use the application.
-
-2. Purpose and Nature of the Software
-IPXtream TV is an independent client media player. It does not provide, host, sell, or index any video streams, television channels, or playlists. The application is strictly a playback tool.
-
-3. User Responsibilities
-You are solely responsible for the playlists and credentials you load. You must ensure you have the legal right or license to access your content. You must not use the application to infringe upon copyright or intellectual property rights.
-
-4. Third-Party Services
-Connections are established directly from your device to the IPTV server you specify. The developers have no affiliation with any streaming service or provider.
-
-5. Disclaimer of Warranties
-The software is provided "as is" without warranty of any kind. The developers are not liable for any damages resulting from the use of this software or content accessed through it.""",
+                title = stringResource(R.string.legal_terms_title),
+                content = stringResource(R.string.legal_terms_body),
                 onDismiss = { showTermsDialog = false }
             )
         }
 
         if (showPrivacyDialog) {
             LegalInfoDialog(
-                title = "Privacy Policy",
-                content = """IPXtream TV Privacy Policy
-
-1. Zero Data Collection
-IPXtream TV does not collect, transmit, store, or sell your personal data. There are no tracking scripts, analytics SDKs, or background telemetry.
-
-2. Local Storage
-All credentials, playlists, stream caches, and download history are saved exclusively on your local device within sandboxed application storage. This information is deleted if you clear app data or uninstall the application.
-
-3. Outgoing Connections
-The application connects directly to the IPTV provider address you provide to load streams, and queries the public GitHub Releases API to check for software updates. No personal data is transmitted in these requests.
-
-4. Contact
-For questions or inquiries, visit the official repository at github.com/KyuJunior/Ipxtream-for-android-tv.""",
+                title = stringResource(R.string.legal_privacy_title),
+                content = stringResource(R.string.legal_privacy_body),
                 onDismiss = { showPrivacyDialog = false }
             )
         }
@@ -417,17 +398,17 @@ private fun GeneralSettingsContent(
     onToggleDownloads: (Boolean) -> Unit,
     onToggleLibrary: (Boolean) -> Unit
 ) {
-    SectionHeader("General & Appearance", "Configure interface language, visual effects, and sidebar layout.")
+    SectionHeader(stringResource(R.string.settings_general_title), stringResource(R.string.settings_general_sub))
 
     // App Language Selector
     SettingSelectorItem(
-        title = "Application Language",
-        subtitle = "Choose your preferred user interface language.",
+        title = stringResource(R.string.settings_language),
+        subtitle = stringResource(R.string.settings_language_sub),
         options = AppLanguage.values().toList(),
         selected = settings.appLanguage,
         onSelect = onLanguageChange,
         labelProvider = { it.displayName },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
     )
 
     // Performance mode
@@ -436,74 +417,74 @@ private fun GeneralSettingsContent(
         com.ipxtream.tv.ui.theme.reducedEffectsFor(context, com.ipxtream.tv.data.local.PerformanceMode.AUTO)
     }
     SettingSelectorItem(
-        title = "Performance",
+        title = stringResource(R.string.settings_performance),
         subtitle = when (settings.performanceMode) {
             com.ipxtream.tv.data.local.PerformanceMode.AUTO ->
-                "Picks the best mode for this TV — currently " + (if (autoIsReduced) "Smooth." else "Full Effects.")
+                stringResource(R.string.settings_performance_auto_sub, stringResource(if (autoIsReduced) R.string.performance_current_smooth else R.string.performance_current_full))
             com.ipxtream.tv.data.local.PerformanceMode.FULL ->
-                "All animations: backdrop zoom and blur, focus shine and depth, cinematic transitions."
+                stringResource(R.string.settings_performance_full_sub)
             com.ipxtream.tv.data.local.PerformanceMode.SMOOTH ->
-                "Turns off heavy visual effects so menus and scrolling stay fluid on any TV."
+                stringResource(R.string.settings_performance_smooth_sub)
         },
         options = com.ipxtream.tv.data.local.PerformanceMode.values().toList(),
         selected = settings.performanceMode,
         onSelect = onPerformanceModeChange,
-        labelProvider = { it.label },
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        labelProvider = { stringResource(it.labelRes) },
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Dynamic Spotlight
     SettingToggleItem(
-        title = "Dynamic Poster Spotlight",
-        subtitle = "Renders high-resolution blurred art backdrop behind Home and Category screens.",
+        title = stringResource(R.string.settings_spotlight),
+        subtitle = stringResource(R.string.settings_spotlight_sub),
         isChecked = settings.showSpotlightBackdrop,
         onCheckedChange = onToggleSpotlight,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Channel Numbers
     SettingToggleItem(
-        title = "Show Channel Numbers",
-        subtitle = "Display index badges on Live TV channel cards.",
+        title = stringResource(R.string.settings_channel_numbers),
+        subtitle = stringResource(R.string.settings_channel_numbers_sub),
         isChecked = settings.showChannelNumbers,
         onCheckedChange = onToggleChannelNumbers,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Clock Format
     SettingToggleItem(
-        title = "24-Hour Clock Format",
-        subtitle = "Display clock in 24-hour mode instead of 12-hour AM/PM.",
+        title = stringResource(R.string.settings_clock_24h),
+        subtitle = stringResource(R.string.settings_clock_24h_sub),
         isChecked = settings.is24HourClockFormat,
         onCheckedChange = onToggle24HourClock,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     Spacer(Modifier.height(8.dp))
-    Text("Side Navigation Sections", style = IpxTypography.TitleMedium, color = AccentCyan)
+    Text(stringResource(R.string.settings_side_nav_sections), style = IpxTypography.TitleMedium, color = AccentCyan)
 
     SettingToggleItem(
-        title = "Show \"What's New\"",
-        subtitle = "Displays top rated releases section in the side menu.",
+        title = stringResource(R.string.settings_show_whats_new),
+        subtitle = stringResource(R.string.settings_show_whats_new_sub),
         isChecked = settings.showWhatsNewSection,
         onCheckedChange = onToggleWhatsNew,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     SettingToggleItem(
-        title = "Show \"Downloads\"",
-        subtitle = "Displays offline media downloads section in the side menu.",
+        title = stringResource(R.string.settings_show_downloads),
+        subtitle = stringResource(R.string.settings_show_downloads_sub),
         isChecked = settings.showDownloadsSection,
         onCheckedChange = onToggleDownloads,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     SettingToggleItem(
-        title = "Show \"My Library\"",
-        subtitle = "Displays bookmarks, history, and update checks in the side menu.",
+        title = stringResource(R.string.settings_show_library),
+        subtitle = stringResource(R.string.settings_show_library_sub),
         isChecked = settings.showLibrarySection,
         onCheckedChange = onToggleLibrary,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 }
 
@@ -518,57 +499,57 @@ private fun PlaybackSettingsContent(
     onDecoderChange: (DecoderMode) -> Unit,
     onKeepScreenAwake: (Boolean) -> Unit
 ) {
-    SectionHeader("Playback & Player", "Tune streaming buffers, decoding priority, and aspect ratio.")
+    SectionHeader(stringResource(R.string.settings_playback_title), stringResource(R.string.settings_playback_sub))
 
     // Buffer Profile
     SettingSelectorItem(
-        title = "Streaming Buffer Profile",
-        subtitle = "Adjust buffer duration for network reliability vs startup latency.",
+        title = stringResource(R.string.settings_buffer),
+        subtitle = stringResource(R.string.settings_buffer_sub),
         options = BufferProfile.values().toList(),
         selected = settings.bufferProfile,
         onSelect = onBufferChange,
-        labelProvider = { it.label },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+        labelProvider = { stringResource(it.labelRes) },
+        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
     )
 
     // Auto Play Next Episode
     SettingToggleItem(
-        title = "Auto-play Next Episode",
-        subtitle = "Automatically load the next TV episode upon finishing current playback.",
+        title = stringResource(R.string.settings_autoplay_next),
+        subtitle = stringResource(R.string.settings_autoplay_next_sub),
         isChecked = settings.autoPlayNextEpisode,
         onCheckedChange = onAutoPlayNext,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Aspect Ratio
     SettingSelectorItem(
-        title = "Default Video Aspect Ratio",
-        subtitle = "Select default framing for VOD blockbusters and TV channels.",
+        title = stringResource(R.string.settings_aspect),
+        subtitle = stringResource(R.string.settings_aspect_sub),
         options = AspectRatioMode.values().toList(),
         selected = settings.defaultAspectRatio,
         onSelect = onAspectRatioChange,
-        labelProvider = { it.label },
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        labelProvider = { stringResource(it.labelRes) },
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Decoder Mode
     SettingSelectorItem(
-        title = "Hardware Acceleration",
-        subtitle = "Prefer hardware decoder chips for smooth 4K/60fps TV streaming.",
+        title = stringResource(R.string.settings_hw_accel),
+        subtitle = stringResource(R.string.settings_hw_accel_sub),
         options = DecoderMode.values().toList(),
         selected = settings.decoderMode,
         onSelect = onDecoderChange,
-        labelProvider = { it.label },
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        labelProvider = { stringResource(it.labelRes) },
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Keep Screen Awake
     SettingToggleItem(
-        title = "Prevent TV Sleep During Playback",
-        subtitle = "Keep screen alive and block TV screen savers while video is playing.",
+        title = stringResource(R.string.settings_keep_awake),
+        subtitle = stringResource(R.string.settings_keep_awake_sub),
         isChecked = settings.keepScreenAwake,
         onCheckedChange = onKeepScreenAwake,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 }
 
@@ -582,65 +563,65 @@ private fun AudioSubsSettingsContent(
     onSubLangChange: (String) -> Unit,
     onSubSizeChange: (SubtitleTextSize) -> Unit
 ) {
-    SectionHeader("Audio & Subtitles", "Configure default tracks, subtitle languages, and font size.")
+    SectionHeader(stringResource(R.string.settings_audio_title), stringResource(R.string.settings_audio_sub))
 
     val audioOptions = listOf(
-        "default" to "Stream Default",
-        "en" to "English",
-        "ar" to "Arabic",
-        "fr" to "French",
-        "es" to "Spanish",
-        "de" to "German"
+        "default" to stringResource(R.string.lang_stream_default),
+        "en" to stringResource(R.string.lang_english),
+        "ar" to stringResource(R.string.lang_arabic),
+        "fr" to stringResource(R.string.lang_french),
+        "es" to stringResource(R.string.lang_spanish),
+        "de" to stringResource(R.string.lang_german)
     )
 
     // Preferred Audio Language
     SettingSelectorItem(
-        title = "Preferred Audio Track Language",
-        subtitle = "Automatically select matching audio tracks when streams have multiple languages.",
+        title = stringResource(R.string.settings_audio_lang),
+        subtitle = stringResource(R.string.settings_audio_lang_sub),
         options = audioOptions.map { it.first },
         selected = settings.preferredAudioLanguage,
         onSelect = onAudioLangChange,
         labelProvider = { code -> audioOptions.firstOrNull { it.first == code }?.second ?: code },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
     )
 
     // Default Subtitles Toggle
     SettingToggleItem(
-        title = "Enable Subtitles by Default",
-        subtitle = "Automatically turn subtitles on when matching text tracks exist.",
+        title = stringResource(R.string.settings_subs_default),
+        subtitle = stringResource(R.string.settings_subs_default_sub),
         isChecked = settings.defaultSubtitlesEnabled,
         onCheckedChange = onToggleSubtitles,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     val subOptions = listOf(
-        "en" to "English",
-        "ar" to "Arabic",
-        "fr" to "French",
-        "es" to "Spanish",
-        "de" to "German"
+        "en" to stringResource(R.string.lang_english),
+        "ar" to stringResource(R.string.lang_arabic),
+        "fr" to stringResource(R.string.lang_french),
+        "es" to stringResource(R.string.lang_spanish),
+        "de" to stringResource(R.string.lang_german)
     )
 
     // Preferred Subtitle Language
     SettingSelectorItem(
-        title = "Preferred Subtitle Language",
-        subtitle = "Language code used when prioritizing subtitle selection.",
+        title = stringResource(R.string.settings_sub_lang),
+        subtitle = stringResource(R.string.settings_sub_lang_sub),
         options = subOptions.map { it.first },
         selected = settings.preferredSubtitleLanguage,
         onSelect = onSubLangChange,
         labelProvider = { code -> subOptions.firstOrNull { it.first == code }?.second ?: code },
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Subtitle Text Size
     SettingSelectorItem(
-        title = "Subtitle Font Size",
-        subtitle = "Text scale rendered for closed captions and embedded subtitles.",
+        title = stringResource(R.string.settings_sub_size),
+        subtitle = stringResource(R.string.settings_sub_size_sub),
         options = SubtitleTextSize.values().toList(),
         selected = settings.subtitleTextSize,
         onSelect = onSubSizeChange,
-        labelProvider = { it.label },
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        labelProvider = { stringResource(it.labelRes) },
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 }
 
@@ -660,15 +641,15 @@ private fun AccountsSettingsContent(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        SectionHeader("Accounts Manager", "Switch between multiple IPTV subscriptions and manage credentials.")
+        SectionHeader(stringResource(R.string.settings_accounts_title), stringResource(R.string.settings_accounts_sub))
         Button(
             onClick = onAddAccount,
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+            modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
         ) {
             Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Black)
             Spacer(Modifier.width(6.dp))
-            Text("Add Account", fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.accounts_add), fontSize = 12.sp, color = Color.Black, fontWeight = FontWeight.Bold)
         }
     }
 
@@ -677,7 +658,7 @@ private fun AccountsSettingsContent(
             modifier = Modifier.fillMaxWidth().padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("No accounts stored.", style = IpxTypography.BodyMedium, color = TextMuted)
+            Text(stringResource(R.string.accounts_none), style = IpxTypography.BodyMedium, color = TextMuted)
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -699,8 +680,8 @@ private fun AccountsSettingsContent(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column {
-                                Text(account.username, style = IpxTypography.TitleMedium, color = TextPrimary)
-                                Text(account.server.removePrefix("http://").removePrefix("https://").substringBefore("/"), style = IpxTypography.BodySmall, color = TextMuted)
+                                Text(bidi(account.username), style = IpxTypography.TitleMedium, color = TextPrimary)
+                                Text(bidi(account.server.removePrefix("http://").removePrefix("https://").substringBefore("/")), style = IpxTypography.BodySmall, color = TextMuted)
                             }
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -711,7 +692,7 @@ private fun AccountsSettingsContent(
                                             .background(AccentCyan.copy(alpha = 0.2f))
                                             .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
-                                        Text("Active", fontSize = 11.sp, color = AccentCyan, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.accounts_active), fontSize = 11.sp, color = AccentCyan, fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 if (isDefault) {
@@ -721,7 +702,7 @@ private fun AccountsSettingsContent(
                                             .background(AccentAmber.copy(alpha = 0.2f))
                                             .padding(horizontal = 8.dp, vertical = 3.dp)
                                     ) {
-                                        Text("Default", fontSize = 11.sp, color = AccentAmber, fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.accounts_default), fontSize = 11.sp, color = AccentAmber, fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -734,32 +715,32 @@ private fun AccountsSettingsContent(
                             if (!isActive) {
                                 Button(
                                     onClick = { onSwitchAccount(account.server, account.username) },
-                                    modifier = Modifier.height(30.dp).focusProperties { left = leftNavFocus }
+                                    modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus }
                                 ) {
-                                    Text("Switch", fontSize = 11.sp, color = Color.Black)
+                                    Text(stringResource(R.string.accounts_switch), fontSize = 11.sp, color = Color.Black)
                                 }
                             }
                             if (!isDefault) {
                                 Button(
                                     onClick = { onSetDefaultAccount(account.server, account.username) },
-                                    modifier = Modifier.height(30.dp).focusProperties { left = leftNavFocus },
+                                    modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus },
                                     colors = ButtonDefaults.colors(
                                         containerColor = Color.Transparent,
                                         focusedContainerColor = SlateCard
                                     )
                                 ) {
-                                    Text("Set Default", fontSize = 11.sp, color = TextPrimary)
+                                    Text(stringResource(R.string.accounts_set_default), fontSize = 11.sp, color = TextPrimary)
                                 }
                             }
                             Button(
                                 onClick = { onRemoveAccount(account.server, account.username) },
-                                modifier = Modifier.height(30.dp).focusProperties { left = leftNavFocus },
+                                modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus },
                                 colors = ButtonDefaults.colors(
                                     containerColor = Color.Red.copy(alpha = 0.75f),
                                     focusedContainerColor = Color.Red
                                 )
                             ) {
-                                Text("Remove", fontSize = 11.sp, color = Color.White)
+                                Text(stringResource(R.string.accounts_remove), fontSize = 11.sp, color = Color.White)
                             }
                         }
                     }
@@ -778,34 +759,34 @@ private fun DataStorageSettingsContent(
     onClearImageCache: () -> Unit,
     onClearWatchHistory: () -> Unit
 ) {
-    SectionHeader("Data & Storage", "Manage offline files, local poster disk cache, and continue watching records.")
+    SectionHeader(stringResource(R.string.settings_data_title), stringResource(R.string.settings_data_sub))
 
     // Auto Refresh Cache
     SettingToggleItem(
-        title = "Auto-Refresh Content on App Launch",
-        subtitle = "Perform background Stale-While-Revalidate refresh for categories and channel listings.",
+        title = stringResource(R.string.settings_auto_refresh),
+        subtitle = stringResource(R.string.settings_auto_refresh_sub),
         isChecked = settings.autoRefreshCacheOnStartup,
         onCheckedChange = onToggleAutoRefresh,
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
     )
 
     // Clear Poster Cache
     SettingActionItem(
-        title = "Clear Poster & Image Cache",
-        subtitle = "Removes cached channel thumbnails and movie posters to free local TV storage.",
-        actionLabel = "Clear Cache",
+        title = stringResource(R.string.settings_clear_images),
+        subtitle = stringResource(R.string.settings_clear_images_sub),
+        actionLabel = stringResource(R.string.settings_clear_cache),
         onClick = onClearImageCache,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
     // Clear Watch History
     SettingActionItem(
-        title = "Clear Watch History & Progress",
-        subtitle = "Resets all resume points and clears items in Continue Watching row.",
-        actionLabel = "Clear History",
+        title = stringResource(R.string.settings_clear_history),
+        subtitle = stringResource(R.string.settings_clear_history_sub),
+        actionLabel = stringResource(R.string.settings_clear_history_action),
         isDestructive = true,
         onClick = onClearWatchHistory,
-        modifier = Modifier.focusProperties { left = leftNavFocus }
+        modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 }
 
@@ -821,7 +802,7 @@ private fun AboutSettingsContent(
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit
 ) {
-    SectionHeader("About & Updates", "Version diagnostics, legal notices, and OTA software updates.")
+    SectionHeader(stringResource(R.string.settings_about_title), stringResource(R.string.settings_about_sub))
 
     // App Information Box
     Box(
@@ -832,11 +813,11 @@ private fun AboutSettingsContent(
             .padding(16.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("IPXtream TV Client", style = IpxTypography.TitleMedium, color = AccentCyan)
+            Text(stringResource(R.string.about_client), style = IpxTypography.TitleMedium, color = AccentCyan)
             Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                Text("Version: v${BuildConfig.VERSION_NAME}", style = IpxTypography.BodySmall, color = TextPrimary)
-                Text("Build Type: ${BuildConfig.BUILD_TYPE}", style = IpxTypography.BodySmall, color = TextSecondary)
-                Text("Target: Android TV (Leanback)", style = IpxTypography.BodySmall, color = TextMuted)
+                Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME), style = IpxTypography.BodySmall, color = TextPrimary)
+                Text(stringResource(R.string.about_build_type, BuildConfig.BUILD_TYPE), style = IpxTypography.BodySmall, color = TextSecondary)
+                Text(stringResource(R.string.about_target), style = IpxTypography.BodySmall, color = TextMuted)
             }
         }
     }
@@ -850,15 +831,15 @@ private fun AboutSettingsContent(
             .padding(16.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Software Update", style = IpxTypography.TitleMedium, color = Color.White)
+            Text(stringResource(R.string.about_software_update), style = IpxTypography.TitleMedium, color = Color.White)
 
             when {
                 uiState.isCheckingForUpdate -> {
-                    Text("Checking GitHub repository for latest release...", style = IpxTypography.BodyMedium, color = TextSecondary)
+                    Text(stringResource(R.string.about_checking_github), style = IpxTypography.BodyMedium, color = TextSecondary)
                 }
                 uiState.updateDownloadProgress != null -> {
                     val progress = uiState.updateDownloadProgress
-                    Text("Downloading update: ${(progress * 100).toInt()}%", style = IpxTypography.BodyMedium, color = AccentCyan)
+                    Text(stringResource(R.string.update_downloading_pct, (progress * 100).toInt()), style = IpxTypography.BodyMedium, color = AccentCyan)
                     androidx.compose.material3.LinearProgressIndicator(
                         progress = { progress },
                         color = AccentCyan,
@@ -869,13 +850,13 @@ private fun AboutSettingsContent(
                 }
                 uiState.updateRelease != null -> {
                     val release = uiState.updateRelease
-                    Text("New version ${release.tagName} is available!", style = IpxTypography.BodyMedium, color = AccentGreen, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.update_new_version, release.tagName), style = IpxTypography.BodyMedium, color = AccentGreen, fontWeight = FontWeight.Bold)
                     if (!release.body.isNullOrBlank()) {
                         Text(release.body, style = IpxTypography.BodySmall, color = TextSecondary, maxLines = 4)
                     }
                 }
                 else -> {
-                    Text("Running the latest version (v${BuildConfig.VERSION_NAME}).", style = IpxTypography.BodyMedium, color = TextSecondary)
+                    Text(stringResource(R.string.update_running_latest, BuildConfig.VERSION_NAME), style = IpxTypography.BodyMedium, color = TextSecondary)
                 }
             }
 
@@ -887,23 +868,23 @@ private fun AboutSettingsContent(
                 if (uiState.updateRelease != null && uiState.updateDownloadProgress == null) {
                     Button(
                         onClick = onDownloadUpdate,
-                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
                     ) {
-                        Text("Download Update", color = Color.Black, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.update_download), color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = onDismissUpdate,
-                        modifier = Modifier.height(34.dp).focusProperties { left = leftNavFocus }
+                        modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus }
                     ) {
-                        Text("Later")
+                        Text(stringResource(R.string.action_later))
                     }
                 } else {
                     Button(
                         onClick = onCheckUpdates,
                         enabled = !uiState.isCheckingForUpdate && uiState.updateDownloadProgress == null,
-                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
                     ) {
-                        Text(if (uiState.isCheckingForUpdate) "Checking..." else "Check for Updates")
+                        Text(if (uiState.isCheckingForUpdate) stringResource(R.string.update_checking) else stringResource(R.string.update_check))
                     }
                 }
             }
@@ -914,24 +895,24 @@ private fun AboutSettingsContent(
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = onOpenTerms,
-            modifier = Modifier.height(34.dp).focusProperties { left = leftNavFocus },
+            modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
             colors = ButtonDefaults.colors(
                 containerColor = SlateCard,
                 focusedContainerColor = AccentCyan
             )
         ) {
-            Text("Terms & Conditions", style = IpxTypography.BodySmall)
+            Text(stringResource(R.string.legal_terms_short), style = IpxTypography.BodySmall)
         }
 
         Button(
             onClick = onOpenPrivacy,
-            modifier = Modifier.height(34.dp).focusProperties { left = leftNavFocus },
+            modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
             colors = ButtonDefaults.colors(
                 containerColor = SlateCard,
                 focusedContainerColor = AccentCyan
             )
         ) {
-            Text("Privacy Policy", style = IpxTypography.BodySmall)
+            Text(stringResource(R.string.legal_privacy_title), style = IpxTypography.BodySmall)
         }
     }
 }
@@ -1021,7 +1002,7 @@ private fun <T> SettingSelectorItem(
     options: List<T>,
     selected: T,
     onSelect: (T) -> Unit,
-    labelProvider: (T) -> String,
+    labelProvider: @Composable (T) -> String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1234,7 +1215,7 @@ private fun LegalInfoDialog(
                         )
                     ) {
                         Text(
-                            text = "Close",
+                            text = stringResource(R.string.action_close),
                             style = IpxTypography.BodyMedium,
                             color = Color.Black,
                             fontWeight = FontWeight.Bold

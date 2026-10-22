@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -77,13 +79,13 @@ fun CategoryRow(
         // "All" chip
         item {
             CategoryChip(
-                label      = "All",
+                label      = stringResource(R.string.category_all),
                 isSelected = selectedCategoryId == null,
                 onClick    = { onCategorySelected(null) },
                 modifier   = Modifier
                     .then(if (firstChipFocusRequester != null) Modifier.focusRequester(firstChipFocusRequester) else Modifier)
                     .focusProperties {
-                        if (sideNavFocusRequester != null) left = sideNavFocusRequester
+                        if (sideNavFocusRequester != null) start = sideNavFocusRequester
                         if (gridFocusRequester != null) down = gridFocusRequester
                         if (searchBarFocusRequester != null) up = searchBarFocusRequester
                     }

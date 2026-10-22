@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.directionalKeys
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -58,13 +61,14 @@ fun SearchBar(
     query: String,
     onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Search...",
+    placeholder: String = stringResource(R.string.search_hint),
     onDownNavigation: (() -> Unit)? = null,
     onLeftNavigation: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    val keys = directionalKeys()
 
     val bgColor by animateColorAsState(
         targetValue = if (isFocused) Color(0x33FFFFFF) else Color(0x14FFFFFF),
@@ -109,7 +113,7 @@ fun SearchBar(
                             }
                             true
                         }
-                        Key.DirectionLeft -> {
+                        keys.start -> {
                             if (onLeftNavigation != null) {
                                 onLeftNavigation()
                                 true
@@ -151,7 +155,7 @@ fun SearchBar(
             ) {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Search",
+                    contentDescription = stringResource(R.string.search),
                     tint = if (isFocused) Color.White else com.ipxtream.tv.ui.theme.TextSecondary,
                     modifier = Modifier.size(20.dp)
                 )

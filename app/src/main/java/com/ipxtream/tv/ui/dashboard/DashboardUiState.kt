@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard
 
+import com.ipxtream.tv.R
+import androidx.annotation.StringRes
 import com.ipxtream.tv.data.model.Category
 import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesInfoResponse
@@ -14,16 +16,16 @@ import com.ipxtream.tv.data.local.LibraryItem
  * The three top-level content sections exposed on the Dashboard.
  * Drives which API endpoints are called and which card layout is rendered.
  */
-enum class ContentSection(val displayName: String, val iconRes: String) {
-    HOME("Home", "ic_home"),
-    LIVE("Live TV",   "ic_live_tv"),
-    VOD("Movies",    "ic_movie"),
-    SERIES("Series", "ic_series"),
-    UHD("4K Ultra HD", "ic_4k"),
-    MY_LIBRARY("My Library", "ic_library"),
-    WHATS_NEW("What's New", "ic_whats_new"),
-    SETTINGS("Settings", "ic_settings"),
-    DOWNLOADS("Downloads", "ic_downloads")
+enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
+    HOME(R.string.section_home, "ic_home"),
+    LIVE(R.string.section_live,   "ic_live_tv"),
+    VOD(R.string.section_movies,    "ic_movie"),
+    SERIES(R.string.section_series, "ic_series"),
+    UHD(R.string.section_uhd, "ic_4k"),
+    MY_LIBRARY(R.string.section_library, "ic_library"),
+    WHATS_NEW(R.string.section_whats_new, "ic_whats_new"),
+    SETTINGS(R.string.section_settings, "ic_settings"),
+    DOWNLOADS(R.string.section_downloads, "ic_downloads")
 }
 
 // ─── 4K scan progress ─────────────────────────────────────────────────────────

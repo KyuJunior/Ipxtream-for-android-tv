@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.login
 
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -244,7 +246,7 @@ fun LoginScreen(
                 modifier = Modifier.graphicsLayer { alpha = f1Alpha; translationY = (1f - f1Alpha) * 15.dp.toPx() }
             ) {
                 LoginField(
-                    label       = "Server URL",
+                    label       = stringResource(R.string.login_server_url),
                     hint        = "http://your-provider.com:8080",
                     value       = server,
                     onValueChange = { server = it },
@@ -263,7 +265,7 @@ fun LoginScreen(
                 modifier = Modifier.graphicsLayer { alpha = f2Alpha; translationY = (1f - f2Alpha) * 15.dp.toPx() }
             ) {
                 LoginField(
-                    label         = "Username",
+                    label         = stringResource(R.string.login_username),
                     hint          = "your_username",
                     value         = username,
                     onValueChange = { username = it },
@@ -282,7 +284,7 @@ fun LoginScreen(
                 modifier = Modifier.graphicsLayer { alpha = f3Alpha; translationY = (1f - f3Alpha) * 15.dp.toPx() }
             ) {
                 LoginField(
-                    label         = "Password",
+                    label         = stringResource(R.string.login_password),
                     hint          = "••••••••",
                     value         = password,
                     onValueChange = { password = it },
@@ -351,11 +353,11 @@ fun LoginScreen(
                                 strokeWidth = 2.dp
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text("Connecting…", color = TextOnAccent, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.login_connecting), color = TextOnAccent, fontWeight = FontWeight.SemiBold)
                         }
                     } else {
                         Text(
-                            "Sign In",
+                            stringResource(R.string.login_sign_in),
                             color      = TextOnAccent,
                             fontWeight = FontWeight.SemiBold,
                             fontSize   = 16.sp,
@@ -430,7 +432,7 @@ private fun LoginField(
                     ) {
                         Icon(
                             imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                            contentDescription = stringResource(if (passwordVisible) R.string.login_hide_password else R.string.login_show_password),
                             tint = if (isFocused) AccentCyan else TextMuted
                         )
                     }

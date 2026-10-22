@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -285,7 +288,7 @@ fun VodDetailScreen(
 
                 // 2. Movie Title
                 Text(
-                    text       = title,
+                    text       = bidi(title),
                     style      = IpxTypography.DisplayLarge.copy(fontSize = 44.sp, lineHeight = 52.sp),
                     color      = TextPrimary,
                     fontWeight = FontWeight.Black,
@@ -303,7 +306,7 @@ fun VodDetailScreen(
                     VodActionButton(
                         onClick         = onPlay,
                         icon            = Icons.Filled.PlayArrow,
-                        label           = "Play",
+                        label           = stringResource(R.string.action_play),
                         isPrimary       = true,
                         modifier        = Modifier.focusRequester(playButtonFocus)
                     )
@@ -311,14 +314,14 @@ fun VodDetailScreen(
                     VodActionButton(
                         onClick   = onDownload,
                         icon      = Icons.Filled.ArrowDownward,
-                        label     = "Download",
+                        label     = stringResource(R.string.action_download),
                         isPrimary = false
                     )
 
                     VodActionButton(
                         onClick         = onToggleFavorite,
                         icon            = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        label           = if (isFavorite) "Liked" else "Like",
+                        label           = stringResource(if (isFavorite) R.string.action_liked else R.string.action_like),
                         isPrimary       = false,
                         isHeartFavorite = isFavorite
                     )
@@ -326,7 +329,7 @@ fun VodDetailScreen(
                     VodActionButton(
                         onClick   = onClose,
                         icon      = Icons.AutoMirrored.Filled.ArrowBack,
-                        label     = "Back",
+                        label     = stringResource(R.string.action_back),
                         isPrimary = false
                     )
                 }
@@ -336,14 +339,14 @@ fun VodDetailScreen(
                 // 4. Synopsis / Plot
                 if (isLoadingVodInfo && plot == null) {
                     Text(
-                        text      = "Loading movie details...",
+                        text      = stringResource(R.string.vod_loading),
                         style     = IpxTypography.BodyMedium.copy(fontSize = 15.sp),
                         color     = TextMuted,
                         fontStyle = FontStyle.Italic
                     )
                 } else {
                     Text(
-                        text       = plot ?: "No synopsis available for this title.",
+                        text       = plot ?: stringResource(R.string.no_synopsis),
                         style      = IpxTypography.BodyMedium.copy(fontSize = 15.sp, lineHeight = 23.sp),
                         color      = Color(0xFFBAC7D5),
                         maxLines   = 4,
@@ -358,7 +361,7 @@ fun VodDetailScreen(
                     if (!director.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text       = "Director",
+                                text       = stringResource(R.string.vod_director),
                                 style      = IpxTypography.BodySmall.copy(fontSize = 13.sp),
                                 color      = TextSecondary,
                                 fontWeight = FontWeight.Bold,
@@ -376,7 +379,7 @@ fun VodDetailScreen(
                     if (!cast.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.Top) {
                             Text(
-                                text       = "Cast",
+                                text       = stringResource(R.string.vod_cast),
                                 style      = IpxTypography.BodySmall.copy(fontSize = 13.sp),
                                 color      = TextSecondary,
                                 fontWeight = FontWeight.Bold,
@@ -396,7 +399,7 @@ fun VodDetailScreen(
                     if (!country.isNullOrBlank()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text       = "Country",
+                                text       = stringResource(R.string.vod_country),
                                 style      = IpxTypography.BodySmall.copy(fontSize = 13.sp),
                                 color      = TextSecondary,
                                 fontWeight = FontWeight.Bold,

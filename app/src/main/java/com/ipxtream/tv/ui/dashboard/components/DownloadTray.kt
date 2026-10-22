@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -114,7 +117,7 @@ fun DownloadTray(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text      = "⬇ Downloads",
+                text      = "⬇ " + stringResource(R.string.section_downloads),
                 style     = IpxTypography.TitleMedium,
                 color     = AccentCyan,
                 fontWeight = FontWeight.SemiBold
@@ -129,7 +132,7 @@ fun DownloadTray(
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        text     = "$activeCount active",
+                        text     = stringResource(R.string.downloads_active_count, activeCount),
                         fontSize = 10.sp,
                         color    = Color(0xFF0B1520),
                         fontWeight = FontWeight.Bold
@@ -159,13 +162,13 @@ fun DownloadTray(
 
             // Clear finished button
             if (downloads.any { it.isFinished || it.hasFailed }) {
-                TrayIconButton(label = "Clear done", onClick = onClearDone)
+                TrayIconButton(label = stringResource(R.string.downloads_clear_done_short), onClick = onClearDone)
                 Spacer(Modifier.width(8.dp))
             }
 
             // Collapse / Expand toggle
             TrayIconButton(
-                label   = if (isExpanded) "▼ Collapse" else "▲ Expand",
+                label   = if (isExpanded) "▼ " + stringResource(R.string.tray_collapse) else "▲ " + stringResource(R.string.tray_expand),
                 onClick = { isExpanded = !isExpanded }
             )
         }
@@ -227,7 +230,7 @@ private fun DownloadRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text     = item.title,
+                text     = bidi(item.title),
                 style    = IpxTypography.BodyMedium,
                 color    = TextPrimary,
                 maxLines = 1,
@@ -285,13 +288,13 @@ private fun DownloadRow(
                         TrayIconButton("▶", onResume)
 
                     DownloadStatus.FAILED ->
-                        TrayIconButton("↺ Retry", onRetry)
+                        TrayIconButton("↺ " + stringResource(R.string.action_retry), onRetry)
 
                     DownloadStatus.COMPLETED -> { /* no action needed */ }
                 }
 
                 if (!item.isFinished) {
-                    TrayIconButton("Cancel", onCancel)
+                    TrayIconButton(stringResource(R.string.action_cancel), onCancel)
                 }
             }
         }
@@ -306,11 +309,11 @@ private fun DownloadRow(
 @Composable
 private fun StatusBadge(status: DownloadStatus) {
     val (label, color) = when (status) {
-        DownloadStatus.PENDING     -> "Queued" to TextMuted
-        DownloadStatus.DOWNLOADING -> "Active" to AccentCyan
-        DownloadStatus.PAUSED      -> "Paused" to AccentAmber
-        DownloadStatus.COMPLETED   -> "Done"   to AccentGreen
-        DownloadStatus.FAILED      -> "Failed" to AccentAmber
+        DownloadStatus.PENDING     -> stringResource(R.string.dl_queued) to TextMuted
+        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_active) to AccentCyan
+        DownloadStatus.PAUSED      -> stringResource(R.string.dl_paused) to AccentAmber
+        DownloadStatus.COMPLETED   -> stringResource(R.string.dl_done)   to AccentGreen
+        DownloadStatus.FAILED      -> stringResource(R.string.dl_failed) to AccentAmber
     }
     Text(label, style = IpxTypography.LabelSmall, color = color, fontSize = 10.sp)
 }
@@ -335,6 +338,7 @@ private fun TrayIconButton(label: String, onClick: () -> Unit) {
 //  Formatting helpers
 // =============================================================================
 
+@Composable
 private fun buildInfoText(item: DownloadItem): String {
     val parts = mutableListOf<String>()
 
@@ -354,7 +358,7 @@ private fun buildInfoText(item: DownloadItem): String {
     // ETA
     val eta = item.etaSeconds
     if (item.isActive && eta > 0L) {
-        parts += "${formatEta(eta)} left"
+        parts += stringResource(R.string.time_left, formatEta(eta))
     }
 
     if (item.hasFailed && item.errorMessage != null) {
@@ -377,13 +381,14 @@ private fun formatSpeed(bps: Long): String = when {
     else             -> "${"%.1f".format(bps / 1_048_576.0)} MB/s"
 }
 
+@Composable
 private fun formatEta(seconds: Long): String {
     val h = seconds / 3_600
     val m = (seconds % 3_600) / 60
     val s = seconds % 60
     return when {
-        h > 0 -> "${h}h ${m}m"
-        m > 0 -> "${m}m ${s}s"
-        else  -> "${s}s"
+        h > 0 -> stringResource(R.string.eta_hm, h, m)
+        m > 0 -> stringResource(R.string.eta_ms, m, s)
+        else  -> stringResource(R.string.eta_s, s)
     }
 }

@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.R
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -495,7 +496,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         // Language (convert BCP-47 tag to readable name)
         format.language?.takeIf { it.isNotBlank() }?.let { tag ->
             val locale      = Locale.forLanguageTag(tag)
-            val displayName = locale.getDisplayLanguage(Locale.ENGLISH)
+            val displayName = locale.getDisplayLanguage(Locale.getDefault())
             parts += if (displayName.isNotBlank() && displayName != tag) displayName
                      else tag.uppercase()
         }
@@ -521,8 +522,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
             if (format.channelCount > 0) {
                 parts += when (format.channelCount) {
-                    1    -> "Mono"
-                    2    -> "Stereo"
+                    1    -> text(R.string.track_mono)
+                    2    -> text(R.string.track_stereo)
                     6    -> "5.1"
                     8    -> "7.1"
                     else -> "${format.channelCount}ch"
@@ -530,7 +531,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
 
-        return parts.joinToString(" · ").ifBlank { "Track ${format.id ?: "?"}" }
+        return parts.joinToString(" · ").ifBlank { text(R.string.track_n, format.id ?: "?") }
     }
 
     // =========================================================================
@@ -770,17 +771,20 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  Error message formatting
     // =========================================================================
 
+    private fun text(id: Int, vararg args: Any): String =
+        com.ipxtream.tv.util.LocaleHelper.localized(getApplication()).getString(id, *args)
+
     private fun buildErrorMessage(error: PlaybackException): String = when (error.errorCode) {
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
-            "Network error. Check your connection and server URL."
+            text(R.string.player_err_network)
         PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
-            "Stream unavailable. The server returned an error."
+            text(R.string.player_err_http)
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ->
-            "This stream format is not supported on your device."
+            text(R.string.player_err_format)
         PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ->
-            "Fell behind the live stream. Reconnecting..."
-        else -> error.localizedMessage ?: "Playback error (${error.errorCode})."
+            text(R.string.player_err_behind_live)
+        else -> error.localizedMessage ?: text(R.string.player_err_code, error.errorCode)
     }
 
     // =========================================================================

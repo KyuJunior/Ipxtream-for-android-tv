@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -72,7 +75,7 @@ fun DownloadsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Downloads",
+                    text = stringResource(R.string.section_downloads),
                     style = IpxTypography.DisplayLarge.copy(fontSize = 40.sp),
                     color = TextPrimary
                 )
@@ -87,7 +90,7 @@ fun DownloadsScreen(
                             focusedContentColor = Color.Black
                         )
                     ) {
-                        Text("Clear Done / Failed", style = IpxTypography.BodyMedium)
+                        Text(stringResource(R.string.downloads_clear_done), style = IpxTypography.BodyMedium)
                     }
                 }
             }
@@ -101,12 +104,12 @@ fun DownloadsScreen(
                         Text("⬇", fontSize = 48.sp, color = TextMuted)
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            text = "No downloads yet.",
+                            text = stringResource(R.string.downloads_empty),
                             style = IpxTypography.TitleMedium,
                             color = TextMuted
                         )
                         Text(
-                            text = "Long-press OK on Movies or Series episodes to start downloads.",
+                            text = stringResource(R.string.downloads_empty_hint),
                             style = IpxTypography.BodyMedium,
                             color = TextSecondary,
                             modifier = Modifier.padding(top = 8.dp)
@@ -185,7 +188,7 @@ private fun DownloadManagerCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = item.title,
+                    text = bidi(item.title),
                     style = IpxTypography.TitleMedium,
                     color = TextPrimary,
                     maxLines = 1,
@@ -234,17 +237,17 @@ private fun DownloadManagerCard(
                     when (item.status) {
                         DownloadStatus.DOWNLOADING -> {
                             Button(onClick = onPause) {
-                                Text("Pause")
+                                Text(stringResource(R.string.action_pause))
                             }
                         }
                         DownloadStatus.PAUSED, DownloadStatus.PENDING -> {
                             Button(onClick = onResume) {
-                                Text("Resume")
+                                Text(stringResource(R.string.action_resume))
                             }
                         }
                         DownloadStatus.FAILED -> {
                             Button(onClick = onRetry) {
-                                Text("Retry")
+                                Text(stringResource(R.string.action_retry))
                             }
                         }
                         DownloadStatus.COMPLETED -> {
@@ -261,7 +264,7 @@ private fun DownloadManagerCard(
                                 focusedContentColor = Color.White
                             )
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(R.string.action_cancel))
                         }
                     }
                 }
@@ -274,11 +277,11 @@ private fun DownloadManagerCard(
 @Composable
 private fun ScreenStatusBadge(status: DownloadStatus) {
     val (label, color) = when (status) {
-        DownloadStatus.PENDING -> "Queued" to TextMuted
-        DownloadStatus.DOWNLOADING -> "Downloading" to AccentCyan
-        DownloadStatus.PAUSED -> "Paused" to AccentAmber
-        DownloadStatus.COMPLETED -> "Finished" to AccentGreen
-        DownloadStatus.FAILED -> "Failed" to Color.Red
+        DownloadStatus.PENDING -> stringResource(R.string.dl_queued) to TextMuted
+        DownloadStatus.DOWNLOADING -> stringResource(R.string.dl_downloading) to AccentCyan
+        DownloadStatus.PAUSED -> stringResource(R.string.dl_paused) to AccentAmber
+        DownloadStatus.COMPLETED -> stringResource(R.string.dl_finished) to AccentGreen
+        DownloadStatus.FAILED -> stringResource(R.string.dl_failed) to Color.Red
     }
     Box(
         modifier = Modifier
@@ -290,6 +293,7 @@ private fun ScreenStatusBadge(status: DownloadStatus) {
     }
 }
 
+@Composable
 private fun formatInfo(item: DownloadItem): String {
     val parts = mutableListOf<String>()
 
@@ -306,7 +310,7 @@ private fun formatInfo(item: DownloadItem): String {
 
     val eta = item.etaSeconds
     if (item.isActive && eta > 0L) {
-        parts += "${formatEta(eta)} left"
+        parts += stringResource(R.string.time_left, formatEta(eta))
     }
 
     if (item.hasFailed && item.errorMessage != null) {
@@ -329,13 +333,14 @@ private fun formatSpeed(bps: Long): String = when {
     else -> "${"%.1f".format(bps / 1_048_576.0)} MB/s"
 }
 
+@Composable
 private fun formatEta(seconds: Long): String {
     val h = seconds / 3_600
     val m = (seconds % 3_600) / 60
     val s = seconds % 60
     return when {
-        h > 0 -> "${h}h ${m}m"
-        m > 0 -> "${m}m ${s}s"
-        else -> "${s}s"
+        h > 0 -> stringResource(R.string.eta_hm, h, m)
+        m > 0 -> stringResource(R.string.eta_ms, m, s)
+        else -> stringResource(R.string.eta_s, s)
     }
 }

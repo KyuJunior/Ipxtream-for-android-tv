@@ -54,7 +54,7 @@ class LoginActivity : ComponentActivity() {
 
         viewModel = ViewModelProvider(
             this,
-            LoginViewModelFactory(credentialStore)
+            LoginViewModelFactory(credentialStore, applicationContext)
         )[LoginViewModel::class.java]
 
         val isAddAccountMode = intent.getBooleanExtra(EXTRA_ADD_ACCOUNT, false)

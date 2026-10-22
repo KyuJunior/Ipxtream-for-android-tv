@@ -1,5 +1,9 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.ui.theme.directionalKeys
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import android.os.Build
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
@@ -331,13 +335,13 @@ fun HeroInfo(
         ) { f ->
             Column(Modifier.widthIn(max = 640.dp)) {
                 Text(
-                    text  = if (f.kind == "Series") "FEATURED SERIES" else "FEATURED MOVIE",
+                    text  = stringResource(if (f.kind == "Series") R.string.hero_featured_series else R.string.hero_featured_movie),
                     style = IpxTypography.Eyebrow,
                     color = TextSecondary
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    text     = f.title,
+                    text     = bidi(f.title),
                     style    = IpxTypography.HeroTitle,
                     color    = Color.White,
                     maxLines = 2,
@@ -366,24 +370,25 @@ fun HeroInfo(
             verticalAlignment     = Alignment.CenterVertically
         ) {
             PremiumButton(
-                label    = if (feature.kind == "Series") "Episodes" else "Play",
+                label    = stringResource(if (feature.kind == "Series") R.string.action_episodes else R.string.action_play),
                 icon     = if (feature.kind == "Series") Icons.Rounded.VideoLibrary else Icons.Rounded.PlayArrow,
                 onClick  = { onPrimary(feature) },
                 modifier = primaryModifier
             )
             if (feature.kind == "Movie") {
                 PremiumButton(
-                    label   = "Details",
+                    label   = stringResource(R.string.action_details),
                     icon    = Icons.Rounded.Info,
                     onClick = { onDetails(feature) }
                 )
             }
+            val keys = directionalKeys()
             GlassIconButton(
                 icon     = if (isFavorite) Icons.Rounded.Check else Icons.Rounded.Add,
-                contentDescription = if (isFavorite) "Remove from My Library" else "Add to My Library",
+                contentDescription = stringResource(if (isFavorite) R.string.library_remove else R.string.library_add),
                 onClick  = { onToggleFavorite(feature) },
                 modifier = Modifier.onPreviewKeyEvent { e ->
-                    if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionRight && features.size > 1) {
+                    if (e.type == KeyEventType.KeyDown && e.key == keys.end && features.size > 1) {
                         next(); true
                     } else false
                 }

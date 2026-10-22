@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.dashboard
 
+import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.R
+import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -586,7 +589,7 @@ fun DashboardScreen(
                                                 .focusRequester(firstItemFocusRequester)
                                                 .focusProperties {
                                                     up = searchBarFocusRequester
-                                                    left = sideNavFocusRequester
+                                                    start = sideNavFocusRequester
                                                 }
                                         )
                                     }
@@ -599,8 +602,8 @@ fun DashboardScreen(
                                         horizontalArrangement = Arrangement.spacedBy(20.dp)
                                     ) {
                                         QuickAccessCard(
-                                            title = "Live TV",
-                                            subtitle = "Channels, sports and news",
+                                            title = stringResource(R.string.home_tile_live),
+                                            subtitle = stringResource(R.string.home_tile_live_sub),
                                             icon = Icons.Rounded.Tv,
                                             themeColor = Color(0xFFFF453A),
                                             onClick = { onSectionSelected(ContentSection.LIVE) },
@@ -614,12 +617,12 @@ fun DashboardScreen(
                                                 )
                                                 .focusProperties {
                                                     up = if (hasHero) liveTvCardFocusRequester else searchBarFocusRequester
-                                                    left = sideNavFocusRequester
+                                                    start = sideNavFocusRequester
                                                 }
                                         )
                                         QuickAccessCard(
-                                            title = "Movies",
-                                            subtitle = "Films on demand",
+                                            title = stringResource(R.string.section_movies),
+                                            subtitle = stringResource(R.string.home_tile_movies_sub),
                                             icon = Icons.Rounded.Movie,
                                             themeColor = Color(0xFF0A84FF),
                                             onClick = { onSectionSelected(ContentSection.VOD) },
@@ -629,8 +632,8 @@ fun DashboardScreen(
                                                 .focusProperties { up = if (hasHero) liveTvCardFocusRequester else searchBarFocusRequester }
                                         )
                                         QuickAccessCard(
-                                            title = "TV Series",
-                                            subtitle = "Shows worth the binge",
+                                            title = stringResource(R.string.home_tile_series),
+                                            subtitle = stringResource(R.string.home_tile_series_sub),
                                             icon = Icons.Rounded.Slideshow,
                                             themeColor = Color(0xFFFF9F0A),
                                             onClick = { onSectionSelected(ContentSection.SERIES) },
@@ -656,7 +659,7 @@ fun DashboardScreen(
                                 if (uiState.homeLiveHighlights.isNotEmpty()) {
                                     item {
                                         HomeHighlightsRow(
-                                            title = "Live Now",
+                                            title = stringResource(R.string.home_live_now),
                                             items = uiState.homeLiveHighlights,
                                             onStreamSelected = onStreamSelected,
                                             showChannelNumber = uiState.settings.showChannelNumbers
@@ -667,7 +670,7 @@ fun DashboardScreen(
                                 if (uiState.homeHotMovies.isNotEmpty()) {
                                     item {
                                         HomeMoviesRow(
-                                            title = "Top Movies",
+                                            title = stringResource(R.string.home_top_movies),
                                             items = uiState.homeHotMovies,
                                             onStreamSelected = onStreamSelected,
                                             watchProgress = { uiState.getWatchProgress(it) }
@@ -678,7 +681,7 @@ fun DashboardScreen(
                                 if (uiState.homePopularSeries.isNotEmpty()) {
                                     item {
                                         HomeSeriesRow(
-                                            title = "Popular Series",
+                                            title = stringResource(R.string.home_popular_series),
                                             items = uiState.homePopularSeries,
                                             onSeriesSelected = onSeriesSelected,
                                             watchProgress = { uiState.getWatchProgress(it) }
@@ -692,7 +695,7 @@ fun DashboardScreen(
                         if (uiState.isLoadingContent) {
                             LoadingIndicator()
                         } else if (uiState.whatsNewItems.isEmpty()) {
-                            EmptyPromptMessage("No new high-rated releases found.")
+                            EmptyPromptMessage(stringResource(R.string.whats_new_empty))
                         } else {
                             WhatsNewGrid(
                                 items = uiState.whatsNewItems,
@@ -800,7 +803,7 @@ fun DashboardScreen(
                                 uiState.error != null && uiState.itemCount == 0 ->
                                     ErrorMessage(message = uiState.error, onRetry = onRefresh)
                                 uiState.itemCount == 0 && !uiState.isLoadingContent ->
-                                    EmptyPromptMessage("No content available in this section.")
+                                    EmptyPromptMessage(stringResource(R.string.section_empty))
                                 uiState.activeSection == ContentSection.SERIES ->
                                     SeriesGrid(
                                         seriesList                = uiState.paginatedSeries,
@@ -973,7 +976,7 @@ fun DashboardScreen(
                 } else null
 
                 val nextEpLabel: String? = allEpisodes.getOrNull(currentEpIndex + 1)?.let { ep ->
-                    val base = "S${ep.season} · E${ep.episodeNum}"
+                    val base = stringResource(R.string.episode_short, ep.season, ep.episodeNum)
                     if (ep.title.isNotBlank()) "$base  ${ep.title}" else base
                 }
 
@@ -1023,11 +1026,11 @@ fun DashboardScreen(
                         .padding(36.dp)
                         .width(460.dp)
                 ) {
-                    Text("Update Available", style = IpxTypography.HeadlineMedium, color = Color.White)
+                    Text(stringResource(R.string.update_available), style = IpxTypography.HeadlineMedium, color = Color.White)
 
                     val release = uiState.updateRelease
                     Text(
-                        text = "A new version (${release.tagName}) is available. Would you like to download and install it?",
+                        text = stringResource(R.string.update_dialog_body, release.tagName),
                         style = IpxTypography.BodyMedium,
                         color = TextPrimary
                     )
@@ -1048,7 +1051,7 @@ fun DashboardScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text("Downloading ${(progress * 100).toInt()}%", style = IpxTypography.BodyMedium, color = TextSecondary)
+                            Text(stringResource(R.string.downloading_pct, (progress * 100).toInt()), style = IpxTypography.BodyMedium, color = TextSecondary)
                             LinearProgressIndicator(
                                 progress = { progress },
                                 color = Color.White,
@@ -1067,13 +1070,13 @@ fun DashboardScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             PremiumButton(
-                                label = "Install Now",
+                                label = stringResource(R.string.action_install_now),
                                 icon = null,
                                 onClick = onDownloadUpdate,
                                 modifier = Modifier.focusRequester(updateDialogFocusRequester)
                             )
                             PremiumButton(
-                                label = "Later",
+                                label = stringResource(R.string.action_later),
                                 icon = null,
                                 onClick = onDismissUpdate
                             )
@@ -1138,7 +1141,7 @@ private fun StreamGrid(
                     .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     .focusProperties {
                         if (isLeftColumn && sideNavFocusRequester != null) {
-                            left = sideNavFocusRequester
+                            start = sideNavFocusRequester
                         }
                         if (isTopRow && categoryRowFocusRequester != null) {
                             up = categoryRowFocusRequester
@@ -1212,7 +1215,7 @@ private fun SeriesGrid(
                     .then(if (index == 0) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     .focusProperties {
                         if (isLeftColumn && sideNavFocusRequester != null) {
-                            left = sideNavFocusRequester
+                            start = sideNavFocusRequester
                         }
                         if (isTopRow && categoryRowFocusRequester != null) {
                             up = categoryRowFocusRequester
@@ -1250,7 +1253,9 @@ private fun SectionHeader(title: String, itemCount: Int, isFromCache: Boolean, c
         Spacer(Modifier.weight(1f))
         if (itemCount > 0) {
             Text(
-                text  = "$itemCount items${if (isFromCache) " · cached" else ""}${if (totalPages > 1) " · Page ${currentPage + 1}/$totalPages" else ""}",
+                text  = stringResource(R.string.section_items, itemCount) +
+                    (if (isFromCache) stringResource(R.string.section_cached) else "") +
+                    (if (totalPages > 1) stringResource(R.string.section_page, currentPage + 1, totalPages) else ""),
                 style = IpxTypography.BodyMedium,
                 color = TextSecondary
             )
@@ -1276,7 +1281,7 @@ private fun ErrorMessage(message: String, onRetry: () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         androidx.tv.material3.Text(message, style = IpxTypography.BodyMedium, color = TextSecondary)
         Spacer(Modifier.height(12.dp))
-        androidx.tv.material3.Button(onClick = onRetry) { androidx.tv.material3.Text("Retry") }
+        androidx.tv.material3.Button(onClick = onRetry) { androidx.tv.material3.Text(stringResource(R.string.action_retry)) }
     }
 }
 
@@ -1343,15 +1348,15 @@ private fun LibrarySection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("App Updates", style = IpxTypography.TitleMedium, color = AccentCyan)
+                        Text(stringResource(R.string.library_app_updates), style = IpxTypography.TitleMedium, color = AccentCyan)
                         Spacer(Modifier.height(4.dp))
                         val currentVersion = com.ipxtream.tv.BuildConfig.VERSION_NAME
                         if (uiState.isCheckingForUpdate) {
-                            Text("Checking for updates...", style = IpxTypography.BodySmall, color = TextSecondary)
+                            Text(stringResource(R.string.library_checking_updates), style = IpxTypography.BodySmall, color = TextSecondary)
                         } else if (uiState.updateRelease != null) {
-                            Text("New version ${uiState.updateRelease.tagName} available! (Current: v$currentVersion)", style = IpxTypography.BodySmall, color = TextPrimary)
+                            Text(stringResource(R.string.library_update_new, uiState.updateRelease.tagName, currentVersion), style = IpxTypography.BodySmall, color = TextPrimary)
                         } else {
-                            Text("Up to date (v$currentVersion)", style = IpxTypography.BodySmall, color = TextMuted)
+                            Text(stringResource(R.string.library_up_to_date, currentVersion), style = IpxTypography.BodySmall, color = TextMuted)
                         }
                     }
                     Spacer(Modifier.width(16.dp))
@@ -1368,7 +1373,7 @@ private fun LibrarySection(
                                 .background(AccentCyan)
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text("Download Update", color = Color.Black, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.update_download), color = Color.Black, style = IpxTypography.BodyMedium, fontWeight = FontWeight.Bold)
                         }
                     } else {
                         Box(
@@ -1377,7 +1382,7 @@ private fun LibrarySection(
                                 .background(Color.White.copy(alpha = 0.15f))
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text("Check for Updates", color = Color.White, style = IpxTypography.BodyMedium)
+                            Text(stringResource(R.string.update_check), color = Color.White, style = IpxTypography.BodyMedium)
                         }
                     }
                 }
@@ -1386,12 +1391,12 @@ private fun LibrarySection(
 
         if (uiState.favoritesList.isEmpty() && uiState.historyList.isEmpty()) {
             item {
-                EmptyPromptMessage("Your library is empty. Mark items as favorite or play some content first!")
+                EmptyPromptMessage(stringResource(R.string.library_empty))
             }
         } else {
             if (uiState.historyList.isNotEmpty()) {
                 item {
-                    Text("Resume Playback", style = IpxTypography.TitleMedium, color = AccentCyan)
+                    Text(stringResource(R.string.library_resume), style = IpxTypography.TitleMedium, color = AccentCyan)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1406,7 +1411,7 @@ private fun LibrarySection(
 
             if (uiState.favoritesList.isNotEmpty()) {
                 item {
-                    Text("Favorites", style = IpxTypography.TitleMedium, color = AccentCyan)
+                    Text(stringResource(R.string.library_favorites), style = IpxTypography.TitleMedium, color = AccentCyan)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -1430,7 +1435,7 @@ private fun LibraryCard(
     onSeriesSelected: (SeriesItem) -> Unit,
     onEpisodePlay: (com.ipxtream.tv.data.model.SeriesItem, EpisodeItem) -> Unit
 ) {
-    val rawName = item.name ?: "Untitled"
+    val rawName = item.name ?: stringResource(R.string.untitled)
     when (item.type) {
         "live" -> {
             val stream = remember(item) {
@@ -1533,7 +1538,7 @@ private fun LibraryCard(
                         verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = item.name,
+                            text = bidi(item.name),
                             style = IpxTypography.LabelSmall,
                             color = TextPrimary,
                             maxLines = 2,
@@ -1552,7 +1557,7 @@ private fun LibraryCard(
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    text = "${formatTime(item.lastWatchedPositionMs)} left",
+                                    text = stringResource(R.string.time_left, formatTime((item.durationMs - item.lastWatchedPositionMs).coerceAtLeast(0L))),
                                     style = IpxTypography.LabelSmall.copy(fontSize = 10.sp),
                                     color = TextMuted
                                 )
