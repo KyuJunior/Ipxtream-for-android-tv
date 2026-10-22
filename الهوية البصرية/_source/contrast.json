@@ -1,0 +1,278 @@
+{
+ "dark": [
+  {
+   "fg": "textPrimary",
+   "bg": "background",
+   "fgHex": "#F8F4F6",
+   "bgHex": "#0D0811",
+   "ratio": 18.17302922435186,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textSecondary",
+   "bg": "background",
+   "fgHex": "#B8ACBE",
+   "bgHex": "#0D0811",
+   "ratio": 9.135060161019862,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textMuted",
+   "bg": "background",
+   "fgHex": "#8F8296",
+   "bgHex": "#0D0811",
+   "ratio": 5.47330950379402,
+   "grade": "AA"
+  },
+  {
+   "fg": "textPrimary",
+   "bg": "card",
+   "fgHex": "#F8F4F6",
+   "bgHex": "#1D1424",
+   "ratio": 16.354784333260017,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textSecondary",
+   "bg": "card",
+   "fgHex": "#B8ACBE",
+   "bgHex": "#1D1424",
+   "ratio": 8.221080644311998,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onPrimary",
+   "bg": "primary",
+   "fgHex": "#0D0811",
+   "bgHex": "#FF6A2B",
+   "ratio": 6.932933870211806,
+   "grade": "AA"
+  },
+  {
+   "fg": "primaryText",
+   "bg": "background",
+   "fgHex": "#FF8048",
+   "bgHex": "#0D0811",
+   "ratio": 7.9563377883516715,
+   "grade": "AAA"
+  },
+  {
+   "fg": "primary",
+   "bg": "background",
+   "fgHex": "#FF6A2B",
+   "bgHex": "#0D0811",
+   "ratio": 6.932933870211806,
+   "grade": "AA"
+  },
+  {
+   "fg": "onSecondary",
+   "bg": "secondary",
+   "fgHex": "#0D0811",
+   "bgHex": "#B488FF",
+   "ratio": 7.459214532975124,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onFocus",
+   "bg": "focus",
+   "fgHex": "#0D0811",
+   "bgHex": "#FFE6D1",
+   "ratio": 16.50226208055067,
+   "grade": "AAA"
+  },
+  {
+   "fg": "focus",
+   "bg": "background",
+   "fgHex": "#FFE6D1",
+   "bgHex": "#0D0811",
+   "ratio": 16.50226208055067,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onPrimaryContainer",
+   "bg": "primaryContainer",
+   "fgHex": "#FFBB9B",
+   "bgHex": "#4D1C0B",
+   "ratio": 8.633385184284453,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onSecondaryContainer",
+   "bg": "secondaryContainer",
+   "fgHex": "#EADCFF",
+   "bgHex": "#2C1A52",
+   "ratio": 11.75264327005553,
+   "grade": "AAA"
+  },
+  {
+   "fg": "success",
+   "bg": "background",
+   "fgHex": "#34D69C",
+   "bgHex": "#0D0811",
+   "ratio": 10.608803026765136,
+   "grade": "AAA"
+  },
+  {
+   "fg": "warning",
+   "bg": "background",
+   "fgHex": "#FFC23D",
+   "bgHex": "#0D0811",
+   "ratio": 12.298897170427525,
+   "grade": "AAA"
+  },
+  {
+   "fg": "error",
+   "bg": "background",
+   "fgHex": "#FF5470",
+   "bgHex": "#0D0811",
+   "ratio": 6.372150171672973,
+   "grade": "AA"
+  },
+  {
+   "fg": "onStatus",
+   "bg": "error",
+   "fgHex": "#0D0811",
+   "bgHex": "#FF5470",
+   "ratio": 6.372150171672973,
+   "grade": "AA"
+  }
+ ],
+ "light": [
+  {
+   "fg": "textPrimary",
+   "bg": "background",
+   "fgHex": "#150E1B",
+   "bgHex": "#FBF7F4",
+   "ratio": 17.75055847125872,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textSecondary",
+   "bg": "background",
+   "fgHex": "#4B3D56",
+   "bgHex": "#FBF7F4",
+   "ratio": 9.382224630245059,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textMuted",
+   "bg": "background",
+   "fgHex": "#6A5C74",
+   "bgHex": "#FBF7F4",
+   "ratio": 5.804816905732457,
+   "grade": "AA"
+  },
+  {
+   "fg": "textPrimary",
+   "bg": "card",
+   "fgHex": "#150E1B",
+   "bgHex": "#F4EDE9",
+   "ratio": 16.331818288685756,
+   "grade": "AAA"
+  },
+  {
+   "fg": "textSecondary",
+   "bg": "card",
+   "fgHex": "#4B3D56",
+   "bgHex": "#F4EDE9",
+   "ratio": 8.632336162994456,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onPrimary",
+   "bg": "primary",
+   "fgHex": "#0D0811",
+   "bgHex": "#E8521A",
+   "ratio": 5.333313228174431,
+   "grade": "AA"
+  },
+  {
+   "fg": "primaryText",
+   "bg": "background",
+   "fgHex": "#B83D12",
+   "bgHex": "#FBF7F4",
+   "ratio": 5.307184484302917,
+   "grade": "AA"
+  },
+  {
+   "fg": "primary",
+   "bg": "background",
+   "fgHex": "#E8521A",
+   "bgHex": "#FBF7F4",
+   "ratio": 3.4870867205535196,
+   "grade": "AA Large"
+  },
+  {
+   "fg": "onSecondary",
+   "bg": "secondary",
+   "fgHex": "#FFFFFF",
+   "bgHex": "#6E3BD0",
+   "ratio": 6.563733803377854,
+   "grade": "AA"
+  },
+  {
+   "fg": "onFocus",
+   "bg": "focus",
+   "fgHex": "#FFF4EA",
+   "bgHex": "#150E1B",
+   "ratio": 17.451505698489274,
+   "grade": "AAA"
+  },
+  {
+   "fg": "focus",
+   "bg": "background",
+   "fgHex": "#150E1B",
+   "bgHex": "#FBF7F4",
+   "ratio": 17.75055847125872,
+   "grade": "AAA"
+  },
+  {
+   "fg": "onPrimaryContainer",
+   "bg": "primaryContainer",
+   "fgHex": "#86300F",
+   "bgHex": "#FFDCCB",
+   "ratio": 6.692315974397678,
+   "grade": "AA"
+  },
+  {
+   "fg": "onSecondaryContainer",
+   "bg": "secondaryContainer",
+   "fgHex": "#4F2A99",
+   "bgHex": "#EADCFF",
+   "ratio": 7.6189540601990435,
+   "grade": "AAA"
+  },
+  {
+   "fg": "success",
+   "bg": "background",
+   "fgHex": "#0E7A55",
+   "bgHex": "#FBF7F4",
+   "ratio": 5.011230233409061,
+   "grade": "AA"
+  },
+  {
+   "fg": "warning",
+   "bg": "background",
+   "fgHex": "#8F5B00",
+   "bgHex": "#FBF7F4",
+   "ratio": 5.379512651366646,
+   "grade": "AA"
+  },
+  {
+   "fg": "error",
+   "bg": "background",
+   "fgHex": "#C21E3D",
+   "bgHex": "#FBF7F4",
+   "ratio": 5.5575703664719445,
+   "grade": "AA"
+  },
+  {
+   "fg": "onStatus",
+   "bg": "error",
+   "fgHex": "#FFFFFF",
+   "bgHex": "#C21E3D",
+   "ratio": 5.920562182158589,
+   "grade": "AA"
+  }
+ ]
+}

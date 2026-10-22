@@ -9,6 +9,7 @@ on:
       - '**.md'
       - 'docs/**'
       - 'reviews/**'
+      - 'الهوية البصرية/**'
       - '.gitignore'
 
 permissions:

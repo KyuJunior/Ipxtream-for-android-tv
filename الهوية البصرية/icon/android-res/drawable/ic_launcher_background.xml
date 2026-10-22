@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Night plum gradient with a soft Ember glow behind the mark. -->
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="108" android:endY="108">
+                <item android:offset="0" android:color="#FF2E1838" />
+                <item android:offset="1" android:color="#FF0D0811" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M0,0h108v108h-108z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="38.88" android:centerY="54" android:gradientRadius="54">
+                <item android:offset="0" android:color="#38FF6A2B" />
+                <item android:offset="1" android:color="#00FF6A2B" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

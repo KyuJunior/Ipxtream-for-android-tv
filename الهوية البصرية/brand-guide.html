@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دليل هوية IPXtream</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FBF7F4; --surface: #FFFFFF; --card: #F4EDE9; --outline: #DCD0CD;
+  --text: #150E1B; --text2: #4B3D56; --muted: #6A5C74;
+  --ember: #FF6A2B; --ember-text: #B83D12; --orchid: #6E3BD0; --halo: #FFE6D1;
+  --night: #0D0811; --night-card: #1D1424;
+  --font-ar: "Readex Pro", "Segoe UI", Tahoma, sans-serif;
+  --font-lat: "Lexend", "Segoe UI", Arial, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D0811; --surface: #150E1B; --card: #1D1424; --outline: #362A40;
+    --text: #F8F4F6; --text2: #B8ACBE; --muted: #8F8296; --ember-text: #FF8048; --orchid: #B488FF;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D0811; --surface: #150E1B; --card: #1D1424; --outline: #362A40;
+  --text: #F8F4F6; --text2: #B8ACBE; --muted: #8F8296; --ember-text: #FF8048; --orchid: #B488FF;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ar); line-height: 1.7; font-size: 17px; }
+.en, [lang="en"] { font-family: var(--font-lat); }
+.en { color: var(--muted); font-size: .9em; display: block; direction: ltr; text-align: right; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+header.hero { background: var(--night); color: #F8F4F6; padding: 72px 0 56px; }
+header.hero img { width: min(520px, 90%); height: auto; display: block; }
+header.hero h1 { font-weight: 600; font-size: clamp(28px, 5vw, 44px); margin: 28px 0 4px; }
+header.hero p { color: #B8ACBE; max-width: 720px; margin: 0; }
+header.hero .en { color: #8F8296; }
+nav.toc { position: sticky; top: 0; z-index: 2; background: var(--surface); border-bottom: 1px solid var(--outline); }
+nav.toc .wrap { display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; }
+nav.toc a { color: var(--text2); text-decoration: none; white-space: nowrap; padding: 6px 12px; border-radius: 8px; font-size: 15px; }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--card); color: var(--text); outline: none; }
+.theme-btn { margin-inline-start: auto; font: inherit; font-size: 14px; background: var(--card); color: var(--text); border: 1px solid var(--outline); border-radius: 8px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+section { padding: 56px 0 8px; }
+h2 { font-size: 28px; font-weight: 600; margin: 0 0 4px; }
+h2 .en { font-size: 16px; font-weight: 400; }
+h3 { font-size: 19px; font-weight: 600; margin: 28px 0 8px; }
+p.lead { color: var(--text2); max-width: 760px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.tile { border-radius: 14px; border: 1px solid var(--outline); overflow: hidden; background: var(--surface); }
+.tile .art { display: grid; place-items: center; padding: 28px; min-height: 200px; }
+.tile .art img { max-width: 100%; max-height: 160px; height: auto; }
+.tile .cap { padding: 10px 14px; border-top: 1px solid var(--outline); font-size: 14px; color: var(--text2); }
+.tile .cap code { font-family: var(--font-lat); font-size: 12px; color: var(--muted); direction: ltr; unicode-bidi: embed; }
+.on-night { background: #0D0811; } .on-paper { background: #FBF7F4; } .on-grey { background: #6A5C74; } .on-white { background: #fff; }
+.on-ember { background: #FF6A2B; } .on-photo { background: linear-gradient(135deg, #3b2a1e, #6e4b33 40%, #1f2b3a); }
+.swatches { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.sw { border-radius: 12px; overflow: hidden; border: 1px solid var(--outline); background: var(--surface); }
+.sw .chip { height: 84px; display: flex; align-items: flex-end; padding: 8px 10px; font-family: var(--font-lat); font-size: 13px; font-weight: 500; }
+.sw .meta { padding: 8px 10px; font-size: 13px; }
+.sw .meta b { display: block; font-weight: 600; }
+.sw .meta span { font-family: var(--font-lat); color: var(--muted); direction: ltr; display: block; text-align: right; }
+.family { margin-bottom: 28px; }
+.family h3 small { color: var(--muted); font-weight: 400; font-size: 14px; }
+.ramp { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); border-radius: 12px; overflow: hidden; border: 1px solid var(--outline); }
+.ramp div { padding: 30px 6px 6px; font-family: var(--font-lat); font-size: 11px; direction: ltr; text-align: left; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: start; padding: 8px 10px; border-bottom: 1px solid var(--outline); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; }
+td code { font-family: var(--font-lat); direction: ltr; unicode-bidi: embed; }
+.tbl { overflow-x: auto; border: 1px solid var(--outline); border-radius: 12px; background: var(--surface); }
+.dot { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin-inline-end: 6px; border: 1px solid rgba(128,128,128,.4); }
+.ok { color: #0E7A55; } .warn { color: #8F5B00; }
+:root[data-theme="dark"] .ok { color: #34D69C; } :root[data-theme="dark"] .warn { color: #FFC23D; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ok { color: #34D69C; } :root:not([data-theme="light"]) .warn { color: #FFC23D; } }
+
+/* Theme mock-ups: fixed colours, independent of the page theme. */
+.mocks { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.tv { border-radius: 14px; overflow: hidden; aspect-ratio: 16 / 9; display: grid; grid-template-columns: 22% 1fr; font-size: clamp(9px, 1.25vw, 13px); }
+.tv .side { padding: 7% 8%; display: flex; flex-direction: column; gap: 6%; }
+.tv .side img { width: 80%; }
+.tv .nav { padding: 5% 8%; border-radius: 8px; }
+.tv .main { padding: 6% 6% 0; display: flex; flex-direction: column; gap: 5%; }
+.tv .title { font-size: 1.9em; font-weight: 600; line-height: 1.2; }
+.tv .meta2 { opacity: .85; }
+.tv .btns { display: flex; gap: 4%; }
+.tv .btn { padding: 2.5% 6%; border-radius: 8px; font-weight: 600; }
+.tv .row { display: flex; gap: 3%; margin-top: auto; padding-bottom: 6%; }
+.tv .poster { flex: 1; aspect-ratio: 2 / 3; border-radius: 8px; position: relative; overflow: hidden; }
+.tv .poster .bar { position: absolute; inset-inline: 0; bottom: 0; height: 5%; }
+.tv .poster.focus { transform: scale(1.08); }
+.tv.dark { background: #0D0811; color: #F8F4F6; } .tv.dark .side { background: #150E1B; }
+.tv.dark .nav { color: #B8ACBE; } .tv.dark .nav.on { background: #FFE6D1; color: #0D0811; }
+.tv.dark .btn.p { background: #FF6A2B; color: #0D0811; } .tv.dark .btn.s { background: rgba(255,230,209,.12); color: #F8F4F6; }
+.tv.dark .poster { background: #1D1424; } .tv.dark .poster.focus { outline: 3px solid #FFE6D1; outline-offset: 2px; } .tv.dark .bar { background: #FF6A2B; }
+.tv.light { background: #FBF7F4; color: #150E1B; } .tv.light .side { background: #FFFFFF; border-inline-end: 1px solid #DCD0CD; }
+.tv.light .nav { color: #4B3D56; } .tv.light .nav.on { background: #150E1B; color: #FFF4EA; }
+.tv.light .btn.p { background: #E8521A; color: #0D0811; } .tv.light .btn.s { background: rgba(21,14,27,.06); color: #150E1B; }
+.tv.light .poster { background: #EAE1DD; } .tv.light .poster.focus { outline: 3px solid #150E1B; outline-offset: 2px; } .tv.light .bar { background: #E8521A; }
+.tv .live { color: #FF5470; font-weight: 600; } .tv.light .live { color: #C21E3D; }
+
+.type-card { padding: 24px; border-radius: 14px; border: 1px solid var(--outline); background: var(--surface); }
+.type-card .big { font-size: 56px; line-height: 1.2; font-weight: 600; }
+.type-card .sample { color: var(--text2); }
+.scale td:first-child { white-space: nowrap; }
+.clear { display: grid; place-items: center; background: #0D0811; border-radius: 14px; padding: 24px; }
+.clear svg { width: min(640px, 100%); height: auto; }
+.dd { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.dd figure { margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid var(--outline); background: var(--surface); }
+.dd .art { height: 150px; display: grid; place-items: center; padding: 18px; }
+.dd .art img { max-width: 100%; max-height: 100%; }
+.dd figcaption { padding: 10px 14px; font-size: 14px; border-top: 3px solid; }
+.dd .do figcaption { border-color: #0E7A55; } .dd .dont figcaption { border-color: #C21E3D; }
+.dd figcaption b { display: block; }
+.files code { font-family: var(--font-lat); direction: ltr; unicode-bidi: embed; font-size: 13px; }
+footer { padding: 48px 0 64px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <img src="logo/svg/logo-horizontal.svg" alt="IPXtream">
+    <h1>دليل الهوية البصرية</h1>
+    <span class="en">Brand identity guide</span>
+    <p>هوية جديدة كليًا لتطبيق IPXtream على Android TV: علامة «X» عريضة تحتضن زر التشغيل، ولون «جمرة» دافئ على ليلٍ بنفسجيّ عميق، مصمّمة لتُقرأ بوضوح من مسافة ثلاثة أمتار.</p>
+    <span class="en">A new identity for IPXtream on Android TV: a wide slab X that holds a play button, warm Ember on deep plum Night, built to read from three metres away.</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="المحتويات">
+  <div class="wrap">
+    <a href="#logo">الشعار</a><a href="#icon">أيقونة التطبيق</a><a href="#color">الألوان</a><a href="#themes">الثيمات</a>
+    <a href="#type">الخطوط</a><a href="#space">المساحة والحجم</a><a href="#usage">افعل / لا تفعل</a><a href="#files">الملفات</a>
+    <button class="theme-btn" id="themeBtn" type="button">تبديل السمة · Theme</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<section id="logo">
+  <h2>الشعار <span class="en">Logo</span></h2>
+  <p class="lead">العلامة حرف X عريض بذراعين مائلتين بزاوية ٣٦٫٥°، وفي فراغه الأيسر مثلث تشغيل يشير إلى نقطة التقاطع: «X» الاسم و«▶» البث في شكل واحد. حرف X في الكلمة اللاتينية يأخذ لون الجمرة ليربط الكلمة بالعلامة.</p>
+  <span class="en">The mark is a wide slab X (arms at ±36.5°) whose left counter holds a play triangle pointing at the crossing: the X of the name and the ▶ of streaming in one shape. The X in the wordmark is Ember to tie word and mark together.</span>
+
+  <h3>الأساسي <span class="en">Primary</span></h3>
+  <div class="grid">
+    <div class="tile"><div class="art on-night"><img src="logo/svg/logo-horizontal.svg" alt="الشعار الأفقي على خلفية داكنة"></div><div class="cap">أفقي — خلفية داكنة · <code>logo-horizontal.svg</code></div></div>
+    <div class="tile"><div class="art on-paper"><img src="logo/svg/logo-horizontal-light.svg" alt="الشعار الأفقي على خلفية فاتحة"></div><div class="cap">أفقي — خلفية فاتحة · <code>logo-horizontal-light.svg</code></div></div>
+    <div class="tile"><div class="art on-night"><img src="logo/svg/logo-stacked.svg" alt="الشعار العمودي"></div><div class="cap">عمودي · <code>logo-stacked.svg</code></div></div>
+    <div class="tile"><div class="art on-paper"><img src="logo/svg/logo-stacked-light.svg" alt="الشعار العمودي فاتح"></div><div class="cap">عمودي — فاتح · <code>logo-stacked-light.svg</code></div></div>
+  </div>
+
+  <h3>العربي وثنائي اللغة <span class="en">Arabic and bilingual</span></h3>
+  <div class="grid">
+    <div class="tile"><div class="art on-night"><img src="logo/svg/logo-arabic-horizontal.svg" alt="الشعار العربي"></div><div class="cap">عربي أفقي — العلامة على اليمين · <code>logo-arabic-horizontal.svg</code></div></div>
+    <div class="tile"><div class="art on-paper"><img src="logo/svg/logo-arabic-horizontal-light.svg" alt="الشعار العربي فاتح"></div><div class="cap">عربي أفقي — فاتح · <code>logo-arabic-horizontal-light.svg</code></div></div>
+    <div class="tile"><div class="art on-night"><img src="logo/svg/logo-bilingual-stacked.svg" alt="الشعار ثنائي اللغة"></div><div class="cap">ثنائي اللغة · <code>logo-bilingual-stacked.svg</code></div></div>
+    <div class="tile"><div class="art on-paper"><img src="logo/svg/logo-bilingual-stacked-light.svg" alt="الشعار ثنائي اللغة فاتح"></div><div class="cap">ثنائي اللغة — فاتح · <code>logo-bilingual-stacked-light.svg</code></div></div>
+  </div>
+
+  <h3>العلامة والكلمة وأحادي اللون <span class="en">Mark, wordmark, mono</span></h3>
+  <div class="grid">
+    <div class="tile"><div class="art on-night"><img src="logo/svg/mark.svg" alt="العلامة"></div><div class="cap">العلامة · <code>mark.svg</code></div></div>
+    <div class="tile"><div class="art on-night"><img src="logo/svg/wordmark.svg" alt="الكلمة"></div><div class="cap">الكلمة · <code>wordmark.svg</code></div></div>
+    <div class="tile"><div class="art on-photo"><img src="logo/svg/logo-horizontal-mono-white.svg" alt="أبيض"></div><div class="cap">أبيض فوق الصور والفيديو · <code>*-mono-white.svg</code></div></div>
+    <div class="tile"><div class="art on-white"><img src="logo/svg/logo-horizontal-mono-black.svg" alt="أسود"></div><div class="cap">أسود للطباعة بلون واحد · <code>*-mono-black.svg</code></div></div>
+  </div>
+</section>
+
+<section id="icon">
+  <h2>أيقونة التطبيق <span class="en">App icon</span></h2>
+  <p class="lead">خلفية «ليل» بتدرّج بنفسجي مع توهّج جمرة خفيف خلف العلامة. الأيقونة التكيّفية ١٠٨×١٠٨dp والعلامة داخل دائرة الأمان ٦٦dp، فتبقى كاملة مع أي قناع. شعار التلفاز (Banner) بمقاس ٣٢٠×١٨٠ يحمل الاسم كاملًا كما تطلب Google.</p>
+  <span class="en">Night plum gradient with a soft Ember glow. Adaptive icon is 108×108 dp with the mark inside the 66 dp safe circle, so no launcher mask clips it. The 320×180 TV banner carries the full name, as Android TV requires.</span>
+  <div class="grid">
+    <div class="tile"><div class="art on-grey"><img src="icon/icon-master.svg" alt="الأيقونة الرئيسية" style="max-height:180px;border-radius:22%"></div><div class="cap">الأيقونة الرئيسية ١٠٢٤ · <code>icon/icon-master.svg</code></div></div>
+    <div class="tile"><div class="art on-grey"><img src="icon/tv-banner/banner.svg" alt="شعار التلفاز" style="max-height:none;width:100%;border-radius:8px"></div><div class="cap">شعار Android TV ٣٢٠×١٨٠ · <code>icon/tv-banner/banner.svg</code></div></div>
+    <div class="tile" style="grid-column: 1 / -1"><div class="art on-paper"><img src="icon/adaptive/preview-masks.svg" alt="معاينة الأقنعة" style="max-height:120px"></div><div class="cap">الأيقونة التكيّفية تحت الأقنعة الشائعة · <code>icon/adaptive/preview-masks.svg</code></div></div>
+  </div>
+</section>
+
+<section id="color">
+  <h2>الألوان <span class="en">Colour palette</span></h2>
+  <p class="lead">لوحة دافئة لا تشبه الأسود والرمادي المحايد السابق: جمرة برتقالية للأفعال، أوركيد للثانوي، هالة كريمية للتركيز بدل الأبيض، وليل بنفسجي عميق بدل الأسود.</p>
+  <span class="en">A warm palette, unlike the previous neutral black/grey: Ember for actions, Orchid for secondary, Halo cream for focus instead of white, and deep plum Night instead of black.</span>
+
+  <h3>الألوان الرئيسية <span class="en">Core colours</span></h3>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#FF6A2B;color:#0D0811">#FF6A2B</div><div class="meta"><b>جمرة · Ember</b>الأساسي<span>Primary · ember.500</span></div></div>
+    <div class="sw"><div class="chip" style="background:#A574FF;color:#0D0811">#A574FF</div><div class="meta"><b>أوركيد · Orchid</b>الثانوي<span>Secondary · orchid.500</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FFE6D1;color:#0D0811">#FFE6D1</div><div class="meta"><b>هالة · Halo</b>التمييز والتركيز<span>Accent / focus · halo.200</span></div></div>
+    <div class="sw"><div class="chip" style="background:#0D0811;color:#F8F4F6">#0D0811</div><div class="meta"><b>ليل · Night</b>خلفية الثيم الداكن<span>Dark canvas · night.950</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FBF7F4;color:#150E1B">#FBF7F4</div><div class="meta"><b>ورق · Paper</b>خلفية الثيم الفاتح<span>Light canvas · paper.50</span></div></div>
+  </div>
+
+  <h3>ألوان الحالة <span class="en">Semantic</span></h3>
+  <div class="swatches">
+    <div class="sw"><div class="chip" style="background:#34D69C;color:#0D0811">#34D69C</div><div class="meta"><b>يَشْم · Jade</b>نجاح · على الفاتح <code>#0E7A55</code><span>Success</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FFC23D;color:#0D0811">#FFC23D</div><div class="meta"><b>زعفران · Saffron</b>تحذير · على الفاتح <code>#8F5B00</code><span>Warning</span></div></div>
+    <div class="sw"><div class="chip" style="background:#FF5470;color:#0D0811">#FF5470</div><div class="meta"><b>ورد · Rose</b>خطأ / مباشر · على الفاتح <code>#C21E3D</code><span>Error / Live</span></div></div>
+  </div>
+
+  <h3>التدرّجات <span class="en">Ramps</span></h3>
+  <div class="family"><h3>جمرة <small>Ember</small></h3><div class="ramp" dir="ltr">
+    <div style="background:#FFF1EA;color:#4D1C0B">50<br>FFF1EA</div><div style="background:#FFDCCB;color:#4D1C0B">100<br>FFDCCB</div><div style="background:#FFBB9B;color:#4D1C0B">200<br>FFBB9B</div><div style="background:#FF9A6B;color:#0D0811">300<br>FF9A6B</div><div style="background:#FF8048;color:#0D0811">400<br>FF8048</div><div style="background:#FF6A2B;color:#0D0811">500<br>FF6A2B</div><div style="background:#E8521A;color:#0D0811">600<br>E8521A</div><div style="background:#B83D12;color:#fff">700<br>B83D12</div><div style="background:#86300F;color:#fff">800<br>86300F</div><div style="background:#4D1C0B;color:#fff">900<br>4D1C0B</div></div></div>
+  <div class="family"><h3>أوركيد <small>Orchid</small></h3><div class="ramp" dir="ltr">
+    <div style="background:#F6F0FF;color:#2C1A52">50<br>F6F0FF</div><div style="background:#EADCFF;color:#2C1A52">100<br>EADCFF</div><div style="background:#D6BCFF;color:#2C1A52">200<br>D6BCFF</div><div style="background:#C39BFF;color:#0D0811">300<br>C39BFF</div><div style="background:#B488FF;color:#0D0811">400<br>B488FF</div><div style="background:#A574FF;color:#0D0811">500<br>A574FF</div><div style="background:#8A55F0;color:#fff">600<br>8A55F0</div><div style="background:#6E3BD0;color:#fff">700<br>6E3BD0</div><div style="background:#4F2A99;color:#fff">800<br>4F2A99</div><div style="background:#2C1A52;color:#fff">900<br>2C1A52</div></div></div>
+  <div class="family"><h3>ليل <small>Night — neutrals</small></h3><div class="ramp" dir="ltr">
+    <div style="background:#F8F4F6;color:#150E1B">50<br>F8F4F6</div><div style="background:#EEE8EF;color:#150E1B">100<br>EEE8EF</div><div style="background:#D9D0DC;color:#150E1B">200<br>D9D0DC</div><div style="background:#B8ACBE;color:#150E1B">300<br>B8ACBE</div><div style="background:#8F8296;color:#0D0811">400<br>8F8296</div><div style="background:#6A5C74;color:#fff">500<br>6A5C74</div><div style="background:#4B3D56;color:#fff">600<br>4B3D56</div><div style="background:#362A40;color:#fff">700<br>362A40</div><div style="background:#271C2F;color:#fff">800<br>271C2F</div><div style="background:#1D1424;color:#fff">850<br>1D1424</div><div style="background:#150E1B;color:#fff">900<br>150E1B</div><div style="background:#0D0811;color:#fff">950<br>0D0811</div></div></div>
+  <div class="family"><h3>هالة وورق <small>Halo &amp; Paper</small></h3><div class="ramp" dir="ltr">
+    <div style="background:#FFF4EA;color:#150E1B">halo 100<br>FFF4EA</div><div style="background:#FFE6D1;color:#150E1B">halo 200<br>FFE6D1</div><div style="background:#FFD2AE;color:#150E1B">halo 300<br>FFD2AE</div><div style="background:#FFFFFF;color:#150E1B">paper 0<br>FFFFFF</div><div style="background:#FBF7F4;color:#150E1B">paper 50<br>FBF7F4</div><div style="background:#F4EDE9;color:#150E1B">paper 100<br>F4EDE9</div><div style="background:#EAE1DD;color:#150E1B">paper 200<br>EAE1DD</div><div style="background:#DCD0CD;color:#150E1B">paper 300<br>DCD0CD</div></div></div>
+
+  <h3>التباين والمشاهدة من بُعد <span class="en">Contrast at TV distance</span></h3>
+  <div class="tbl"><table>
+    <thead><tr><th>الزوج · Pair</th><th>داكن · Dark</th><th>فاتح · Light</th><th>ملاحظة</th></tr></thead>
+    <tbody>
+      <tr><td>نص أساسي / الخلفية</td><td class="ok">18.2:1 AAA</td><td class="ok">17.8:1 AAA</td><td>العناوين والنص</td></tr>
+      <tr><td>نص ثانوي / الخلفية</td><td class="ok">9.1:1 AAA</td><td class="ok">9.4:1 AAA</td><td>البيانات الوصفية — مناسب لأحجام ١٤sp</td></tr>
+      <tr><td>نص خافت / الخلفية</td><td class="ok">5.5:1 AA</td><td class="ok">5.8:1 AA</td><td>للتلميحات فقط، ١٨sp فأكثر</td></tr>
+      <tr><td>نص على الجمرة</td><td class="ok">6.9:1 AA</td><td class="ok">5.3:1 AA</td><td>دائمًا نص داكن على الجمرة؛ الأبيض ٢٫٩:١ ويفشل</td></tr>
+      <tr><td>نص على منصّة التركيز</td><td class="ok">16.5:1 AAA</td><td class="ok">17.5:1 AAA</td><td>الهالة في الداكن، الليل في الفاتح</td></tr>
+      <tr><td>نص بلون الجمرة</td><td class="ok">8.0:1 AAA</td><td class="ok">5.3:1 AA</td><td>ember.400 داكن · ember.700 فاتح</td></tr>
+      <tr><td>زر الجمرة / الخلفية</td><td class="ok">6.9:1</td><td class="warn">3.5:1</td><td>حدود العنصر ≥ ٣:١ (غير نصّي)</td></tr>
+      <tr><td>نجاح · تحذير · خطأ</td><td class="ok">10.6 · 12.3 · 6.4</td><td class="ok">5.0 · 5.4 · 5.6</td><td>لا تعتمد على اللون وحده: أيقونة + كلمة</td></tr>
+    </tbody>
+  </table></div>
+  <ul>
+    <li>الخلفية <code class="en" style="display:inline">#0D0811</code> وليست أسود خالصًا: الأسود بجانب صور ساطعة يسبّب هالات على شاشات LCD ذات الإعتام المحلي.</li>
+    <li>النص <code class="en" style="display:inline">#F8F4F6</code> وليس أبيض خالصًا لتقليل الوهج من بعد ثلاثة أمتار؛ أسطع عنصر على الشاشة هو منصّة التركيز، فتجدها العين أولًا.</li>
+    <li>الجمرة لون مشبع، وأوضاع «Vivid» في التلفزيونات تزيده تشبّعًا؛ استخدمه للأزرار والتقدّم واللمسات، لا لتعبئة الشاشة كاملة ولا للنصوص الطويلة.</li>
+    <li>الجمرة والورد كلاهما دافئ؛ الخطأ والبث المباشر يرافقهما دائمًا نص («مباشر» / LIVE) أو أيقونة.</li>
+    <li>التركيز لا يعتمد على اللون وحده: منصّة أو إطار بالهالة مع تكبير ١٫٠٦–١٫١.</li>
+  </ul>
+  <span class="en">Full ramps, all role values and every contrast ratio: <code>palette/palette.md</code>.</span>
+</section>
+
+<section id="themes">
+  <h2>الثيمات <span class="en">Themes</span></h2>
+  <p class="lead">الثيم الداكن هو الأساسي على التلفاز. الفاتح للمعاينات والاستخدام النهاري ورفيق الهاتف. التركيز في الداكن منصّة «هالة» بنص داكن، وفي الفاتح منصّة «ليل» بنص كريمي.</p>
+  <span class="en">Dark is the primary theme on TV; light is for previews, daytime and a phone companion. Focus is a Halo platter on dark and a Night platter on light.</span>
+  <div class="mocks">
+    <div>
+      <div class="tv dark" dir="rtl" aria-label="معاينة الثيم الداكن">
+        <div class="side"><img src="logo/svg/logo-horizontal.svg" alt=""><div class="nav on">الرئيسية</div><div class="nav">أفلام</div><div class="nav">مسلسلات</div><div class="nav">بث مباشر</div></div>
+        <div class="main"><div class="meta2"><span class="live">● مباشر</span> · 4K HDR</div><div class="title">ليلة على الطريق</div><div class="meta2">2026 · دراما · ساعتان</div>
+          <div class="btns"><span class="btn p">▶ تشغيل</span><span class="btn s">التفاصيل</span></div>
+          <div class="row"><div class="poster focus"><div class="bar" style="width:60%"></div></div><div class="poster"></div><div class="poster"></div><div class="poster"></div><div class="poster"></div></div></div>
+      </div>
+      <p>الداكن · <span class="en" style="display:inline">Dark (TV default)</span></p>
+    </div>
+    <div>
+      <div class="tv light" dir="rtl" aria-label="معاينة الثيم الفاتح">
+        <div class="side"><img src="logo/svg/logo-horizontal-light.svg" alt=""><div class="nav on">الرئيسية</div><div class="nav">أفلام</div><div class="nav">مسلسلات</div><div class="nav">بث مباشر</div></div>
+        <div class="main"><div class="meta2"><span class="live">● مباشر</span> · 4K HDR</div><div class="title">ليلة على الطريق</div><div class="meta2">2026 · دراما · ساعتان</div>
+          <div class="btns"><span class="btn p">▶ تشغيل</span><span class="btn s">التفاصيل</span></div>
+          <div class="row"><div class="poster focus"><div class="bar" style="width:60%"></div></div><div class="poster"></div><div class="poster"></div><div class="poster"></div><div class="poster"></div></div></div>
+      </div>
+      <p>الفاتح · <span class="en" style="display:inline">Light</span></p>
+    </div>
+  </div>
+  <h3>الأدوار الدلالية <span class="en">Semantic roles</span></h3>
+  <div class="tbl"><table>
+    <thead><tr><th>الدور · Role</th><th>داكن</th><th>فاتح</th><th>الاستخدام</th></tr></thead>
+    <tbody>
+      <tr><td><code>background</code></td><td><span class="dot" style="background:#0D0811"></span><code>#0D0811</code></td><td><span class="dot" style="background:#FBF7F4"></span><code>#FBF7F4</code></td><td>خلفية الشاشة</td></tr>
+      <tr><td><code>surface</code></td><td><span class="dot" style="background:#150E1B"></span><code>#150E1B</code></td><td><span class="dot" style="background:#FFFFFF"></span><code>#FFFFFF</code></td><td>اللوحات والقائمة الجانبية</td></tr>
+      <tr><td><code>card</code></td><td><span class="dot" style="background:#1D1424"></span><code>#1D1424</code></td><td><span class="dot" style="background:#F4EDE9"></span><code>#F4EDE9</code></td><td>البطاقات والملصقات</td></tr>
+      <tr><td><code>surfaceRaised</code></td><td><span class="dot" style="background:#271C2F"></span><code>#271C2F</code></td><td><span class="dot" style="background:#EAE1DD"></span><code>#EAE1DD</code></td><td>الحوارات</td></tr>
+      <tr><td><code>textPrimary</code></td><td><span class="dot" style="background:#F8F4F6"></span><code>#F8F4F6</code></td><td><span class="dot" style="background:#150E1B"></span><code>#150E1B</code></td><td>العناوين والنص</td></tr>
+      <tr><td><code>textSecondary</code></td><td><span class="dot" style="background:#B8ACBE"></span><code>#B8ACBE</code></td><td><span class="dot" style="background:#4B3D56"></span><code>#4B3D56</code></td><td>البيانات الوصفية</td></tr>
+      <tr><td><code>primary / onPrimary</code></td><td><span class="dot" style="background:#FF6A2B"></span><code>#FF6A2B / #0D0811</code></td><td><span class="dot" style="background:#E8521A"></span><code>#E8521A / #0D0811</code></td><td>الأزرار الأساسية</td></tr>
+      <tr><td><code>secondary</code></td><td><span class="dot" style="background:#B488FF"></span><code>#B488FF</code></td><td><span class="dot" style="background:#6E3BD0"></span><code>#6E3BD0</code></td><td>الأفعال الثانوية والشرائح المختارة</td></tr>
+      <tr><td><code>focus / onFocus</code></td><td><span class="dot" style="background:#FFE6D1"></span><code>#FFE6D1 / #0D0811</code></td><td><span class="dot" style="background:#150E1B"></span><code>#150E1B / #FFF4EA</code></td><td>منصّة التركيز</td></tr>
+      <tr><td><code>progress</code></td><td><span class="dot" style="background:#FF6A2B"></span><code>#FF6A2B</code></td><td><span class="dot" style="background:#E8521A"></span><code>#E8521A</code></td><td>شريط المشاهدة</td></tr>
+      <tr><td><code>live / error</code></td><td><span class="dot" style="background:#FF5470"></span><code>#FF5470</code></td><td><span class="dot" style="background:#C21E3D"></span><code>#C21E3D</code></td><td>البث المباشر والأخطاء</td></tr>
+    </tbody>
+  </table></div>
+  <span class="en">Ready-to-use files: <code>themes/Color.kt</code> (Compose: <code>IpxPalette</code>, <code>IpxDarkColors</code>, <code>IpxLightColors</code>, <code>LocalIpxColors</code>), <code>themes/colors.xml</code>, <code>themes/tokens.json</code> (W3C design tokens).</span>
+</section>
+
+<section id="type">
+  <h2>الخطوط <span class="en">Typography</span></h2>
+  <p class="lead">زوج مصمَّم ليعمل معًا: <b>Readex Pro</b> للعربية وهو امتداد عربي لـ <b>Lexend</b> اللاتيني؛ كلاهما صُمّم لسهولة القراءة، بنفس السماكات والارتفاعات، ومرخّصان برخصة SIL Open Font License المجانية.</p>
+  <span class="en">A matched pair: Readex Pro (Arabic) was designed as the Arabic companion to Lexend (Latin). Both are built for readability, share weights and proportions, and are free under the SIL Open Font License.</span>
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+    <div class="type-card"><div class="big">أفلام الليلة</div><div>Readex Pro — عربي</div><div class="sample">شاهد أحدث الأفلام والمسلسلات والقنوات المباشرة بجودة 4K.</div><span class="en">fonts.google.com/specimen/Readex+Pro</span></div>
+    <div class="type-card" dir="ltr" style="font-family:var(--font-lat)"><div class="big">Tonight</div><div>Lexend — Latin</div><div class="sample">Watch the latest movies, series and live channels in 4K.</div><span class="en" style="text-align:left">fonts.google.com/specimen/Lexend</span></div>
+  </div>
+  <h3>سلّم الأحجام للتلفاز <span class="en">TV type scale (at 960×540 dp)</span></h3>
+  <div class="tbl"><table class="scale">
+    <thead><tr><th>المستوى</th><th>الحجم / السماكة</th><th>مثال</th></tr></thead>
+    <tbody>
+      <tr><td>Display</td><td><code>48sp · 600</code></td><td style="font-size:30px;font-weight:600">عنوان البطل</td></tr>
+      <tr><td>Headline</td><td><code>32sp · 600</code></td><td style="font-size:24px;font-weight:600">عنوان القسم</td></tr>
+      <tr><td>Title</td><td><code>24sp · 500</code></td><td style="font-size:20px;font-weight:500">عنوان البطاقة</td></tr>
+      <tr><td>Body</td><td><code>18sp · 400</code></td><td>وصف الفيلم والنص العام</td></tr>
+      <tr><td>Label</td><td><code>16sp · 500</code></td><td style="font-weight:500">الأزرار والشرائح</td></tr>
+      <tr><td>Caption</td><td><code>14sp · 400</code></td><td style="font-size:14px">أصغر حجم مسموح على التلفاز</td></tr>
+    </tbody>
+  </table></div>
+  <p>العربية تحتاج ارتفاع سطر أكبر (١٫٤–١٫٥) من اللاتينية (١٫٢–١٫٣) لاستيعاب النقاط والحركات. لا تستخدم تباعد الأحرف السالب مع العربية لأنه يكسر الوصل.</p>
+  <span class="en">Arabic needs more line height (1.4–1.5) than Latin (1.2–1.3) for dots and marks. Never apply negative letter-spacing to Arabic: it breaks the joins.</span>
+</section>
+
+<section id="space">
+  <h2>المساحة الآمنة والحد الأدنى للحجم <span class="en">Clear space and minimum size</span></h2>
+  <p class="lead">المساحة الآمنة حول الشعار = نصف ارتفاع العلامة (<b>x</b>) من كل جانب. لا يدخلها نص أو صورة أو حافة شاشة.</p>
+  <span class="en">Clear space on every side = half the mark's height (x). No text, image or screen edge inside it.</span>
+  <div class="clear">
+    <svg viewBox="0 0 760 300" role="img" aria-label="مخطط المساحة الآمنة">
+      <rect x="40" y="40" width="680" height="220" fill="none" stroke="#FF6A2B" stroke-dasharray="6 6" stroke-width="2"/>
+      <image href="logo/svg/logo-horizontal.svg" x="40" y="40" width="680" height="220" preserveAspectRatio="xMidYMid meet"/>
+      <g fill="#FFE6D1" font-family="Lexend, sans-serif" font-size="16">
+        <text x="380" y="30" text-anchor="middle">½ x</text><text x="380" y="285" text-anchor="middle">½ x</text>
+        <text x="20" y="155" text-anchor="middle">½x</text><text x="740" y="155" text-anchor="middle">½x</text>
+      </g>
+    </svg>
+  </div>
+  <div class="tbl" style="margin-top:16px"><table>
+    <thead><tr><th>العنصر</th><th>أصغر حجم على الشاشة</th><th>أصغر حجم مطبوع</th></tr></thead>
+    <tbody>
+      <tr><td>العلامة وحدها</td><td><code>24dp</code> عرضًا</td><td><code>8mm</code></td></tr>
+      <tr><td>الشعار الأفقي</td><td><code>120dp</code> عرضًا</td><td><code>30mm</code></td></tr>
+      <tr><td>الشعار العمودي / ثنائي اللغة</td><td><code>96dp</code> عرضًا</td><td><code>24mm</code></td></tr>
+    </tbody>
+  </table></div>
+  <h3>المسافات <span class="en">Spacing scale</span></h3>
+  <p>شبكة ٨dp: <code class="en" style="display:inline">4 · 8 · 16 · 24 · 32 · 48</code>. هامش الصفحة ٤٨dp أفقيًا و٢٧dp رأسيًا (منطقة الأمان من القصّ على التلفاز). نصف قطر الزوايا: ٨ للشرائح، ١٤ للبطاقات، ٢٠ للحوارات.</p>
+  <span class="en">8 dp grid. Page margins 48 dp horizontal / 27 dp vertical (TV overscan-safe area). Corner radius: 8 chips, 14 cards, 20 dialogs.</span>
+</section>
+
+<section id="usage">
+  <h2>افعل ولا تفعل <span class="en">Do and don't</span></h2>
+  <div class="dd">
+    <figure class="do"><div class="art on-night"><img src="logo/svg/logo-horizontal.svg" alt=""></div><figcaption><b>✓ افعل</b>الألوان الأصلية على خلفية «ليل».</figcaption></figure>
+    <figure class="do"><div class="art on-photo"><img src="logo/svg/logo-horizontal-mono-white.svg" alt=""></div><figcaption><b>✓ افعل</b>النسخة البيضاء فوق الصور والفيديو.</figcaption></figure>
+    <figure class="do"><div class="art on-night"><img src="logo/svg/logo-arabic-horizontal.svg" alt=""></div><figcaption><b>✓ افعل</b>الشعار العربي في الواجهة العربية، والعلامة على اليمين.</figcaption></figure>
+    <figure class="dont"><div class="art on-ember"><img src="logo/svg/logo-horizontal.svg" alt=""></div><figcaption><b>✗ لا تفعل</b>لا تضع الشعار الملوّن على خلفية جمرة؛ استخدم الأسود أو الأبيض.</figcaption></figure>
+    <figure class="dont"><div class="art on-night"><img src="logo/svg/logo-horizontal.svg" alt="" style="transform:scaleX(1.4);max-width:70%"></div><figcaption><b>✗ لا تفعل</b>لا تمطّ الشعار ولا تضغطه.</figcaption></figure>
+    <figure class="dont"><div class="art on-night"><img src="logo/svg/mark.svg" alt="" style="transform:rotate(90deg);max-height:110px"></div><figcaption><b>✗ لا تفعل</b>لا تدر العلامة؛ مثلث التشغيل يشير دائمًا إلى اليمين، حتى في الواجهة العربية.</figcaption></figure>
+    <figure class="dont"><div class="art on-night"><img src="logo/svg/mark.svg" alt="" style="filter:hue-rotate(160deg)"></div><figcaption><b>✗ لا تفعل</b>لا تغيّر ألوان العلامة ولا تضف ظلالًا أو تدرّجات عليها.</figcaption></figure>
+    <figure class="dont"><div class="art on-paper"><img src="logo/svg/logo-horizontal.svg" alt=""></div><figcaption><b>✗ لا تفعل</b>لا تضع نسخة الخلفية الداكنة على الفاتح؛ استخدم <code class="en" style="display:inline">-light</code>.</figcaption></figure>
+  </div>
+  <ul>
+    <li>لا تعيد كتابة الكلمة بخط آخر؛ استخدم الملفات الجاهزة (النص فيها محوّل إلى مسارات).</li>
+    <li>لا تلوّن جزءًا من الكلمة العربية بلون مختلف؛ الكلمة العربية بلون واحد دائمًا.</li>
+    <li>الاسم يُكتب «IPXtream» بحرفين كبيرين ثم X كبير؛ لا «Ipxtream» ولا «IPXTREAM».</li>
+  </ul>
+  <span class="en">Never retype the wordmark; use the outlined files. Keep the Arabic name in one colour. Write the name as "IPXtream", never "Ipxtream" or "IPXTREAM". The play triangle always points right, also in the Arabic UI.</span>
+</section>
+
+<section id="files">
+  <h2>الملفات <span class="en">Files</span></h2>
+  <div class="tbl files"><table>
+    <tbody>
+      <tr><td><code>logo/svg/</code> · <code>logo/png/</code></td><td>العلامة، الكلمة، الأفقي، العمودي، العربي، ثنائي اللغة — بنسخ داكن/فاتح/أبيض/أسود (PNG بمقاسين)</td></tr>
+      <tr><td><code>icon/icon-master.svg</code></td><td>الأيقونة الرئيسية + <code>icon-master-1024.png</code> و<code>play-store-512.png</code></td></tr>
+      <tr><td><code>icon/adaptive/</code></td><td>طبقات الأيقونة التكيّفية (أمامية، خلفية، أحادية لـ Android 13) SVG وPNG، ومعاينة الأقنعة</td></tr>
+      <tr><td><code>icon/android-res/</code></td><td>جاهزة للنسخ إلى <code>app/src/main/res/</code>: ‏<code>mipmap-*/ic_launcher*.png</code>، ‏<code>mipmap-anydpi-v26/</code>، ‏<code>drawable/</code> (Vector)، ‏<code>drawable-xhdpi/banner.png</code></td></tr>
+      <tr><td><code>icon/tv-banner/</code></td><td>شعار التلفاز SVG و٦٤٠×٣٦٠ و١٢٨٠×٧٢٠</td></tr>
+      <tr><td><code>palette/palette.md</code></td><td>كل الألوان والأدوار ونسب التباين</td></tr>
+      <tr><td><code>themes/</code></td><td><code>Color.kt</code> · <code>colors.xml</code> · <code>tokens.json</code></td></tr>
+      <tr><td><code>_source/build-brand.js</code></td><td>المولّد: يعيد بناء كل ما سبق من تعريف واحد للألوان والهندسة</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+</main>
+<footer class="wrap">IPXtream · الهوية البصرية · 2026 — الخطوط: Lexend وReadex Pro (SIL OFL 1.1).</footer>
+
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  try { var saved = localStorage.getItem('ipx-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  btn.addEventListener('click', function () {
+    var dark = root.getAttribute('data-theme') ? root.getAttribute('data-theme') === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = dark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('ipx-theme', next); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

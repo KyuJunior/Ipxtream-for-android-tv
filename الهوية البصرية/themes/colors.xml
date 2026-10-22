@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IPXtream brand colours — generated from الهوية البصرية/_source/build-brand.js. -->
+<resources>
+
+    <!-- Raw palette -->
+    <!-- Ember (جمرة) — Primary -->
+    <color name="ember_50">#FFFFF1EA</color>
+    <color name="ember_100">#FFFFDCCB</color>
+    <color name="ember_200">#FFFFBB9B</color>
+    <color name="ember_300">#FFFF9A6B</color>
+    <color name="ember_400">#FFFF8048</color>
+    <color name="ember_500">#FFFF6A2B</color>
+    <color name="ember_600">#FFE8521A</color>
+    <color name="ember_700">#FFB83D12</color>
+    <color name="ember_800">#FF86300F</color>
+    <color name="ember_900">#FF4D1C0B</color>
+    <!-- Orchid (أوركيد) — Secondary -->
+    <color name="orchid_50">#FFF6F0FF</color>
+    <color name="orchid_100">#FFEADCFF</color>
+    <color name="orchid_200">#FFD6BCFF</color>
+    <color name="orchid_300">#FFC39BFF</color>
+    <color name="orchid_400">#FFB488FF</color>
+    <color name="orchid_500">#FFA574FF</color>
+    <color name="orchid_600">#FF8A55F0</color>
+    <color name="orchid_700">#FF6E3BD0</color>
+    <color name="orchid_800">#FF4F2A99</color>
+    <color name="orchid_900">#FF2C1A52</color>
+    <!-- Halo (هالة) — Accent / focus -->
+    <color name="halo_100">#FFFFF4EA</color>
+    <color name="halo_200">#FFFFE6D1</color>
+    <color name="halo_300">#FFFFD2AE</color>
+    <!-- Night (ليل) — Neutrals (dark) -->
+    <color name="night_50">#FFF8F4F6</color>
+    <color name="night_100">#FFEEE8EF</color>
+    <color name="night_200">#FFD9D0DC</color>
+    <color name="night_300">#FFB8ACBE</color>
+    <color name="night_400">#FF8F8296</color>
+    <color name="night_500">#FF6A5C74</color>
+    <color name="night_600">#FF4B3D56</color>
+    <color name="night_700">#FF362A40</color>
+    <color name="night_800">#FF271C2F</color>
+    <color name="night_850">#FF1D1424</color>
+    <color name="night_900">#FF150E1B</color>
+    <color name="night_950">#FF0D0811</color>
+    <!-- Paper (ورق) — Neutrals (light) -->
+    <color name="paper_0">#FFFFFFFF</color>
+    <color name="paper_50">#FFFBF7F4</color>
+    <color name="paper_100">#FFF4EDE9</color>
+    <color name="paper_200">#FFEAE1DD</color>
+    <color name="paper_300">#FFDCD0CD</color>
+    <!-- Jade (يَشْم) — Success -->
+    <color name="jade_400">#FF34D69C</color>
+    <color name="jade_700">#FF0E7A55</color>
+    <!-- Saffron (زعفران) — Warning -->
+    <color name="saffron_400">#FFFFC23D</color>
+    <color name="saffron_700">#FF8F5B00</color>
+    <!-- Rose (ورد) — Error / Live -->
+    <color name="rose_400">#FFFF5470</color>
+    <color name="rose_700">#FFC21E3D</color>
+
+    <!-- Dark theme roles -->
+    <color name="ipx_dark_background">@color/night_950</color>
+    <color name="ipx_dark_surface">@color/night_900</color>
+    <color name="ipx_dark_card">@color/night_850</color>
+    <color name="ipx_dark_surface_raised">@color/night_800</color>
+    <color name="ipx_dark_outline">@color/night_700</color>
+    <color name="ipx_dark_outline_strong">@color/night_600</color>
+    <color name="ipx_dark_text_primary">@color/night_50</color>
+    <color name="ipx_dark_text_secondary">@color/night_300</color>
+    <color name="ipx_dark_text_muted">@color/night_400</color>
+    <color name="ipx_dark_text_disabled">@color/night_500</color>
+    <color name="ipx_dark_primary">@color/ember_500</color>
+    <color name="ipx_dark_on_primary">@color/night_950</color>
+    <color name="ipx_dark_primary_container">#FF4D1C0B</color>
+    <color name="ipx_dark_on_primary_container">@color/ember_200</color>
+    <color name="ipx_dark_primary_text">@color/ember_400</color>
+    <color name="ipx_dark_secondary">@color/orchid_400</color>
+    <color name="ipx_dark_on_secondary">@color/night_950</color>
+    <color name="ipx_dark_secondary_container">@color/orchid_900</color>
+    <color name="ipx_dark_on_secondary_container">@color/orchid_100</color>
+    <color name="ipx_dark_focus">@color/halo_200</color>
+    <color name="ipx_dark_on_focus">@color/night_950</color>
+    <color name="ipx_dark_focus_ring">@color/halo_200</color>
+    <color name="ipx_dark_success">@color/jade_400</color>
+    <color name="ipx_dark_warning">@color/saffron_400</color>
+    <color name="ipx_dark_error">@color/rose_400</color>
+    <color name="ipx_dark_live">@color/rose_400</color>
+    <color name="ipx_dark_on_status">@color/night_950</color>
+    <color name="ipx_dark_progress">@color/ember_500</color>
+    <color name="ipx_dark_progress_track">#40FFE6D1</color>
+    <color name="ipx_dark_scrim">#CC0D0811</color>
+    <color name="ipx_dark_glass">#1FFFE6D1</color>
+    <color name="ipx_dark_hairline">#1AFFE6D1</color>
+
+    <!-- Light theme roles -->
+    <color name="ipx_light_background">@color/paper_50</color>
+    <color name="ipx_light_surface">@color/paper_0</color>
+    <color name="ipx_light_card">@color/paper_100</color>
+    <color name="ipx_light_surface_raised">@color/paper_200</color>
+    <color name="ipx_light_outline">@color/paper_300</color>
+    <color name="ipx_light_outline_strong">@color/night_300</color>
+    <color name="ipx_light_text_primary">@color/night_900</color>
+    <color name="ipx_light_text_secondary">@color/night_600</color>
+    <color name="ipx_light_text_muted">@color/night_500</color>
+    <color name="ipx_light_text_disabled">@color/night_300</color>
+    <color name="ipx_light_primary">@color/ember_600</color>
+    <color name="ipx_light_on_primary">@color/night_950</color>
+    <color name="ipx_light_primary_container">@color/ember_100</color>
+    <color name="ipx_light_on_primary_container">@color/ember_800</color>
+    <color name="ipx_light_primary_text">@color/ember_700</color>
+    <color name="ipx_light_secondary">@color/orchid_700</color>
+    <color name="ipx_light_on_secondary">@color/paper_0</color>
+    <color name="ipx_light_secondary_container">@color/orchid_100</color>
+    <color name="ipx_light_on_secondary_container">@color/orchid_800</color>
+    <color name="ipx_light_focus">@color/night_900</color>
+    <color name="ipx_light_on_focus">@color/halo_100</color>
+    <color name="ipx_light_focus_ring">@color/night_900</color>
+    <color name="ipx_light_success">@color/jade_700</color>
+    <color name="ipx_light_warning">@color/saffron_700</color>
+    <color name="ipx_light_error">@color/rose_700</color>
+    <color name="ipx_light_live">@color/rose_700</color>
+    <color name="ipx_light_on_status">@color/paper_0</color>
+    <color name="ipx_light_progress">@color/ember_600</color>
+    <color name="ipx_light_progress_track">#26150E1B</color>
+    <color name="ipx_light_scrim">#99150E1B</color>
+    <color name="ipx_light_glass">#0F150E1B</color>
+    <color name="ipx_light_hairline">#1A150E1B</color>
+
+    <!-- Launcher / window -->
+    <color name="ic_launcher_background">#FF0D0811</color>
+</resources>
