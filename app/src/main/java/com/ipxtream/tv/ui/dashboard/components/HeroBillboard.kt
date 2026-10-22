@@ -179,7 +179,8 @@ fun HeroBackdrop(
 ) {
     // The drift only runs while the billboard is actually on screen; under the player or a
     // dialog it would keep re-rendering a blurred layer every frame for nothing.
-    val kenBurnsState: State<Float> = if (animate) {
+    val reduced = com.ipxtream.tv.ui.theme.LocalReducedEffects.current
+    val kenBurnsState: State<Float> = if (animate && !reduced) {
         rememberInfiniteTransition(label = "kenBurns").animateFloat(
             initialValue  = 1.0f,
             targetValue   = 1.07f,
@@ -200,7 +201,7 @@ fun HeroBackdrop(
     ) {
         Crossfade(
             targetState   = feature,
-            animationSpec = tween(IpxMotion.Hero, easing = IpxMotion.EaseStandard),
+            animationSpec = tween(if (reduced) 250 else IpxMotion.Hero, easing = IpxMotion.EaseStandard),
             label         = "heroBackdrop"
         ) { f ->
             Box(Modifier.fillMaxSize()) {
@@ -270,7 +271,8 @@ fun HeroBackdrop(
 @Composable
 private fun AmbientArtwork(url: String?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    // Real blur is a full-screen GPU pass; Smooth mode uses the cheap up-scaled decode instead.
+    val canBlur = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !com.ipxtream.tv.ui.theme.LocalReducedEffects.current
     val request = ImageRequest.Builder(context)
         .data(url)
         .size(if (canBlur) 160 else 24, if (canBlur) 240 else 36)

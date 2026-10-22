@@ -66,6 +66,7 @@ fun SettingsScreen(
     onToggleShowDownloads: (Boolean) -> Unit = {},
     onToggleShowLibrary: (Boolean) -> Unit = {},
     onToggleShowSpotlight: (Boolean) -> Unit = {},
+    onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit = {},
     onToggleShowChannelNumbers: (Boolean) -> Unit = {},
     onToggle24HourClock: (Boolean) -> Unit = {},
     onBufferProfileChange: (BufferProfile) -> Unit = {},
@@ -277,6 +278,7 @@ fun SettingsScreen(
                                     leftNavFocus = leftNavFocusRequester,
                                     onLanguageChange = onAppLanguageChange,
                                     onToggleSpotlight = onToggleShowSpotlight,
+                                    onPerformanceModeChange = onPerformanceModeChange,
                                     onToggleChannelNumbers = onToggleShowChannelNumbers,
                                     onToggle24HourClock = onToggle24HourClock,
                                     onToggleWhatsNew = onToggleShowWhatsNew,
@@ -408,6 +410,7 @@ private fun GeneralSettingsContent(
     leftNavFocus: FocusRequester,
     onLanguageChange: (AppLanguage) -> Unit,
     onToggleSpotlight: (Boolean) -> Unit,
+    onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit,
     onToggleChannelNumbers: (Boolean) -> Unit,
     onToggle24HourClock: (Boolean) -> Unit,
     onToggleWhatsNew: (Boolean) -> Unit,
@@ -425,6 +428,28 @@ private fun GeneralSettingsContent(
         onSelect = onLanguageChange,
         labelProvider = { it.displayName },
         modifier = Modifier.focusRequester(initialFocus).focusProperties { left = leftNavFocus }
+    )
+
+    // Performance mode
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val autoIsReduced = androidx.compose.runtime.remember {
+        com.ipxtream.tv.ui.theme.reducedEffectsFor(context, com.ipxtream.tv.data.local.PerformanceMode.AUTO)
+    }
+    SettingSelectorItem(
+        title = "Performance",
+        subtitle = when (settings.performanceMode) {
+            com.ipxtream.tv.data.local.PerformanceMode.AUTO ->
+                "Picks the best mode for this TV — currently " + (if (autoIsReduced) "Smooth." else "Full Effects.")
+            com.ipxtream.tv.data.local.PerformanceMode.FULL ->
+                "All animations: backdrop zoom and blur, focus shine and depth, cinematic transitions."
+            com.ipxtream.tv.data.local.PerformanceMode.SMOOTH ->
+                "Turns off heavy visual effects so menus and scrolling stay fluid on any TV."
+        },
+        options = com.ipxtream.tv.data.local.PerformanceMode.values().toList(),
+        selected = settings.performanceMode,
+        onSelect = onPerformanceModeChange,
+        labelProvider = { it.label },
+        modifier = Modifier.focusProperties { left = leftNavFocus }
     )
 
     // Dynamic Spotlight

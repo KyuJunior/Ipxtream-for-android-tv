@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -76,8 +77,16 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
         )
     }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val settingsStore = remember(context) { com.ipxtream.tv.data.local.AppSettingsStore.getInstance(context) }
+    val perfMode by androidx.compose.runtime.produceState(settingsStore.settings.value.performanceMode, settingsStore) {
+        settingsStore.settings.collect { value = it.performanceMode }
+    }
+    val reducedEffects = remember(perfMode) { reducedEffectsFor(context, perfMode) }
+
     androidx.compose.runtime.CompositionLocalProvider(
-        androidx.compose.ui.platform.LocalDensity provides scaledDensity
+        androidx.compose.ui.platform.LocalDensity provides scaledDensity,
+        LocalReducedEffects provides reducedEffects
     ) {
         // Standard M3 theme (for non-TV composables like TextField, SnackBar)
         MaterialTheme(

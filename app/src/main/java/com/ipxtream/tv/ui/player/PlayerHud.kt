@@ -141,7 +141,7 @@ fun PlayerHud(
         positionMs = uiState.currentPositionMs,
         durationMs = uiState.durationMs,
         isPlaying  = uiState.isPlaying,
-        animate    = visible && !uiState.isLive
+        animate    = visible && !uiState.isLive && !com.ipxtream.tv.ui.theme.LocalReducedEffects.current
     )
 
     Box(modifier = modifier.fillMaxSize()) {

@@ -31,6 +31,12 @@ enum class SubtitleTextSize(val label: String, val sizeSp: Float) {
     LARGE("Large (24sp)", 24f)
 }
 
+enum class PerformanceMode(val label: String) {
+    AUTO("Automatic (Recommended)"),
+    FULL("Full Effects"),
+    SMOOTH("Smooth (Reduced Effects)")
+}
+
 enum class AppLanguage(val code: String, val displayName: String) {
     ENGLISH("en", "English"),
     ARABIC("ar", "العربية (Arabic)"),
@@ -48,6 +54,7 @@ data class AppSettings(
     val showSpotlightBackdrop: Boolean = true,
     val showChannelNumbers: Boolean = true,
     val is24HourClockFormat: Boolean = false,
+    val performanceMode: PerformanceMode = PerformanceMode.AUTO,
 
     // Playback & Video Player
     val bufferProfile: BufferProfile = BufferProfile.BALANCED,
@@ -92,8 +99,12 @@ class AppSettingsStore(private val context: Context) {
         val subSizeName = prefs.getString(KEY_SUBTITLE_TEXT_SIZE, SubtitleTextSize.NORMAL.name) ?: SubtitleTextSize.NORMAL.name
         val subSize = runCatching { SubtitleTextSize.valueOf(subSizeName) }.getOrDefault(SubtitleTextSize.NORMAL)
 
+        val perfName = prefs.getString(KEY_PERFORMANCE_MODE, PerformanceMode.AUTO.name) ?: PerformanceMode.AUTO.name
+        val perf = runCatching { PerformanceMode.valueOf(perfName) }.getOrDefault(PerformanceMode.AUTO)
+
         return AppSettings(
             appLanguage = lang,
+            performanceMode = perf,
             showWhatsNewSection = prefs.getBoolean(KEY_SHOW_WHATS_NEW, true),
             showDownloadsSection = prefs.getBoolean(KEY_SHOW_DOWNLOADS, true),
             showLibrarySection = prefs.getBoolean(KEY_SHOW_LIBRARY, true),
@@ -149,6 +160,11 @@ class AppSettingsStore(private val context: Context) {
     fun setIs24HourClockFormat(is24Hour: Boolean) {
         prefs.edit().putBoolean(KEY_IS_24_HOUR_CLOCK, is24Hour).apply()
         _settings.update { it.copy(is24HourClockFormat = is24Hour) }
+    }
+
+    fun setPerformanceMode(mode: PerformanceMode) {
+        prefs.edit().putString(KEY_PERFORMANCE_MODE, mode.name).apply()
+        _settings.update { it.copy(performanceMode = mode) }
     }
 
     fun setBufferProfile(profile: BufferProfile) {
@@ -245,6 +261,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_PREFERRED_SUBTITLE_LANG = "key_preferred_subtitle_lang"
         private const val KEY_SUBTITLE_TEXT_SIZE = "key_subtitle_text_size"
         private const val KEY_AUTO_REFRESH_CACHE = "key_auto_refresh_cache"
+        private const val KEY_PERFORMANCE_MODE = "key_performance_mode"
 
         @Volatile
         private var instance: AppSettingsStore? = null

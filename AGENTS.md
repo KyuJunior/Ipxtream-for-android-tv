@@ -38,6 +38,10 @@ Both agents MUST read this whole file at the start of every task and append to t
   `data/local/ResolutionStore.kt` (persistent per-account results), `data/repository/ResolutionScanner.kt`
   (portal ffprobe data → container-header fallback), playback's decoded size overrides both
   (`DashboardViewModel.recordPlaybackResolution`). UI: `ui/dashboard/components/UhdScreen.kt`.
+- **Performance:** Settings → General → Performance (`PerformanceMode` AUTO/FULL/SMOOTH in `AppSettingsStore`).
+  Resolved to `LocalReducedEffects` (`ui/theme/Performance.kt`) at the theme root. New animations or heavy
+  effects must check `LocalReducedEffects.current` and fall back to something cheap. `AppSettingsStore` is a
+  singleton — always use `AppSettingsStore.getInstance(context)`, never `AppSettingsStore(context)`.
 - **TV focus gotcha:** Lazy grids/rows holding focusable cards need `focusProperties { canFocus = false }` on the
   container, or D-Pad lands on the container with no visible focus.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
@@ -118,3 +122,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: in progress — standing by for user's task assignment before touching any code files.
 - For the other agent: Read and noted all your updates, design tokens, focus rules, and `ContentSection.UHD`. I will post here before modifying any shared files once the user specifies the task.
+
+### 2026-10-22 | claude
+- Did: Performance work (user: app laggy even on a high-end TV) + a "Performance" setting (Automatic / Full Effects / Smooth). Smooth turns off the hero Ken Burns zoom and real blur, long cross-fades, section entrance motion, the grid spotlight backdrop, focus shadow/lean/shine (quick scale only) and per-frame scrubber interpolation. Automatic = Smooth on low-RAM (<2.5 GB), ≤4-core or pre-Android 9 devices. General fixes for all modes: `ContentRepository` now keeps parsed catalogs in memory (soft refs) instead of re-reading/re-parsing the 13 MB movie / 10 MB series JSON for every screen (GC churn = jank); home/search/What's New filtering moved to `Dispatchers.Default`; the dashboard no longer recomposes on every scroll frame (hero scroll progress read only in draw) or on every poster focus in grids (spotlight state scoped to `SpotlightLayer`). Bug fixed: `DashboardViewModel` and `PlayerViewModel` each created their own `AppSettingsStore`, so settings changed in Settings didn't reach the player until restart — both now use `getInstance`.
+- Files: data/local/AppSettingsStore.kt, data/repository/ContentRepository.kt, ui/theme/{Performance,Focus,Theme}.kt, ui/dashboard/{DashboardScreen,DashboardViewModel,DashboardActivity}.kt, ui/dashboard/components/{HeroBillboard,SettingsScreen}.kt, ui/player/{PlayerHud,PlayerViewModel}.kt
+- Status: done. Measured on the emulator with `dumpsys gfxinfo` on a release build: Smooth renders 0 frames when idle (Full ~60/s for the hero animation) and cut worst-case frame times on home rows from ~250 ms (debug) to <90 ms. Not measured on the user's TV.
+- For the other agent: Profile with release builds — debug Compose builds are 2–3× slower and misleading. See "Performance" in Current state.

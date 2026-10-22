@@ -51,7 +51,7 @@ class DashboardViewModel(
 
     private val updateManager = com.ipxtream.tv.data.api.UpdateManager(context)
     private val credentialStore = com.ipxtream.tv.data.local.CredentialStore(context)
-    val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore(context)
+    val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore.getInstance(context)
 
     private val _uiState = MutableStateFlow(DashboardUiState(settings = appSettingsStore.settings.value))
 
@@ -313,7 +313,7 @@ class DashboardViewModel(
 
     private fun performHomeSearch(query: String) {
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
+        searchJob = viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
             delay(300) // 300ms debounce for TV typing
             _uiState.update { it.copy(isSearchingHome = true) }
             
@@ -708,7 +708,7 @@ class DashboardViewModel(
     )
 
     fun loadWhatsNew() {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
             _uiState.update { it.copy(isLoadingContent = true, error = null, whatsNewItems = emptyList()) }
             
             // Fetch VOD movies
@@ -796,7 +796,7 @@ class DashboardViewModel(
     }
 
     fun loadHomeData() {
-        viewModelScope.launch {
+        viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
             // Load Live Highlights (Alwan channels, fallback to first 15 channels)
             repository.getLiveStreams(categoryId = null, forceRefresh = false).onSuccess { channels ->
                 val alwan = channels.filter { it.name.contains("Alwan", ignoreCase = true) }
@@ -1115,6 +1115,10 @@ class DashboardViewModel(
 
     fun setIs24HourClockFormat(is24: Boolean) {
         appSettingsStore.setIs24HourClockFormat(is24)
+    }
+
+    fun setPerformanceMode(mode: com.ipxtream.tv.data.local.PerformanceMode) {
+        appSettingsStore.setPerformanceMode(mode)
     }
 
     fun setBufferProfile(profile: com.ipxtream.tv.data.local.BufferProfile) {

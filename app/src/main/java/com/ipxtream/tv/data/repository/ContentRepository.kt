@@ -56,6 +56,26 @@ class ContentRepository(
     private val cacheManager: CacheManager
 ) {
 
+    /**
+     * Parsed results kept in memory, so screens that need the same catalog don't each re-read
+     * and re-parse a multi-megabyte JSON file (that allocation churn caused GC pauses = UI jank).
+     * Soft references let the system reclaim them under memory pressure.
+     */
+    private class MemEntry(val savedAt: Long, val value: java.lang.ref.SoftReference<Any>)
+    private val memory = java.util.concurrent.ConcurrentHashMap<String, MemEntry>()
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> fromMemory(key: String, maxAgeMs: Long): Result<T>? {
+        val e = memory[key] ?: return null
+        if (System.currentTimeMillis() - e.savedAt > maxAgeMs) return null
+        val v = e.value.get() ?: run { memory.remove(key); return null }
+        return Result.success(v as T)
+    }
+
+    private fun toMemory(key: String, value: Any?) {
+        if (value != null) memory[key] = MemEntry(System.currentTimeMillis(), java.lang.ref.SoftReference(value))
+    }
+
     // =========================================================================
     //  Live TV
     // =========================================================================
@@ -222,6 +242,7 @@ class ContentRepository(
      * Call on logout or when the user requests a manual refresh.
      */
     suspend fun clearCache() = withContext(Dispatchers.IO) {
+        memory.clear()
         cacheManager.clearAll()
     }
 
@@ -255,11 +276,13 @@ class ContentRepository(
         crossinline fetch: suspend () -> T
     ): Result<T> = withContext(Dispatchers.IO) {
 
-        // 1. Check cache first (happy fast path)
+        // 1. Memory, then disk cache (happy fast path)
         if (!forceRefresh) {
+            fromMemory<T>(cacheKey, maxAgeMs)?.let { return@withContext it }
             val cached = loadFromCache<T>(cacheKey, maxAgeMs, type)
             if (cached != null) {
                 Log.d(TAG, "Cache HIT -> '$cacheKey'")
+                toMemory(cacheKey, cached.getOrNull())
                 return@withContext cached
             }
         }
@@ -297,6 +320,7 @@ class ContentRepository(
 
             if (isSuccess && successData != null) {
                 cacheManager.save(cacheKey, successData)
+                toMemory(cacheKey, successData)
                 Log.d(TAG, "Network FETCH -> '$cacheKey'")
                 return@withContext Result.success(successData)
             } else {

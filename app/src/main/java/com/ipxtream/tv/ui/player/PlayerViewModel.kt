@@ -55,7 +55,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  ExoPlayer
     // =========================================================================
 
-    private val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore(application)
+    private val appSettingsStore = com.ipxtream.tv.data.local.AppSettingsStore.getInstance(application)
 
     private val trackSelector = DefaultTrackSelector(application).apply {
         setParameters(

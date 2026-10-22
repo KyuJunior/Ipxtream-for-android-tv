@@ -207,6 +207,7 @@ fun DashboardScreen(
     onToggleShowDownloads: (Boolean) -> Unit = {},
     onToggleShowLibrary: (Boolean) -> Unit = {},
     onToggleShowSpotlight: (Boolean) -> Unit = {},
+    onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit = {},
     onToggleShowChannelNumbers: (Boolean) -> Unit = {},
     onToggle24HourClock: (Boolean) -> Unit = {},
     onBufferProfileChange: (BufferProfile) -> Unit = {},
@@ -277,8 +278,10 @@ fun DashboardScreen(
         runCatching { sideNavFocusRequester.requestFocus() }
     }
 
-    var focusedStreamItem by remember { mutableStateOf<StreamItem?>(null) }
-    var focusedSeriesItem by remember { mutableStateOf<SeriesItem?>(null) }
+    // Held as State objects and read only inside SpotlightLayer, so moving between posters
+    // recomposes the backdrop alone instead of the whole dashboard.
+    val focusedStreamItem = remember { mutableStateOf<StreamItem?>(null) }
+    val focusedSeriesItem = remember { mutableStateOf<SeriesItem?>(null) }
 
     // ─── Home billboard ─────────────────────────────────────────────────────
     val heroFeatures = remember(uiState.homeHotMovies, uiState.homePopularSeries) {
@@ -289,7 +292,9 @@ fun DashboardScreen(
     val homeListState = rememberLazyListState()
     val heroHeight = 430.dp
     val heroHeightPx = with(LocalDensity.current) { heroHeight.toPx() }
-    val heroScrollProgress by remember {
+    // Read only inside draw (graphicsLayer) — reading it here would rebuild the whole
+    // dashboard on every scroll frame.
+    val heroScrollProgress = remember {
         derivedStateOf {
             if (homeListState.firstVisibleItemIndex > 0) 1f
             else (homeListState.firstVisibleItemScrollOffset / heroHeightPx).coerceIn(0f, 1f)
@@ -298,8 +303,9 @@ fun DashboardScreen(
     val hasHero = uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isBlank() && heroFeatures.isNotEmpty()
 
     // Auto-advance like the TV app's billboard; pauses once it has scrolled away.
-    LaunchedEffect(hasHero, heroIndex, heroFeatures.size, heroScrollProgress >= 1f, isOverlayOpen) {
-        if (hasHero && heroFeatures.size > 1 && heroScrollProgress < 1f && !isOverlayOpen) {
+    val heroScrolledAway by remember { derivedStateOf { heroScrollProgress.value >= 1f } }
+    LaunchedEffect(hasHero, heroIndex, heroFeatures.size, heroScrolledAway, isOverlayOpen) {
+        if (hasHero && heroFeatures.size > 1 && !heroScrolledAway && !isOverlayOpen) {
             delay(9_000)
             heroIndex = (heroIndex + 1) % heroFeatures.size
         }
@@ -318,7 +324,9 @@ fun DashboardScreen(
 
     // Each section fades up into place instead of snapping in.
     val sectionEntrance = remember { Animatable(1f) }
+    val reducedEffects = com.ipxtream.tv.ui.theme.LocalReducedEffects.current
     LaunchedEffect(uiState.activeSection) {
+        if (reducedEffects) return@LaunchedEffect
         sectionEntrance.snapTo(0f)
         sectionEntrance.animateTo(1f, tween(IpxMotion.Slow, easing = IpxMotion.EaseApple))
     }
@@ -413,15 +421,15 @@ fun DashboardScreen(
             if (hasHero) {
                 HeroBackdrop(
                     feature        = heroFeatures.getOrNull(heroIndex),
-                    scrollProgress = { heroScrollProgress },
-                    animate        = !isOverlayOpen && heroScrollProgress < 1f,
+                    scrollProgress = { heroScrollProgress.value },
+                    animate        = !isOverlayOpen && !heroScrolledAway,
                     modifier       = Modifier.fillMaxWidth().height(heroHeight + 120.dp).align(Alignment.TopCenter)
                 )
-            } else if (uiState.settings.showSpotlightBackdrop && uiState.activeSection != ContentSection.HOME) {
-                DynamicSpotlight(
-                    streamItem = focusedStreamItem,
-                    seriesItem = focusedSeriesItem,
-                    modifier   = Modifier.fillMaxWidth().fillMaxHeight(0.7f).align(Alignment.TopCenter)
+            } else if (uiState.settings.showSpotlightBackdrop && !reducedEffects && uiState.activeSection != ContentSection.HOME) {
+                SpotlightLayer(
+                    stream   = focusedStreamItem,
+                    series   = focusedSeriesItem,
+                    modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f).align(Alignment.TopCenter)
                 )
             }
 
@@ -709,6 +717,7 @@ fun DashboardScreen(
                             onToggleShowDownloads = onToggleShowDownloads,
                             onToggleShowLibrary = onToggleShowLibrary,
                             onToggleShowSpotlight = onToggleShowSpotlight,
+                            onPerformanceModeChange = onPerformanceModeChange,
                             onToggleShowChannelNumbers = onToggleShowChannelNumbers,
                             onToggle24HourClock = onToggle24HourClock,
                             onBufferProfileChange = onBufferProfileChange,
@@ -799,7 +808,7 @@ fun DashboardScreen(
                                         firstItemFocusRequester   = firstItemFocusRequester,
                                         sideNavFocusRequester     = sideNavFocusRequester,
                                         categoryRowFocusRequester = categoryRowFocusRequester,
-                                        onItemFocused             = { focusedSeriesItem = it; focusedStreamItem = null },
+                                        onItemFocused             = { focusedSeriesItem.value = it; focusedStreamItem.value = null },
                                         hasPrevPage               = uiState.hasPrevPage,
                                         hasNextPage               = uiState.hasNextPage,
                                         currentPage               = uiState.currentPage,
@@ -816,7 +825,7 @@ fun DashboardScreen(
                                         firstItemFocusRequester   = firstItemFocusRequester,
                                         sideNavFocusRequester     = sideNavFocusRequester,
                                         categoryRowFocusRequester = categoryRowFocusRequester,
-                                        onItemFocused             = { focusedStreamItem = it; focusedSeriesItem = null },
+                                        onItemFocused             = { focusedStreamItem.value = it; focusedSeriesItem.value = null },
                                         hasPrevPage               = uiState.hasPrevPage,
                                         hasNextPage               = uiState.hasNextPage,
                                         currentPage               = uiState.currentPage,
@@ -1079,6 +1088,15 @@ fun DashboardScreen(
 // =============================================================================
 //  Grid sub-composables (unchanged from Phase 3, kept here for co-location)
 // =============================================================================
+
+@Composable
+private fun SpotlightLayer(
+    stream:   androidx.compose.runtime.State<StreamItem?>,
+    series:   androidx.compose.runtime.State<SeriesItem?>,
+    modifier: Modifier
+) {
+    DynamicSpotlight(streamItem = stream.value, seriesItem = series.value, modifier = modifier)
+}
 
 @Composable
 private fun StreamGrid(

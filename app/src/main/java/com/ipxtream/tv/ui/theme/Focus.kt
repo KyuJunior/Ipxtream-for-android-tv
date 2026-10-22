@@ -76,8 +76,14 @@ fun Modifier.premiumFocus(
     val sweep     = remember { Animatable(-1f) }
     val topLight  = remember { Animatable(0f) }
     val density   = LocalDensity.current
+    val reduced   = LocalReducedEffects.current
 
-    LaunchedEffect(focused) {
+    LaunchedEffect(focused, reduced) {
+        if (reduced) {
+            // Smooth mode: one short eased scale; no shadow, lean or shine to render.
+            scale.animateTo(if (focused) focusedScale else 1f, tween(140, easing = IpxMotion.EaseOut))
+            return@LaunchedEffect
+        }
         if (focused) {
             launch { scale.animateTo(focusedScale, IpxMotion.focusSpring()) }
             launch { topLight.animateTo(1f, tween(IpxMotion.Standard, easing = IpxMotion.EaseOut)) }
@@ -119,7 +125,7 @@ fun Modifier.premiumFocus(
             rotationX = leanX.value
             cameraDistance = 14f * density.density
             val t = ((scale.value - 1f) / range).coerceIn(0f, 1f)
-            shadowElevation = liftPx * t
+            shadowElevation = if (reduced) 0f else liftPx * t
             this.shape = shape
             clip = false
         }
