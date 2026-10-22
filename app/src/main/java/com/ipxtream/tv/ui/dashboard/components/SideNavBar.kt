@@ -46,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -122,7 +123,9 @@ fun SideNavBar(
     modifier:              Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
-    val width by animateDpAsState(
+    // Read in the layout phase only: the menu re-measures while it slides open instead of
+    // recomposing every item on every frame (that cost a frame each on slow TVs).
+    val width = animateDpAsState(
         targetValue   = if (isExpanded) 240.dp else 72.dp,
         animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
         label         = "navWidth"
@@ -130,7 +133,11 @@ fun SideNavBar(
 
     Box(
         modifier = modifier
-            .width(width)
+            .layout { measurable, constraints ->
+                val w = width.value.roundToPx()
+                val placeable = measurable.measure(constraints.copy(minWidth = w, maxWidth = w))
+                layout(w, placeable.height) { placeable.place(0, 0) }
+            }
             .fillMaxHeight()
             .background(
                 if (isExpanded) Brush.horizontalGradient(listOf(Color(0xFA0A0A0B), Color(0xF0111113)))

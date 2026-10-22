@@ -22,6 +22,8 @@ import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.ui.login.LoginActivity
 import com.ipxtream.tv.ui.player.PlayerViewModel
 import com.ipxtream.tv.ui.theme.IpxTvTheme
+import com.ipxtream.tv.ui.theme.screenReaderOnlySemantics
+import androidx.compose.foundation.layout.fillMaxSize
 
 /**
  * Host Activity for the Dashboard + embedded Player.
@@ -89,12 +91,20 @@ class DashboardActivity : ComponentActivity() {
         }
         val playbackFlow = playerViewModel.uiState.map { it.summary() }.distinctUntilChanged()
 
+        // Compose paints its own opaque background; the window's would be a second
+        // full-screen fill under it on every frame (expensive on TV GPUs).
+        window.setBackgroundDrawable(null)
+
         setContent {
             IpxTvTheme {
                 val dashState     by dashboardViewModel.uiState.collectAsState()
                 val playback      by playbackFlow.collectAsState(PlaybackSummary())
                 val downloadItems by dashboardViewModel.downloadItems.collectAsState()
 
+                // Cheap accessibility tree unless a screen reader is on (see screenReaderOnlySemantics).
+                androidx.compose.foundation.layout.Box(
+                    androidx.compose.ui.Modifier.fillMaxSize().screenReaderOnlySemantics()
+                ) {
                 DashboardScreen(
                     uiState            = dashState,
                     playback           = playback,
@@ -132,10 +142,10 @@ class DashboardActivity : ComponentActivity() {
                         dashboardViewModel.clearActivePlayback()
                     },
 
-                    onDownloadPause    = { id -> dashboardViewModel.pauseDownload(this, id) },
-                    onDownloadResume   = { id -> dashboardViewModel.resumeDownload(this, id) },
-                    onDownloadCancel   = { id -> dashboardViewModel.cancelDownload(this, id) },
-                    onDownloadRetry    = { id -> dashboardViewModel.retryDownload(this, id) },
+                    onDownloadPause    = { id -> dashboardViewModel.pauseDownload(this@DashboardActivity, id) },
+                    onDownloadResume   = { id -> dashboardViewModel.resumeDownload(this@DashboardActivity, id) },
+                    onDownloadCancel   = { id -> dashboardViewModel.cancelDownload(this@DashboardActivity, id) },
+                    onDownloadRetry    = { id -> dashboardViewModel.retryDownload(this@DashboardActivity, id) },
                     onDownloadClearDone = dashboardViewModel::clearFinishedDownloads,
                     onCloseDetails      = dashboardViewModel::closeDetails,
 
@@ -152,14 +162,14 @@ class DashboardActivity : ComponentActivity() {
                     onSetDefaultAccount = dashboardViewModel::setDefaultAccount,
                     onRemoveAccount    = dashboardViewModel::removeAccount,
                     onAddAccount       = dashboardViewModel::addAccount,
-                    onVodDownload      = { stream -> dashboardViewModel.downloadStream(this, stream, credentials) },
-                    onEpisodeDownload  = { episode -> dashboardViewModel.downloadEpisode(this, episode, credentials) },
+                    onVodDownload      = { stream -> dashboardViewModel.downloadStream(this@DashboardActivity, stream, credentials) },
+                    onEpisodeDownload  = { episode -> dashboardViewModel.downloadEpisode(this@DashboardActivity, episode, credentials) },
                     onCacheAll         = dashboardViewModel::cacheAllContent,
                     onLogout           = dashboardViewModel::logout,
 
                     onAppLanguageChange = { lang ->
                         dashboardViewModel.setAppLanguage(lang)
-                        com.ipxtream.tv.util.LocaleHelper.applyLocale(this, lang.code)
+                        com.ipxtream.tv.util.LocaleHelper.applyLocale(this@DashboardActivity, lang.code)
                     },
                     onToggleShowWhatsNew = dashboardViewModel::setShowWhatsNewSection,
                     onToggleShowDownloads = dashboardViewModel::setShowDownloadsSection,
@@ -183,6 +193,7 @@ class DashboardActivity : ComponentActivity() {
                     onUhdScanLibrary = dashboardViewModel::startUhdLibraryScan,
                     onUhdStopScan = dashboardViewModel::stopUhdScan
                 )
+                }
             }
         }
     }
@@ -194,7 +205,28 @@ class DashboardActivity : ComponentActivity() {
         super.attachBaseContext(localizedContext)
     }
 
+    private var lastRepeatHandledAt = 0L
+
+    /**
+     * Holding a D-Pad key on a slow TV queues repeats faster than frames are drawn, so focus
+     * keeps sliding after the key is released. Repeats that are stale or closer together than
+     * [REPEAT_INTERVAL_MS] are dropped; single presses always go through.
+     */
+    private fun isExcessRepeat(event: android.view.KeyEvent): Boolean {
+        if (event.action != android.view.KeyEvent.ACTION_DOWN || event.repeatCount == 0) return false
+        when (event.keyCode) {
+            android.view.KeyEvent.KEYCODE_DPAD_UP, android.view.KeyEvent.KEYCODE_DPAD_DOWN,
+            android.view.KeyEvent.KEYCODE_DPAD_LEFT, android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> Unit
+            else -> return false
+        }
+        val now = android.os.SystemClock.uptimeMillis()
+        if (now - event.eventTime > STALE_REPEAT_MS || now - lastRepeatHandledAt < REPEAT_INTERVAL_MS) return true
+        lastRepeatHandledAt = now
+        return false
+    }
+
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (isExcessRepeat(event)) return true
         if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_DOWN) {
             val state = dashboardViewModel.uiState.value
             val isFullScreenPlaying = state.selectedEpisode != null || 
@@ -217,7 +249,19 @@ class DashboardActivity : ComponentActivity() {
                 return true
             }
         }
-        return super.dispatchKeyEvent(event)
+        return dispatchSafely(event)
+    }
+
+    /**
+     * Compose throws when a focus jump names a FocusRequester that isn't on screen right now
+     * (e.g. a section without a category row). A D-Pad press must never crash the app: drop it.
+     */
+    private fun dispatchSafely(event: android.view.KeyEvent): Boolean = try {
+        super.dispatchKeyEvent(event)
+    } catch (e: IllegalStateException) {
+        if (e.message?.contains("FocusRequester is not initialized") != true) throw e
+        android.util.Log.w("DashboardActivity", "Ignored focus move to a missing target", e)
+        true
     }
 
     // ─── Lifecycle ────────────────────────────────────────────────────────────
@@ -243,5 +287,8 @@ class DashboardActivity : ComponentActivity() {
         const val EXTRA_SERVER   = "extra_server"
         const val EXTRA_USERNAME = "extra_username"
         const val EXTRA_PASSWORD = "extra_password"
+
+        private const val REPEAT_INTERVAL_MS = 110L   // ~9 moves per second while a key is held
+        private const val STALE_REPEAT_MS    = 200L   // repeat waited too long in the queue
     }
 }

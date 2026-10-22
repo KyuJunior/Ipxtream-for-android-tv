@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.*
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -167,7 +168,19 @@ fun SettingsScreen(
 
             // 2-Pane Categorized Body
             Row(
-                modifier = Modifier.fillMaxWidth().weight(1f),
+                // Up from the top of either pane must not slide diagonally into the side menu
+                // (the nearest thing above-left); Left/Back still reach the menu on purpose.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .focusProperties {
+                        @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+                        exit = { direction ->
+                            if (direction == androidx.compose.ui.focus.FocusDirection.Up) FocusRequester.Cancel
+                            else FocusRequester.Default
+                        }
+                    }
+                    .focusGroup(),
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // ── Left Pane: Settings Categories Rail ────────────────────────

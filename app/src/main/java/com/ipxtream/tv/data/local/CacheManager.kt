@@ -3,6 +3,7 @@ package com.ipxtream.tv.data.local
 import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import com.google.gson.stream.JsonReader
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
@@ -12,8 +13,11 @@ import java.security.MessageDigest
  *
  * ## Design
  * - Cache key  = MD5 hex digest of any arbitrary String (typically a URL + params).
- * - Cache file = `{cacheDir}/{md5}.json` containing a [CacheEntry] JSON wrapper.
- * - Each entry stores a [CacheEntry.timestamp] so callers can check staleness.
+ * - Cache file = `{cacheDir}/{md5}.v2.json`: the data's own JSON, streamed to and from disk.
+ *   Catalogs are 10+ MB; never holding them as one String keeps a weak TV out of GC pauses.
+ * - Age comes from the file's modification time.
+ * - Files from older versions (`{md5}.json`, a [CacheEntry] wrapper holding the data as an
+ *   escaped string) are read once, rewritten in the new format and deleted.
  *
  * ## Thread safety
  * File I/O runs on whatever dispatcher the caller uses. Always call from
@@ -44,10 +48,9 @@ class CacheManager(private val cacheDir: File) {
         val file = fileFor(cacheKey)
         val tmp  = File(cacheDir, file.name + ".tmp")
         try {
-            val entry = CacheEntry(data = gson.toJson(data))
-            // Write to a temp file and rename, so a crash or full disk mid-write never
-            // leaves a truncated cache file behind.
-            tmp.writeText(gson.toJson(entry))
+            // Stream straight to a temp file, then rename, so a crash or full disk mid-write
+            // never leaves a truncated cache file behind.
+            tmp.bufferedWriter(Charsets.UTF_8).use { gson.toJson(data, it) }
             if (!tmp.renameTo(file)) {
                 file.delete()
                 if (!tmp.renameTo(file)) throw IOException("rename failed")
@@ -68,7 +71,7 @@ class CacheManager(private val cacheDir: File) {
      * catalog files are many megabytes). Null when the entry doesn't exist.
      */
     fun ageMs(cacheKey: String): Long? {
-        val file = fileFor(cacheKey)
+        val file = fileFor(cacheKey).takeIf { it.exists() } ?: legacyFileFor(cacheKey)
         if (!file.exists()) return null
         return (System.currentTimeMillis() - file.lastModified()).coerceAtLeast(0L)
     }
@@ -91,22 +94,41 @@ class CacheManager(private val cacheDir: File) {
         maxAgeMs: Long = DEFAULT_MAX_AGE_MS
     ): T? {
         val file = fileFor(cacheKey)
-        if (!file.exists()) return null
+        if (!file.exists()) return loadLegacy(cacheKey, type, maxAgeMs)
 
+        val ageMs = System.currentTimeMillis() - file.lastModified()
+        if (ageMs > maxAgeMs) {
+            Log.d(TAG, "Cache stale (${ageMs / 1000}s old) → ${file.name}")
+            return null
+        }
         return try {
-            val entry = gson.fromJson(file.readText(), CacheEntry::class.java)
-            val ageMs = System.currentTimeMillis() - entry.timestamp
-
-            if (ageMs > maxAgeMs) {
-                Log.d(TAG, "Cache stale (${ageMs / 1000}s old) → ${file.name}")
-                null
-            } else {
-                Log.d(TAG, "Cache hit (${ageMs / 1000}s old) → ${file.name}")
-                gson.fromJson<T>(entry.data, type)
-            }
+            Log.d(TAG, "Cache hit (${ageMs / 1000}s old) → ${file.name}")
+            JsonReader(file.bufferedReader(Charsets.UTF_8)).use { gson.fromJson<T>(it, type) }
         } catch (e: Exception) {
             Log.w(TAG, "Cache corrupt for key='$cacheKey': ${e.message}")
             file.delete() // purge bad entry
+            null
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "Cache too large to load for key='$cacheKey'")
+            null
+        }
+    }
+
+    /** One-time read of a pre-v2 file; rewrites it in the streaming format. */
+    private fun <T> loadLegacy(cacheKey: String, type: java.lang.reflect.Type, maxAgeMs: Long): T? {
+        val legacy = legacyFileFor(cacheKey)
+        if (!legacy.exists()) return null
+        return try {
+            val entry = gson.fromJson(legacy.readText(), CacheEntry::class.java)
+            val data = gson.fromJson<T>(entry.data, type)
+            legacy.delete()
+            if (data != null) {
+                save(cacheKey, data)
+                fileFor(cacheKey).setLastModified(entry.timestamp)  // keep its real age
+            }
+            if (System.currentTimeMillis() - entry.timestamp > maxAgeMs) null else data
+        } catch (e: Throwable) {
+            legacy.delete()
             null
         }
     }
@@ -116,6 +138,7 @@ class CacheManager(private val cacheDir: File) {
      */
     fun invalidate(cacheKey: String) {
         val file = fileFor(cacheKey)
+        legacyFileFor(cacheKey).delete()
         if (file.delete()) Log.d(TAG, "Invalidated cache → ${file.name}")
     }
 
@@ -142,6 +165,9 @@ class CacheManager(private val cacheDir: File) {
     // -------------------------------------------------------------------------
 
     private fun fileFor(cacheKey: String): File =
+        File(cacheDir, "${cacheKey.md5()}.v2.json")
+
+    private fun legacyFileFor(cacheKey: String): File =
         File(cacheDir, "${cacheKey.md5()}.json")
 
     private fun String.md5(): String {
@@ -176,7 +202,7 @@ class CacheManager(private val cacheDir: File) {
 }
 
 /**
- * Internal wrapper stored as the root JSON object in each cache file.
+ * Pre-v2 wrapper, kept only to read old cache files once.
  *
  * Keeping the [data] as a raw JSON String (not a nested object) means the
  * [CacheManager] itself is type-agnostic and doesn't need to know the schema

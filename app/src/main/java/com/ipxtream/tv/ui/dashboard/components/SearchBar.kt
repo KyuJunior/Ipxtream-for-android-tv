@@ -66,6 +66,9 @@ fun SearchBar(
     onLeftNavigation: (() -> Unit)? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    // On a TV remote, passing over the field must not pop up the full-screen keyboard.
+    // The field is read-only until the user presses OK on it.
+    var editing by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val keys = directionalKeys()
@@ -102,10 +105,20 @@ fun SearchBar(
                 color = borderColor,
                 shape = RoundedCornerShape(50)
             )
-            .onFocusChanged { state -> isFocused = state.isFocused }
+            .onFocusChanged { state ->
+                isFocused = state.isFocused
+                if (!state.isFocused) editing = false
+            }
             .onPreviewKeyEvent { keyEvent ->
                 if (keyEvent.type == KeyEventType.KeyDown) {
                     when (keyEvent.key) {
+                        Key.DirectionCenter, Key.Enter, Key.NumPadEnter -> {
+                            if (editing) false else {
+                                editing = true
+                                keyboardController?.show()
+                                true
+                            }
+                        }
                         Key.DirectionDown -> {
                             val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
                             if (!moved && onDownNavigation != null) {
@@ -124,6 +137,7 @@ fun SearchBar(
                 } else false
             },
         textStyle = IpxTypography.BodyMedium.copy(color = TextPrimary),
+        readOnly = !editing,
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
@@ -131,6 +145,7 @@ fun SearchBar(
         ),
         keyboardActions = KeyboardActions(
             onSearch = {
+                editing = false
                 keyboardController?.hide()
                 val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
                 if (!moved && onDownNavigation != null) {
@@ -138,6 +153,7 @@ fun SearchBar(
                 }
             },
             onDone = {
+                editing = false
                 keyboardController?.hide()
                 val moved = runCatching { focusManager.moveFocus(FocusDirection.Down) }.getOrDefault(false)
                 if (!moved && onDownNavigation != null) {

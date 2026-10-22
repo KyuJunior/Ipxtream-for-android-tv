@@ -244,22 +244,27 @@ fun HeroBackdrop(
         }
 
         // Legibility scrims: left for the copy, top for the header, bottom to melt into the rows.
+        // Each covers only the band where it isn't transparent: on a weak TV GPU every
+        // blended full-screen layer costs several milliseconds per frame.
         Box(
-            Modifier.fillMaxSize().background(
+            Modifier.fillMaxHeight().fillMaxWidth(0.7f).background(
                 Brush.horizontalGradient(
                     0f to Color(0xF2000000),
-                    0.38f to Color(0xA6000000),
-                    0.7f to Color.Transparent
+                    0.54f to Color(0xA6000000),
+                    1f to Color.Transparent
                 )
             )
         )
         Box(
-            Modifier.fillMaxSize().background(
+            Modifier.fillMaxWidth().fillMaxHeight(0.22f).background(
+                Brush.verticalGradient(0f to Color(0x99000000), 1f to Color.Transparent)
+            )
+        )
+        Box(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().fillMaxHeight(0.45f).background(
                 Brush.verticalGradient(
-                    0f to Color(0x99000000),
-                    0.22f to Color.Transparent,
-                    0.55f to Color.Transparent,
-                    0.85f to Color(0xCC000000),
+                    0f to Color.Transparent,
+                    0.67f to Color(0xCC000000),
                     1f to Color.Black
                 )
             )

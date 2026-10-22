@@ -248,6 +248,7 @@ fun DashboardScreen(
     val libraryListState = androidx.compose.foundation.lazy.rememberLazyListState()
     val focusScope = androidx.compose.runtime.rememberCoroutineScope()
 
+    val layoutDirection = androidx.compose.ui.platform.LocalLayoutDirection.current
     val focusContentForSection: () -> Unit = {
         val ok: Boolean = when (uiState.activeSection) {
             ContentSection.MY_LIBRARY -> {
@@ -275,7 +276,17 @@ fun DashboardScreen(
             }
         }
         if (!ok) {
-            runCatching { firstItemFocusRequester.requestFocus() }
+            // Screens without that requester (Settings, Downloads): step from the menu toward
+            // the content instead of leaving focus stuck in the menu.
+            val moved = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
+            if (!moved) {
+                runCatching {
+                    focusManager.moveFocus(
+                        if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) FocusDirection.Left
+                        else FocusDirection.Right
+                    )
+                }
+            }
         }
     }
 
@@ -455,6 +466,23 @@ fun DashboardScreen(
             val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY ||
                 uiState.activeSection == ContentSection.UHD
             val isHomeNormal = isHomeSection && uiState.searchQuery.isBlank()
+            // Header → content: a requester that isn't attached in this section crashes focus
+            // search, so only name one that exists; otherwise let geometry pick (Settings, Downloads).
+            val hasCategoryRow = uiState.categories.isNotEmpty() && uiState.activeSection in
+                setOf(ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES)
+            val hasFirstItem = when (uiState.activeSection) {
+                ContentSection.MY_LIBRARY -> true
+                ContentSection.UHD -> !uiState.isLoadingContent
+                ContentSection.WHATS_NEW -> uiState.whatsNewItems.isNotEmpty()
+                ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES ->
+                    !uiState.isLoadingContent && uiState.itemCount > 0
+                else -> false
+            }
+            val headerDownTarget = when {
+                hasCategoryRow -> categoryRowFocusRequester
+                hasFirstItem   -> firstItemFocusRequester
+                else           -> FocusRequester.Default
+            }
             val hasSearchResults = isHomeSection && uiState.searchQuery.isNotBlank() && !uiState.isSearchingHome &&
                     (uiState.paginatedSearchMovies.isNotEmpty() || uiState.paginatedSearchSeries.isNotEmpty())
 
@@ -477,52 +505,38 @@ fun DashboardScreen(
                     searchModifier = Modifier
                         .focusRequester(searchBarFocusRequester)
                         .focusProperties {
-                            if (isHomeNormal) {
-                                down = liveTvCardFocusRequester
-                            } else if (isLibrarySection) {
-                                down = firstItemFocusRequester
-                            } else {
-                                down = categoryRowFocusRequester
-                            }
+                            down = if (isHomeNormal) liveTvCardFocusRequester else headerDownTarget
                         },
                     actionButtonsModifier = Modifier.focusProperties {
-                        if (isHomeNormal) {
-                            down = if (hasHero) liveTvCardFocusRequester else moviesCardFocusRequester
-                        } else if (isLibrarySection) {
-                            down = firstItemFocusRequester
-                        } else {
-                            down = categoryRowFocusRequester
-                        }
+                        down = if (isHomeNormal) {
+                            if (hasHero) liveTvCardFocusRequester else moviesCardFocusRequester
+                        } else headerDownTarget
                     },
                     userProfileModifier = Modifier
                         .focusRequester(userProfileFocusRequester)
                         .focusProperties {
-                            if (isHomeNormal) {
-                                down = if (hasHero) liveTvCardFocusRequester else seriesCardFocusRequester
-                            } else if (isLibrarySection) {
-                                down = firstItemFocusRequester
-                            } else {
-                                down = categoryRowFocusRequester
-                            }
+                            down = if (isHomeNormal) {
+                                if (hasHero) liveTvCardFocusRequester else seriesCardFocusRequester
+                            } else headerDownTarget
                         },
                     onSearchDown = {
                         when {
                             hasSearchResults -> {
                                 val ok = runCatching { searchFirstCardFocusRequester.requestFocus() }.isSuccess
                                 if (!ok) {
-                                    focusManager.moveFocus(FocusDirection.Down)
+                                    runCatching { focusManager.moveFocus(FocusDirection.Down) }
                                 }
                             }
                             isHomeNormal -> {
                                 val ok = runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
                                 if (!ok) {
-                                    focusManager.moveFocus(FocusDirection.Down)
+                                    runCatching { focusManager.moveFocus(FocusDirection.Down) }
                                 }
                             }
                             isLibrarySection -> {
                                 val ok = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
                                 if (!ok) {
-                                    focusManager.moveFocus(FocusDirection.Down)
+                                    runCatching { focusManager.moveFocus(FocusDirection.Down) }
                                 }
                             }
                             else -> {
@@ -530,7 +544,7 @@ fun DashboardScreen(
                                 if (!ok) {
                                     val firstOk = runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
                                     if (!firstOk) {
-                                        focusManager.moveFocus(FocusDirection.Down)
+                                        runCatching { focusManager.moveFocus(FocusDirection.Down) }
                                     }
                                 }
                             }
