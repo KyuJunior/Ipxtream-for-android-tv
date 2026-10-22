@@ -137,32 +137,43 @@ class UpdateManager(private val context: Context) {
         }
     }
 
-    fun installApk(apkFile: File) {
+    /** Hands the APK to the system installer. False when the device has no installer we may use. */
+    fun installApk(apkFile: File): Boolean = try {
         val authority = "${context.packageName}.provider"
         val uri: Uri = FileProvider.getUriForFile(context, authority, apkFile)
-        
+
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+        true
+    } catch (e: Exception) {
+        // Locked-down TV boxes may have no package installer, or block unknown sources.
+        Log.e(tag, "Could not start installer: ${e.message}", e)
+        false
     }
 
-    fun isNewerVersion(current: String, latest: String): Boolean {
-        val cleanCurrent = current.trim().removePrefix("v").removePrefix("V")
-        val cleanLatest = latest.trim().removePrefix("v").removePrefix("V")
-        
-        val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
-        val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }
-        
-        val maxLen = maxOf(currentParts.size, latestParts.size)
-        for (i in 0 until maxLen) {
-            val currVal = currentParts.getOrElse(i) { 0 }
-            val latVal = latestParts.getOrElse(i) { 0 }
-            if (latVal > currVal) return true
-            if (currVal > latVal) return false
+    fun isNewerVersion(current: String, latest: String): Boolean = Companion.isNewerVersion(current, latest)
+
+    companion object {
+        /** True when [latest] (e.g. "v1.0.12") is a higher dotted version than [current]. */
+        fun isNewerVersion(current: String, latest: String): Boolean {
+            val cleanCurrent = current.trim().removePrefix("v").removePrefix("V")
+            val cleanLatest = latest.trim().removePrefix("v").removePrefix("V")
+
+            val currentParts = cleanCurrent.split(".").mapNotNull { it.toIntOrNull() }
+            val latestParts = cleanLatest.split(".").mapNotNull { it.toIntOrNull() }
+
+            val maxLen = maxOf(currentParts.size, latestParts.size)
+            for (i in 0 until maxLen) {
+                val currVal = currentParts.getOrElse(i) { 0 }
+                val latVal = latestParts.getOrElse(i) { 0 }
+                if (latVal > currVal) return true
+                if (currVal > latVal) return false
+            }
+            return false
         }
-        return false
     }
 }

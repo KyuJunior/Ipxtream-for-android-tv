@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -352,7 +353,8 @@ class DownloadService : Service() {
 
     private fun stopSelfIfIdle() {
         if (activeJobs.isEmpty() && pendingQueue.isEmpty()) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            // Service.stopForeground(int) is API 24+; ServiceCompat covers Android 6.
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
     }

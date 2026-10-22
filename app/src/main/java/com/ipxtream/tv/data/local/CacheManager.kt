@@ -41,14 +41,36 @@ class CacheManager(private val cacheDir: File) {
      * @param data     Any Gson-serialisable object.
      */
     fun <T> save(cacheKey: String, data: T) {
+        val file = fileFor(cacheKey)
+        val tmp  = File(cacheDir, file.name + ".tmp")
         try {
-            val entry   = CacheEntry(data = gson.toJson(data))
-            val file    = fileFor(cacheKey)
-            file.writeText(gson.toJson(entry))
+            val entry = CacheEntry(data = gson.toJson(data))
+            // Write to a temp file and rename, so a crash or full disk mid-write never
+            // leaves a truncated cache file behind.
+            tmp.writeText(gson.toJson(entry))
+            if (!tmp.renameTo(file)) {
+                file.delete()
+                if (!tmp.renameTo(file)) throw IOException("rename failed")
+            }
             Log.d(TAG, "Saved cache → ${file.name}")
-        } catch (e: IOException) {
+        } catch (e: Exception) {
+            tmp.delete()
             Log.w(TAG, "Cache write failed for key='$cacheKey': ${e.message}")
+        } catch (e: OutOfMemoryError) {
+            // A huge catalog can exhaust the heap while serialising; skip caching it this time.
+            tmp.delete()
+            Log.w(TAG, "Cache write skipped (out of memory) for key='$cacheKey'")
         }
+    }
+
+    /**
+     * Age of the entry in milliseconds, from the file's modification time (no parsing —
+     * catalog files are many megabytes). Null when the entry doesn't exist.
+     */
+    fun ageMs(cacheKey: String): Long? {
+        val file = fileFor(cacheKey)
+        if (!file.exists()) return null
+        return (System.currentTimeMillis() - file.lastModified()).coerceAtLeast(0L)
     }
 
     /**
@@ -131,14 +153,8 @@ class CacheManager(private val cacheDir: File) {
      * Returns true if cache entry exists and is older than [maxAgeMs], or does not exist.
      */
     fun isStale(cacheKey: String, maxAgeMs: Long = DEFAULT_MAX_AGE_MS): Boolean {
-        val file = fileFor(cacheKey)
-        if (!file.exists()) return true
-        return try {
-            val entry = gson.fromJson(file.readText(), CacheEntry::class.java)
-            (System.currentTimeMillis() - entry.timestamp) > maxAgeMs
-        } catch (e: Exception) {
-            true
-        }
+        val age = ageMs(cacheKey) ?: return true
+        return age > maxAgeMs
     }
 
     // -------------------------------------------------------------------------

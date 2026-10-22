@@ -224,6 +224,12 @@ class ContentRepository(
         runCatching { apiService.getSeriesInfo(credentials.username, credentials.password, seriesId = seriesId) }
     }
 
+    /**
+     * Age of the cached full catalog for a section ("live_streams", "vod_streams", "series"),
+     * or null when nothing is cached. Survives app restarts, unlike in-memory timestamps.
+     */
+    fun catalogAgeMs(base: String): Long? = cacheManager.ageMs(buildKey(base))
+
     /** Stable per-account key for stores that live outside the HTTP cache. */
     val accountKey: String get() = buildKey("account")
 
@@ -301,6 +307,8 @@ class ContentRepository(
                     successData = data
                     isSuccess = true
                     break
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e // the caller left the screen; don't retry or fall back
                 } catch (e: Exception) {
                     val mappedException = mapException(e)
                     lastException = mappedException
@@ -406,7 +414,7 @@ class ContentRepository(
          * ```
          */
         fun create(context: Context, credentials: AuthCredentials): ContentRepository {
-            val apiService   = ApiClient.create(credentials.server, debug = true)
+            val apiService   = ApiClient.create(credentials.server, debug = com.ipxtream.tv.BuildConfig.DEBUG)
             val cacheManager = CacheManager(context.cacheDir)
             return ContentRepository(context.applicationContext, credentials, apiService, cacheManager)
         }

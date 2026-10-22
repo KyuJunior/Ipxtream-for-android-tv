@@ -1,3 +1,5 @@
+import java.util.Properties
+
 // =============================================================================
 //  IPXtream TV — app/build.gradle.kts   (Full — Phases 1–6)
 // =============================================================================
@@ -9,6 +11,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)   // Kotlin 2.x Compose compiler plugin
 }
 
+// Version lives in /version.properties so the CI bump never rewrites this file.
+val versionProps = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+
 android {
     namespace  = "com.ipxtream.tv"
     compileSdk = 35
@@ -17,8 +24,8 @@ android {
         applicationId = "com.ipxtream.tv"
         minSdk        = 23          // EncryptedSharedPreferences requires API 23
         targetSdk     = 35
-        versionCode   = 59
-        versionName   = "1.0.58"
+        versionCode   = versionProps.getProperty("VERSION_CODE").toInt()
+        versionName   = versionProps.getProperty("VERSION_NAME")
     }
 
     buildFeatures {
@@ -36,6 +43,16 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    lint {
+        // Known issues as of v1.0.58 live in the baseline; CI fails only on new ones.
+        baseline     = file("lint-baseline.xml")
+        abortOnError = true
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true   // android.util.Log etc. are no-ops in JVM tests
     }
 
     packaging {

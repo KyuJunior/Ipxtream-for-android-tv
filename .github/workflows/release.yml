@@ -8,6 +8,8 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+      - 'reviews/**'
+      - '.gitignore'
 
 permissions:
   contents: write
@@ -36,47 +38,51 @@ jobs:
       - name: Auto Increment Version
         id: versioning
         run: |
-          gradle_file="app/build.gradle.kts"
-          
-          # Read current versionName and versionCode
-          current_version=$(grep -oP 'versionName\s*=\s*"\K[^"]+' $gradle_file)
-          current_code=$(grep -oP 'versionCode\s*=\s*\K[0-9]+' $gradle_file)
-          
-          echo "Current Version Name: $current_version"
-          echo "Current Version Code: $current_code"
-          
+          props="version.properties"
+          current_version=$(grep -oP '^VERSION_NAME=\K.+' $props)
+          current_code=$(grep -oP '^VERSION_CODE=\K[0-9]+' $props)
+          echo "Current: $current_version ($current_code)"
+
           # Increment patch version (e.g. 1.0.0 -> 1.0.1)
           IFS='.' read -r major minor patch <<< "$current_version"
-          new_patch=$((patch + 1))
-          new_version="$major.$minor.$new_patch"
+          new_version="$major.$minor.$((patch + 1))"
           new_code=$((current_code + 1))
-          
-          echo "New Version Name: $new_version"
-          echo "New Version Code: $new_code"
-          
-          # Update build.gradle.kts
-          sed -i "s/versionName\s*=\s*\"$current_version\"/versionName   = \"$new_version\"/g" $gradle_file
-          sed -i "s/versionCode\s*=\s*$current_code/versionCode   = $new_code/g" $gradle_file
-          
-          # Set outputs
+          echo "New: $new_version ($new_code)"
+
+          sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$new_version/" $props
+          sed -i "s/^VERSION_CODE=.*/VERSION_CODE=$new_code/" $props
+
           echo "new_version=v$new_version" >> $GITHUB_OUTPUT
           echo "new_version_raw=$new_version" >> $GITHUB_OUTPUT
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build Debug & Release APKs
-        run: ./gradlew assembleDebug assembleRelease
+      # Unit tests and lint gate the release: lint fails only on issues not in app/lint-baseline.xml.
+      - name: Test, lint and build release APK
+        run: ./gradlew testDebugUnitTest lintDebug assembleRelease
         env:
           RELEASE_STORE_PASSWORD: ${{ secrets.RELEASE_STORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
+      # Every installed copy updates in place only if the signing key never changes.
+      - name: Verify signing certificate
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          actual=$("$apksigner" verify --print-certs app/build/outputs/apk/release/app-release.apk             | grep -m1 'SHA-256 digest' | awk '{print $NF}')
+          expected="${{ vars.RELEASE_CERT_SHA256 || '4ffd408866bde43fa08bffc0ae8c63d438ba400ae539974bada48076f8e4e172' }}"
+          echo "Signed with: $actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::app-release.apk is signed with an unexpected key ($actual). Installed apps could not update."
+            exit 1
+          fi
+
       - name: Commit and Push Version Bump
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/build.gradle.kts
+          git add version.properties
           git commit -m "chore: bump version to ${{ steps.versioning.outputs.new_version }}"
           # main may have moved while we built; replay the bump on top of it.
           git pull --rebase origin main
@@ -95,6 +101,5 @@ jobs:
           prerelease: false
           files: |
             app/build/outputs/apk/release/app-release.apk
-            app/build/outputs/apk/debug/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

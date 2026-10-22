@@ -28,9 +28,13 @@ object ApiClient {
      *                 Should be [BuildConfig.DEBUG] in production code.
      */
     fun create(baseUrl: String, debug: Boolean = false): XtreamApiService {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
+        // Request lines only, and only in debug builds. BODY logging would copy multi-MB
+        // catalogs into logcat, and every request URL carries the account password.
+        val loggingInterceptor = HttpLoggingInterceptor { message ->
+            android.util.Log.d("OkHttp", redactCredentials(message))
+        }.apply {
             level = if (debug)
-                HttpLoggingInterceptor.Level.BODY
+                HttpLoggingInterceptor.Level.BASIC
             else
                 HttpLoggingInterceptor.Level.NONE
         }
@@ -49,6 +53,11 @@ object ApiClient {
             .build()
             .create(XtreamApiService::class.java)
     }
+
+    private val PASSWORD_PARAM = Regex("""(?i)(password=)[^&\s]*""")
+
+    /** Masks the `password` query parameter in any logged URL. */
+    fun redactCredentials(text: String): String = text.replace(PASSWORD_PARAM, "$1***")
 
     /**
      * Ensures the URL is properly formatted for Retrofit's [Retrofit.Builder.baseUrl]:

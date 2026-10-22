@@ -17,11 +17,14 @@ Both agents MUST read this whole file at the start of every task and append to t
    - Commit only your own files: `git add <files>`, never `git add -A` / `git add .`.
    - Commit messages start with `[claude]` or `[antigravity]`.
    - Before pushing: `git pull --rebase origin main`, resolve conflicts keeping both sides' intent, build, push.
-4. **Version number** (`versionCode` / `versionName`): never edit it by hand. CI (`.github/workflows/release.yml`)
-   bumps it and publishes a GitHub release after every push to `main` that touches code; the in-app updater
+4. **Version number** (`VERSION_CODE` / `VERSION_NAME` in `/version.properties`, read by `app/build.gradle.kts`):
+   never edit it by hand. CI (`.github/workflows/release.yml`) bumps it and publishes a GitHub release after every push to `main` that touches code; the in-app updater
    offers that release. So after any push, `origin/main` gains a `chore: bump version to vX` bot commit —
-   always `git pull --rebase origin main` before your next push. Pushes that only change `*.md` / `docs/**`
-   don't trigger a release.
+   always `git pull --rebase origin main` before your next push. Pushes that only change `*.md` / `docs/**` /
+   `reviews/**` / `.gitignore` don't trigger a release.
+   CI runs `testDebugUnitTest lintDebug assembleRelease` first: a failing unit test or a **new** lint error (anything
+   not in `app/lint-baseline.xml`) blocks the release, so run the same command locally before pushing. Don't
+   regenerate the baseline to hide a new error; fix it. CI also refuses an APK signed with a different key.
 5. **Secrets**: NEVER write tokens, passwords, API keys, or server credentials in this file or any tracked file.
    Put them in `SECRETS.local.md` (gitignored, local only) and refer to them by name here, e.g. "see SECRETS.local.md → XTREAM_TEST_LOGIN".
 
@@ -44,6 +47,10 @@ Both agents MUST read this whole file at the start of every task and append to t
   singleton — always use `AppSettingsStore.getInstance(context)`, never `AppSettingsStore(context)`.
 - **TV focus gotcha:** Lazy grids/rows holding focusable cards need `focusProperties { canFocus = false }` on the
   container, or D-Pad lands on the container with no visible focus.
+- **Data safety:** `LibraryStore` / `CredentialStore` never overwrite a list they couldn't parse (raw copy kept under
+  `<key>_corrupt_<timestamp>`); `CredentialStore` never falls back to plain-text prefs; `CacheManager` writes via
+  temp file + rename. Network logging is `BuildConfig.DEBUG`-only, request lines only, password redacted.
+- **Unit tests:** `app/src/test/` (JVM, no emulator). Add tests for pure logic you touch.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
   `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
   `applicationIdSuffix = ".preview"` on the debug build type, so the installed release app is untouched.
@@ -140,3 +147,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files (locked until my next entry — please don't edit): data/api/{ApiClient,UpdateManager}.kt, data/repository/ContentRepository.kt, data/local/{CacheManager,CredentialStore,LibraryStore}.kt, data/download/DownloadService.kt, ui/login/LoginViewModel.kt, ui/dashboard/{DashboardViewModel,DashboardActivity}.kt, ui/player/PlayerViewModel.kt, app/build.gradle.kts, .github/workflows/release.yml, new version.properties, app/lint-baseline.xml, app/src/test/**.
 - Status: in progress
 - For the other agent: Owner decisions: releases stay on every push; Arabic translation + RTL comes after Release 2; owner's TV runs app-release.apk. FYI: the repo has NO signing secrets, so every published release is signed with the public debugCI key — owner is being asked how to handle that; don't change signing config.
+
+### 2026-10-22 | claude
+- Did: Release 1 of `reviews/joint-plan.md`. (1) Network logging: release builds log nothing; debug logs request lines only with `password=` redacted (was full 13 MB bodies + password in logcat on every build). Catalogs revalidate by cache-file age, so launching the app no longer re-downloads Movies/Series/Live; a background refresh no longer resets the chosen category to "All". (2) Crashes: `ServiceCompat.stopForeground` (Android 6), Dashboard without saved credentials → Login, installer failure → error message, `CancellationException` no longer retried. (3) Data safety: see Current state. (4) Continue Watching loads on cold start and refreshes when the player closes; progress is saved every 10 s + on pause/seek/stop, on `Dispatchers.IO` (was every second on main). (5) Pipeline: version moved to `version.properties`; lint baseline (`app/lint-baseline.xml`, 38 known errors) + CI gate; first 17 JVM unit tests; releases now ship only `app-release.apk`; CI checks the release signing cert SHA-256 (override with repo variable `RELEASE_CERT_SHA256` if the key ever changes).
+- Files: version.properties, app/build.gradle.kts, app/lint-baseline.xml, app/src/test/**, .github/workflows/release.yml, data/api/{ApiClient,UpdateManager}.kt, data/repository/ContentRepository.kt, data/local/{CacheManager,CredentialStore,LibraryStore}.kt, data/download/DownloadService.kt, ui/login/LoginViewModel.kt, ui/dashboard/{DashboardViewModel,DashboardActivity}.kt, ui/player/PlayerViewModel.kt
+- Status: done. Locks from my previous entry are released. Verified on the emulator (release build): Continue Watching shows on cold start and updates after playback; Movies opens from cache with no network fetch; no `password=` or OkHttp lines in logcat. Tests + lint + assembleRelease pass locally.
+- For the other agent: Signing is unchanged (still the debugCI key; owner decision pending). Next from the plan: Release 2 (PlayerHost, PosterGrid, AppContainer/LibraryController, update hardening) and Arabic translation + RTL D-Pad. Post here before starting any of them so we don't both take the same files.

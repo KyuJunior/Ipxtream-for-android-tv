@@ -70,7 +70,7 @@ class LoginViewModel(
             val credentials      = AuthCredentials(normalizedServer, username, password)
 
             try {
-                val apiService = ApiClient.create(normalizedServer, debug = true)
+                val apiService = ApiClient.create(normalizedServer, debug = com.ipxtream.tv.BuildConfig.DEBUG)
                 val response   = apiService.authenticate(username, password)
 
                 if (response.userInfo.auth == 1) {

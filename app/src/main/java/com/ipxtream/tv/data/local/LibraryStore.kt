@@ -2,6 +2,7 @@ package com.ipxtream.tv.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.ipxtream.tv.data.model.AuthCredentials
@@ -41,30 +42,59 @@ class LibraryStore(
     )
 
     companion object {
+        private const val TAG = "LibraryStore"
         private const val KEY_FAVORITES = "favorites"
         private const val KEY_HISTORY = "history"
         private const val MAX_HISTORY_ITEMS = 50
+
+        /**
+         * Lists found unreadable in this process ("<prefs file>/<key>"). They are backed up and
+         * not overwritten until the app restarts, so one bad read can't wipe them for good.
+         */
+        private val writeBlocked = java.util.Collections.synchronizedSet(mutableSetOf<String>())
+    }
+
+    private val prefsName = "ipxtream_library_${serverSlug}_${credentials.username}"
+
+    private fun readList(key: String): List<LibraryItem> {
+        val json = prefs.getString(key, null) ?: return emptyList()
+        return try {
+            val type = object : TypeToken<List<LibraryItem>>() {}.type
+            gson.fromJson<List<LibraryItem?>>(json, type)?.filterNotNull() ?: emptyList()
+        } catch (e: Exception) {
+            backUpCorrupt(key, json)
+            emptyList()
+        }
+    }
+
+    private fun writeList(key: String, items: List<LibraryItem>) {
+        if ("$prefsName/$key" in writeBlocked) {
+            Log.w(TAG, "Not saving '$key': stored list was unreadable this session")
+            return
+        }
+        prefs.edit().putString(key, gson.toJson(items)).apply()
+    }
+
+    /** Copies unreadable JSON to `<key>_corrupt_<timestamp>` once, then blocks writes this session. */
+    private fun backUpCorrupt(key: String, json: String) {
+        val alreadySaved = prefs.all.any { (k, v) -> k.startsWith("${key}_corrupt_") && v == json }
+        if (alreadySaved) return
+        prefs.edit().putString("${key}_corrupt_${System.currentTimeMillis()}", json).apply()
+        writeBlocked.add("$prefsName/$key")
+        Log.e(TAG, "Unreadable '$key' list backed up; leaving the original untouched")
     }
 
     // ─── Favorites API ────────────────────────────────────────────────────────
 
     @Synchronized
-    fun getFavorites(): List<LibraryItem> {
-        val json = prefs.getString(KEY_FAVORITES, null) ?: return emptyList()
-        return try {
-            val type = object : TypeToken<List<LibraryItem>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
+    fun getFavorites(): List<LibraryItem> = readList(KEY_FAVORITES)
 
     @Synchronized
     fun addFavorite(item: LibraryItem) {
         val current = getFavorites().toMutableList()
         current.removeAll { it.id == item.id && it.type == item.type }
         current.add(0, item) // Insert at top (most recently favorited)
-        prefs.edit().putString(KEY_FAVORITES, gson.toJson(current)).apply()
+        writeList(KEY_FAVORITES, current)
     }
 
     @Synchronized
@@ -72,7 +102,7 @@ class LibraryStore(
         val current = getFavorites().toMutableList()
         val removed = current.removeAll { it.id == id && it.type == type }
         if (removed) {
-            prefs.edit().putString(KEY_FAVORITES, gson.toJson(current)).apply()
+            writeList(KEY_FAVORITES, current)
         }
     }
 
@@ -84,15 +114,7 @@ class LibraryStore(
     // ─── Watch History API ───────────────────────────────────────────────────
 
     @Synchronized
-    fun getHistory(): List<LibraryItem> {
-        val json = prefs.getString(KEY_HISTORY, null) ?: return emptyList()
-        return try {
-            val type = object : TypeToken<List<LibraryItem>>() {}.type
-            gson.fromJson(json, type) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
+    fun getHistory(): List<LibraryItem> = readList(KEY_HISTORY)
 
     @Synchronized
     fun saveHistoryItem(item: LibraryItem) {
@@ -105,7 +127,7 @@ class LibraryStore(
         if (current.size > MAX_HISTORY_ITEMS) {
             current.removeAt(current.lastIndex)
         }
-        prefs.edit().putString(KEY_HISTORY, gson.toJson(current)).apply()
+        writeList(KEY_HISTORY, current)
     }
 
     @Synchronized
@@ -113,7 +135,7 @@ class LibraryStore(
         val current = getHistory().toMutableList()
         val removed = current.removeAll { it.id == id && it.type == type }
         if (removed) {
-            prefs.edit().putString(KEY_HISTORY, gson.toJson(current)).apply()
+            writeList(KEY_HISTORY, current)
         }
     }
 

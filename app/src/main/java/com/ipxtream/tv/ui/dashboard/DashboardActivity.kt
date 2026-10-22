@@ -1,5 +1,6 @@
 package com.ipxtream.tv.ui.dashboard
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,6 +12,7 @@ import com.ipxtream.tv.data.local.CredentialStore
 import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesItem
+import com.ipxtream.tv.ui.login.LoginActivity
 import com.ipxtream.tv.ui.player.PlayerViewModel
 import com.ipxtream.tv.ui.theme.IpxTvTheme
 
@@ -36,8 +38,11 @@ import com.ipxtream.tv.ui.theme.IpxTvTheme
  */
 class DashboardActivity : ComponentActivity() {
 
+    /** Set in [onCreate] before anything touches [dashboardViewModel]. */
+    private lateinit var credentials: AuthCredentials
+
     private val dashboardViewModel: DashboardViewModel by viewModels {
-        DashboardViewModelFactory(applicationContext, resolveCredentials())
+        DashboardViewModelFactory(applicationContext, credentials)
     }
 
     /**
@@ -49,7 +54,15 @@ class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val credentials = resolveCredentials()
+        // No saved account (e.g. storage was cleared): send the user to Login instead of crashing.
+        credentials = resolveCredentials() ?: run {
+            startActivity(
+                Intent(this, LoginActivity::class.java)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            )
+            finish()
+            return
+        }
         dashboardViewModel.checkForUpdates()
 
         setContent {
@@ -203,7 +216,7 @@ class DashboardActivity : ComponentActivity() {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private fun resolveCredentials(): AuthCredentials {
+    private fun resolveCredentials(): AuthCredentials? {
         val server   = intent.getStringExtra(EXTRA_SERVER)
         val username = intent.getStringExtra(EXTRA_USERNAME)
         val password = intent.getStringExtra(EXTRA_PASSWORD)
@@ -213,10 +226,6 @@ class DashboardActivity : ComponentActivity() {
         }
 
         return CredentialStore(applicationContext).loadCredentials()
-            ?: throw IllegalStateException(
-                "DashboardActivity launched without credentials. " +
-                "Redirect to LoginActivity before opening Dashboard."
-            )
     }
 
     companion object {

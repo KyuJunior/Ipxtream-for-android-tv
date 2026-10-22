@@ -85,9 +85,22 @@ class DashboardViewModel(
     private val sectionLastFetchTime = java.util.concurrent.ConcurrentHashMap<ContentSection, Long>()
     private val CACHE_REVALIDATION_TTL_MS = 12 * 60 * 60 * 1000L // 12 hours
 
+    /**
+     * True when a section's catalog is old enough to refresh in the background. Uses the
+     * cache file's age, so a fresh app launch no longer re-downloads every catalog.
+     */
     fun shouldRevalidateCache(section: ContentSection): Boolean {
-        val lastTime = sectionLastFetchTime[section] ?: return true
-        return (System.currentTimeMillis() - lastTime) > CACHE_REVALIDATION_TTL_MS
+        sectionLastFetchTime[section]?.let { last ->
+            if (System.currentTimeMillis() - last <= CACHE_REVALIDATION_TTL_MS) return false
+        }
+        val base = when (section) {
+            ContentSection.LIVE   -> "live_streams"
+            ContentSection.VOD    -> "vod_streams"
+            ContentSection.SERIES -> "series"
+            else                  -> return false
+        }
+        val age = repository.catalogAgeMs(base) ?: return true
+        return age > CACHE_REVALIDATION_TTL_MS
     }
 
     init {
@@ -96,8 +109,10 @@ class DashboardViewModel(
                 _uiState.update { it.copy(settings = newSettings) }
             }
         }
-        // Load the default section on first creation.
+        // Load the default section on first creation. activeSection already starts as HOME,
+        // so selectSection() returns early: load Continue Watching and favorites directly.
         selectSection(ContentSection.HOME)
+        refreshLibraryLists()
         refreshAccountsState()
         loadHomeData()
     }
@@ -272,6 +287,8 @@ class DashboardViewModel(
      */
     fun clearActivePlayback() {
         _uiState.update { it.copy(selectedStream = null, selectedEpisode = null) }
+        // The player just saved where the user stopped; show it in Continue Watching.
+        refreshLibraryLists()
     }
 
     /**
@@ -527,7 +544,11 @@ class DashboardViewModel(
 
             if (success) {
                 _uiState.update { it.copy(updateDownloadProgress = null) }
-                updateManager.installApk(destinationFile)
+                if (!updateManager.installApk(destinationFile)) {
+                    _uiState.update { it.copy(
+                        updateErrorMessage = "This TV couldn't open the installer. Allow installs from this app in Settings, then try again."
+                    ) }
+                }
             } else {
                 _uiState.update { it.copy(
                     updateDownloadProgress = null,
@@ -1043,9 +1064,10 @@ class DashboardViewModel(
                         val cats = repository.getLiveCategories(forceRefresh = true).getOrNull()
                         val streams = repository.getLiveStreams(categoryId = null, forceRefresh = true).getOrNull()
                         if (streams != null && _uiState.value.activeSection == ContentSection.LIVE) {
+                            // Don't replace a category the user picked with the full list.
                             _uiState.update { it.copy(
                                 categories = cats ?: it.categories,
-                                streams    = streams
+                                streams    = if (it.selectedCategoryId == null) streams else it.streams
                             ) }
                             sectionLastFetchTime[section] = System.currentTimeMillis()
                         }
@@ -1054,9 +1076,10 @@ class DashboardViewModel(
                         val cats = repository.getVodCategories(forceRefresh = true).getOrNull()
                         val streams = repository.getVodStreams(categoryId = null, forceRefresh = true).getOrNull()
                         if (streams != null && _uiState.value.activeSection == ContentSection.VOD) {
+                            // Don't replace a category the user picked with the full list.
                             _uiState.update { it.copy(
                                 categories = cats ?: it.categories,
-                                streams    = streams
+                                streams    = if (it.selectedCategoryId == null) streams else it.streams
                             ) }
                             sectionLastFetchTime[section] = System.currentTimeMillis()
                         }
@@ -1065,9 +1088,10 @@ class DashboardViewModel(
                         val cats = repository.getSeriesCategories(forceRefresh = true).getOrNull()
                         val series = repository.getSeries(categoryId = null, forceRefresh = true).getOrNull()
                         if (series != null && _uiState.value.activeSection == ContentSection.SERIES) {
+                            // Don't replace a category the user picked with the full list.
                             _uiState.update { it.copy(
                                 categories = cats ?: it.categories,
-                                seriesList = series
+                                seriesList = if (it.selectedCategoryId == null) series else it.seriesList
                             ) }
                             sectionLastFetchTime[section] = System.currentTimeMillis()
                         }

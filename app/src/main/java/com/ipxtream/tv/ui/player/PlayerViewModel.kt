@@ -21,6 +21,7 @@ import com.ipxtream.tv.data.model.AuthCredentials
 import com.ipxtream.tv.data.model.EpisodeItem
 import com.ipxtream.tv.data.model.SeriesItem
 import com.ipxtream.tv.data.model.StreamItem
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -124,6 +125,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     // ─── Coroutine jobs ────────────────────────────────────────────────────────
     private var positionPollingJob: Job? = null
+    private var seekSaveJob: Job? = null
+    private var lastProgressSaveMs = 0L
     private var hudHideJob:         Job? = null
 
     // ─── Scoped Storage ────────────────────────────────────────────────────────
@@ -265,6 +268,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val duration = exoPlayer.duration.takeIf { it > 0L } ?: return
         val newPos   = (exoPlayer.currentPosition + offsetMs).coerceIn(0L, duration)
         exoPlayer.seekTo(newPos)
+        saveProgressAfterSeek()
         onHudInteraction()
     }
 
@@ -286,11 +290,14 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val duration = exoPlayer.duration.takeIf { it > 0L } ?: return
         val newPos   = positionMs.coerceIn(0L, duration)
         exoPlayer.seekTo(newPos)
+        saveProgressAfterSeek()
         onHudInteraction()
     }
 
     fun stop() {
-        saveCurrentProgress()
+        // Written before returning so the dashboard's Continue Watching row sees it right away.
+        saveCurrentProgress(inBackground = false)
+        seekSaveJob?.cancel()
         stopPositionPolling()
         stopHudTimer()
         exoPlayer.stop()
@@ -567,7 +574,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     bufferedPercent   = exoPlayer.bufferedPercentage
                 ) }
 
-                saveCurrentProgress()
+                // The position ticks every second for the HUD; history is written every 10 s.
+                if (System.currentTimeMillis() - lastProgressSaveMs >= PROGRESS_SAVE_INTERVAL_MS) {
+                    saveCurrentProgress()
+                }
                 delay(1000)
             }
         }
@@ -597,7 +607,21 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private fun saveCurrentProgress() {
+    /** Saves once the user stops scrubbing, so holding Right doesn't write on every step. */
+    private fun saveProgressAfterSeek() {
+        seekSaveJob?.cancel()
+        seekSaveJob = viewModelScope.launch {
+            delay(1500)
+            saveCurrentProgress()
+        }
+    }
+
+    /**
+     * Records the current position in watch history. Player state is read here on the main
+     * thread; the JSON write runs on [Dispatchers.IO] unless [inBackground] is false.
+     */
+    private fun saveCurrentProgress(inBackground: Boolean = true) {
+        lastProgressSaveMs = System.currentTimeMillis()
         val currentState = _uiState.value
         val store = libraryStore ?: return
         if (currentState.isLive) return
@@ -610,7 +634,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val type = if (currentState.activeStream != null) (currentState.activeStream.streamType ?: "movie") else "episode"
 
         if (progressFraction >= 0.90f) {
-            store.removeFromHistory(id, type)
+            runStoreWrite(inBackground) { store.removeFromHistory(id, type) }
         } else {
             val item = if (currentState.activeStream != null) {
                 val stream = currentState.activeStream
@@ -640,8 +664,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     durationMs = duration
                 )
             }
-            store.saveHistoryItem(item)
+            runStoreWrite(inBackground) { store.saveHistoryItem(item) }
         }
+    }
+
+    private fun runStoreWrite(inBackground: Boolean, write: () -> Unit) {
+        if (inBackground) viewModelScope.launch(Dispatchers.IO) { write() } else write()
     }
 
     private fun clearCurrentProgressFromHistory() {
@@ -679,6 +707,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     override fun onCleared() {
         super.onCleared()
+        if (_uiState.value.hasActiveMedia) saveCurrentProgress(inBackground = false)
         stopPositionPolling()
         stopHudTimer()
         exoPlayer.release()
@@ -692,7 +721,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             _uiState.update { it.copy(isPlaying = isPlaying) }
-            if (isPlaying) startPositionPolling() else stopPositionPolling()
+            if (isPlaying) {
+                startPositionPolling()
+            } else {
+                stopPositionPolling()
+                // Paused, buffering or ended: keep the last position the user saw.
+                if (_uiState.value.hasActiveMedia) saveCurrentProgress()
+            }
         }
 
         override fun onPlaybackStateChanged(state: Int) {
@@ -754,5 +789,6 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
     private companion object {
         const val HUD_TIMEOUT_MS = 5_000L
+        const val PROGRESS_SAVE_INTERVAL_MS = 10_000L
     }
 }
