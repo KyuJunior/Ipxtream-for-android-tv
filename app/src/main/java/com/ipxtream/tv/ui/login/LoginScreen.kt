@@ -224,13 +224,18 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.graphicsLayer { alpha = logoAlpha; translationY = (1f - logoAlpha) * 15.dp.toPx() }
             ) {
-                Text(
-                    text       = "IPXtream",
-                    fontSize   = 38.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = (-1).sp,
-                    color      = androidx.compose.ui.graphics.Color.White
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_brand_mark),
+                    contentDescription = null,
+                    modifier = Modifier.width(76.dp)
                 )
+                Spacer(Modifier.height(18.dp))
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(R.drawable.ic_brand_wordmark),
+                    contentDescription = "IPXtream",
+                    modifier = Modifier.height(30.dp)
+                )
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text  = "TV",
                     fontSize = 14.sp,

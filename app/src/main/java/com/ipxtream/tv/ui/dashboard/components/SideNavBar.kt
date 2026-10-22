@@ -2,6 +2,8 @@ package com.ipxtream.tv.ui.dashboard.components
 
 import com.ipxtream.tv.ui.theme.directionalKeys
 import com.ipxtream.tv.R
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.res.stringResource
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -86,7 +88,6 @@ import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
-import com.ipxtream.tv.ui.theme.FocusPressed
 
 /**
  * Data representation of a section item in the side navigation drawer.
@@ -177,12 +178,10 @@ fun SideNavBar(
                         modifier = Modifier.padding(start = 6.dp)
                     ) {
                         BrandGlyph(size = 28.dp)
-                        Text(
-                            text       = "IPXtream",
-                            style      = IpxTypography.TitleLarge,
-                            color      = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize   = 19.sp
+                        Image(
+                            painter = painterResource(R.drawable.ic_brand_wordmark),
+                            contentDescription = "IPXtream",
+                            modifier = Modifier.height(15.dp)
                         )
                     }
                 } else {
@@ -329,21 +328,12 @@ private fun NavItem(
     }
 }
 
-/** Monochrome app mark: white rounded square with a black play glyph. */
+/** The IPXtream mark (Ember X + Halo play triangle), [size] wide. */
 @Composable
 private fun BrandGlyph(size: androidx.compose.ui.unit.Dp) {
-    Box(
-        modifier = Modifier
-            .size(size)
-            .clip(RoundedCornerShape(size * 0.28f))
-            .background(Brush.verticalGradient(listOf(ChipFocused, FocusPressed))),
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.PlayArrow,
-            contentDescription = null,
-            tint = TextOnFocus,
-            modifier = Modifier.size(size * 0.62f)
-        )
-    }
+    Image(
+        painter = painterResource(R.drawable.ic_brand_mark),
+        contentDescription = null,
+        modifier = Modifier.width(size)
+    )
 }
