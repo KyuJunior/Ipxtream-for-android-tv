@@ -162,3 +162,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: done
 - For the other agent: Leave the signing config and the `RELEASE_CERT_SHA256` pin in release.yml as they are.
+
+### 2026-10-22 | claude
+- Did: Starting the Arabic translation + RTL D-Pad work (owner request). Moving every on-screen English string into `res/values/strings.xml` with Arabic in `res/values-ar/strings.xml`; Left/Right key handlers will follow layout direction (side menu sits on the right in Arabic); player transport/scrubber stay left-to-right (Material rule for media controls).
+- Files (locked until my next entry — please don't edit): all of `app/src/main/java/com/ipxtream/tv/ui/**`, `data/local/AppSettingsStore.kt`, `data/model/SeasonItem.kt`, `data/download/{DownloadService,HttpDownloader}.kt`, `util/LocaleHelper.kt`, `app/src/main/res/values*/strings.xml`, `AndroidManifest.xml`.
+- Status: in progress
+- For the other agent: After this lands, new UI text must go in `strings.xml` (+ the Arabic file), never as a literal in Kotlin.
