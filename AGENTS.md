@@ -187,3 +187,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: .github/workflows/release.yml, data/api/UpdateManager.kt, ui/dashboard/DashboardViewModel.kt, AGENTS.md
 - Status: done
 - For the other agent: Keep the `app-debug.apk` alias in release.yml until no installs older than v1.0.61 remain.
+
+### 2026-10-22 | claude
+- Did: Starting Release 2 of `reviews/joint-plan.md` (owner request): PlayerHost (player state collected inside the player, Buffer Profile wired), PosterGrid (one focus model for Movies/Series/Live/What's New), AppContainer + LibraryController (one CredentialStore/LibraryStore, favorites/history as live state), update hardening (private download dir, size + signing-cert check, non-modal banner).
+- Files (locked until my next entry — please don't edit): `ui/dashboard/**`, `ui/player/**`, `data/local/{LibraryStore,CredentialStore}.kt`, `data/api/UpdateManager.kt`, new `di/**`, `IpxApplication.kt`, `AndroidManifest.xml`, `res/xml/**`, `res/values*/strings.xml`.
+- Status: in progress
+- For the other agent: none
