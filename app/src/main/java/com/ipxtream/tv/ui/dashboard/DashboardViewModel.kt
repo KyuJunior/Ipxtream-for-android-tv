@@ -524,8 +524,8 @@ class DashboardViewModel(
 
     fun downloadAndInstallUpdate() {
         val release = _uiState.value.updateRelease ?: return
-        val targetApk = if (com.ipxtream.tv.BuildConfig.DEBUG) "app-debug.apk" else "app-release.apk"
-        val apkAsset = release.assets.firstOrNull { it.name.equals(targetApk, ignoreCase = true) }
+        // Every install (debug or release) updates to the release APK; both share the signing key.
+        val apkAsset = release.assets.firstOrNull { it.name.equals("app-release.apk", ignoreCase = true) }
             ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
             ?: return
 

@@ -48,11 +48,6 @@ class UpdateManager(private val context: Context) {
                         if (isNewerVersion(currentVersion, tagName)) {
                             val assets = listOf(
                                 com.ipxtream.tv.data.model.GitHubAsset(
-                                    name = "app-debug.apk",
-                                    downloadUrl = "https://github.com/KyuJunior/Ipxtream-for-android-tv/releases/download/$tagName/app-debug.apk",
-                                    size = 0L
-                                ),
-                                com.ipxtream.tv.data.model.GitHubAsset(
                                     name = "app-release.apk",
                                     downloadUrl = "https://github.com/KyuJunior/Ipxtream-for-android-tv/releases/download/$tagName/app-release.apk",
                                     size = 0L
@@ -109,7 +104,10 @@ class UpdateManager(private val context: Context) {
         val request = Request.Builder().url(downloadUrl).build()
         try {
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return@withContext false
+                if (!response.isSuccessful) {
+                    Log.e(tag, "Update download failed: HTTP ${response.code} for $downloadUrl")
+                    return@withContext false
+                }
                 val body = response.body ?: return@withContext false
                 val totalBytes = body.contentLength()
                 

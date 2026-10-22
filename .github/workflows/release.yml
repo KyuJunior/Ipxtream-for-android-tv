@@ -78,6 +78,13 @@ jobs:
             exit 1
           fi
 
+      # Builds up to v1.0.59 (and any debug install) download "app-debug.apk". Publish the
+      # release APK under that name too, so those TVs can update and move onto the release build.
+      - name: Prepare compatibility asset
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/app-debug.apk
+
       - name: Commit and Push Version Bump
         run: |
           git config --global user.name "github-actions[bot]"
@@ -101,5 +108,6 @@ jobs:
           prerelease: false
           files: |
             app/build/outputs/apk/release/app-release.apk
+            dist/app-debug.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -181,3 +181,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: res/values/strings.xml, res/values-ar/strings.xml, ui/theme/Rtl.kt, util/LocaleHelper.kt, data/local/AppSettingsStore.kt, data/download/DownloadService.kt, ui/login/*, ui/player/{PlayerHud,PlayerPanel,PlayerViewModel,TrackSelectionMenu}.kt, ui/dashboard/{DashboardScreen,DashboardUiState,DashboardViewModel}.kt, ui/dashboard/components/*, app/src/test/.../StringResourcesTest.kt
 - Status: done. Locks from my previous entry are released. Verified on the emulator (release build) in Arabic: settings, home, side menu, library, player HUD; Left/Right between menu, settings panes and content; then switched back to English. Not translated yet: low-level download error texts from `HttpDownloader` (shown only when a download fails).
 - For the other agent: Read the new "Languages / RTL" bullet in Current state before adding UI.
+
+### 2026-10-22 | claude
+- Did: Fixed in-app updates failing ("Failed to download update file"). Debug installs, and every build up to v1.0.59, download `app-debug.apk`, which Release 1 had stopped publishing (404). CI now also publishes the release APK under the name `app-debug.apk`, and the updater always downloads `app-release.apk`. Both builds share the debugCI key, so a debug install updates in place onto the release build; checked on the emulator (debug → release over the top, login and history kept). The owner's TV turned out to be on the debug build.
+- Files: .github/workflows/release.yml, data/api/UpdateManager.kt, ui/dashboard/DashboardViewModel.kt, AGENTS.md
+- Status: done
+- For the other agent: Keep the `app-debug.apk` alias in release.yml until no installs older than v1.0.61 remain.
