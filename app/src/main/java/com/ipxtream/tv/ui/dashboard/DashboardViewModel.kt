@@ -356,8 +356,9 @@ class DashboardViewModel(
             while (true) {
                 val day = async { matchRepository.matchesFor(offset, force = refresh) }
                 val channels = repository.getLiveStreams().getOrNull().orEmpty()
+                val categories = repository.getLiveCategories().getOrNull().orEmpty()
                 val result = day.await()
-                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels) }
+                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, categories) }
                 _uiState.update { it.copy(
                     matches             = listings,
                     isLoadingMatches    = false,
@@ -378,9 +379,16 @@ class DashboardViewModel(
         }
     }
 
-    private fun buildMatchListings(matches: List<Match>, channels: List<StreamItem>): List<MatchListing> {
+    private fun buildMatchListings(
+        matches:    List<Match>,
+        channels:   List<StreamItem>,
+        categories: List<com.ipxtream.tv.data.model.Category>
+    ): List<MatchListing> {
+        // Suggestions come only from the provider's sports categories (owner request: no "beIN DRAMA").
+        // The picker still offers every channel, and a remembered pick can be any channel.
         val index = channelIndex.takeIf { channelIndexSource === channels }
-            ?: ChannelMatcher.ChannelIndex(channels).also { channelIndex = it; channelIndexSource = channels }
+            ?: ChannelMatcher.ChannelIndex(ChannelMatcher.sportsChannels(channels, categories))
+                .also { channelIndex = it; channelIndexSource = channels }
         val regions = ChannelMatcher.preferredRegions(
             arabicApp  = _uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC,
             timeZoneId = java.util.TimeZone.getDefault().id

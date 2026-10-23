@@ -113,6 +113,12 @@ class MatchesTest {
         assertEquals("tr", ChannelMatcher.normalize("ⒶⓂ TR ★ BEIN SPORTS 1 4K").region)
         assertEquals(1, ChannelMatcher.entry(live(1, "ⒶⓂ BeIN SPORTS 4K 1 (SS)")).number)
         assertNull("beIN DRAMA is not a sports channel", ChannelMatcher.entry(live(2, "ⒶⓂ AR_beIN_DRAMA_1_FHD")).family)
+        assertNull("beIN's documentary channels don't count", ChannelMatcher.entry(live(3, "ⒶⓂ AR_BEIN_Animal_Planet_FHD")).family)
+        assertNull(ChannelMatcher.entry(live(4, "ⒶⓂ Bein  Movies-1")).family)
+        ChannelMatcher.entry(live(5, "ⒶⓂ BeIN SPORTS FHD 1 (SS)")).let {
+            assertEquals("bein", it.family)
+            assertEquals(1, it.number)
+        }
     }
 
     @Test fun providerNamesSuggestArabicBeinSportsFirst() {
@@ -133,6 +139,25 @@ class MatchesTest {
         val best = ChannelMatcher.candidates(match("Everton", "Fulham"), channels, rights.familiesFor("eng.1"), regions)
         assertEquals(41, best.first().streamId)
         assertEquals(ChannelMatcher.ENGLISH_REGIONS, ChannelMatcher.preferredRegions(false, "Europe/London"))
+    }
+
+    @Test fun recognisesSportsCategories() {
+        listOf("AR| BEIN SPORTS", "SPORTS 4K", "ⒶⓂ TR ★ SPORT", "رياضة", "|AR| SSC", "LIVE EVENTS", "Football PPV")
+            .forEach { assertTrue(it, ChannelMatcher.isSportsCategory(it)) }
+        listOf("AR| BEIN DRAMA", "AR| MOVIES", "KIDS", "AR| NEWS", "beIN Entertainment")
+            .forEach { assertTrue(it, !ChannelMatcher.isSportsCategory(it)) }
+    }
+
+    @Test fun suggestsOnlyFromSportsCategories() {
+        fun ch(id: Int, name: String, cat: String) = live(id, name).copy(categoryId = cat)
+        val channels = listOf(ch(50, "ⒶⓂ AR_beIN_SPORTS_1_FHD", "s"), ch(51, "ⒶⓂ AR_beIN_1_FHD", "d"))
+        val cats = listOf(
+            com.ipxtream.tv.data.model.Category("s", "AR| BEIN SPORTS"),
+            com.ipxtream.tv.data.model.Category("d", "AR| BEIN DRAMA")
+        )
+        assertEquals(listOf(50), ChannelMatcher.sportsChannels(channels, cats).map { it.streamId })
+        assertEquals("no sports category: keep everything", 2,
+            ChannelMatcher.sportsChannels(channels, listOf(cats[1])).size)
     }
 
     @Test fun rightsTableCoversDefaultCompetitions() {

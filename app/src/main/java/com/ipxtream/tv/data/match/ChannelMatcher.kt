@@ -75,7 +75,11 @@ object ChannelMatcher {
         "drama", "movies", "movie", "series", "cinema", "film", "films", "box", "office", "junior", "jeem", "baraem",
         "gourmet", "fatafeat", "kids", "documentary", "docs", "doc", "music", "entertainment", "comedy"
     )
-    private val SPORT_WORDS = setOf("sport", "sports", "رياضة", "رياضية", "سبورت")
+    private val SPORT_WORDS = setOf(
+        "sport", "sports", "spor", "رياضة", "رياضية", "سبورت", "football", "foot", "futbol", "laliga", "liga"
+    )
+    /** Broadcasters that also run movie/kids/food channels: only their channels named "sport…" count. */
+    private val MIXED_FAMILIES = setOf("bein", "shahid", "canal+", "movistar", "viaplay", "amazon prime", "nbc", "cbs")
     private val PENALTY = setOf("news", "backup", "test", "replay", "radio", "fm", "24")
     private val VERSUS = setOf("vs", "v", "x", "ضد")
     private val PREFIX = Regex("""^[^\p{L}\p{N}]*([a-z]{2,4})\s*(?:[|:\]]|\s-\s)\s*""")
@@ -83,6 +87,31 @@ object ChannelMatcher {
     private val NUMBER = Regex("""^\d{1,2}$""")
     private val FAMILY_WORDS: Set<String> by lazy { FAMILIES.values.flatten().map { it.substringBefore(' ') }.toSet() }
     private val TEAM_FILLER =setOf("fc", "cf", "afc", "sc", "ac", "club", "cd", "ud", "sd", "rc", "rcd")
+
+    /** Words in a category name that mark it as sports (plus any broadcaster family spelling). */
+    private val SPORTS_CATEGORY_WORDS = SPORT_WORDS + setOf(
+        "football", "soccer", "كرة", "القدم", "مباريات", "league", "liga", "premier", "champions",
+        "events", "event", "ppv", "match", "matches", "eurosport"
+    )
+
+    /** True for a live category that holds sports channels ("AR| BEIN SPORTS", "SPORTS 4K", "رياضة"). */
+    fun isSportsCategory(name: String): Boolean {
+        val words = normalize(name).text.split(' ').toSet()
+        if (words.any { it in ENTERTAINMENT }) return false
+        val padded = " ${words.joinToString(" ")} "
+        return words.any { it in SPORTS_CATEGORY_WORDS } ||
+            FAMILIES.values.flatten().any { padded.contains(" $it ") }
+    }
+
+    /**
+     * The channels worth matching: those in the provider's sports categories. When a provider has
+     * no recognisable sports category, every channel (the entertainment filter still applies).
+     */
+    fun sportsChannels(channels: List<StreamItem>, categories: List<com.ipxtream.tv.data.model.Category>): List<StreamItem> {
+        val ids = categories.filter { isSportsCategory(it.categoryName) }.map { it.categoryId }.toSet()
+        if (ids.isEmpty()) return channels
+        return channels.filter { it.categoryId in ids }.ifEmpty { channels }
+    }
 
     data class Normalized(val text: String, val region: String?, val quality: Int)
 
@@ -164,7 +193,9 @@ object ChannelMatcher {
             region  = n.region,
             quality = n.quality,
             // beIN DRAMA / MOVIES / SERIES share the brand but never show football.
-            family  = family.takeIf { words.none { it in ENTERTAINMENT } },
+            family  = family.takeIf {
+                words.none { w -> w in ENTERTAINMENT } && (it !in MIXED_FAMILIES || words.any { w -> w in SPORT_WORDS })
+            },
             sport   = words.any { it in SPORT_WORDS },
             number  = number,
             penalty = words.any { it in PENALTY },

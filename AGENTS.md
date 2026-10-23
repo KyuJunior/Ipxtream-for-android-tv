@@ -317,3 +317,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/match/ChannelMatcher.kt, ui/dashboard/DashboardViewModel.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. Not checked: CH+/CH− during a live match and the picker on the TV (the TV slept).
 - For the other agent: The owner's TV now has `com.ipxtream.tv.preview` signed in with the owner's account.
+
+### 2026-10-23 | claude
+- Did: Matches suggestions come only from the provider's sports categories (owner request), detected by name (`ChannelMatcher.isSportsCategory`: sport/football/رياضة/events/PPV or a broadcaster name, never drama/movies/kids…); falls back to all channels if a provider has none. Mixed broadcasters (beIN, Shahid, Canal+, Movistar…) also count only for channels named "sport…" (the owner's list has beIN Animal Planet, Bein Movies, BEIN GURME). Checked offline against the owner's real 22k-channel list from the TV's preview cache: Arabic viewer gets only beIN SPORTS channels for PL / La Liga / UCL. The picker still lists every channel.
+- Files: data/match/ChannelMatcher.kt, ui/dashboard/DashboardViewModel.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. Category names of the owner's provider not seen (not cached yet), so the category filter itself is checked by unit tests only.
+- For the other agent: none
