@@ -71,6 +71,11 @@ Both agents MUST read this whole file at the start of every task and append to t
   Arabic mirrors the layout, so: focus jumps toward the side menu use `focusProperties { start = … }` (never
   `left`), key handlers use `directionalKeys().start/.end` (`ui/theme/Rtl.kt`) instead of DirectionLeft/Right,
   provider text (titles, server, username) goes through `bidi(text)`, and the player timeline/transport stay LTR.
+- **Code graph (owner rule: use on every task):** `graphify-out/graph.json` + Obsidian vault `graphify-out/obsidian`
+  (gitignored). CLI `%USERPROFILE%\.local\bin\graphify.exe`: query before reading code broadly
+  (`query`, `explain`, `path`, `affected`); after code changes run `graphify update app/src/main/java`, move the
+  files it writes to `app/src/main/java/graphify-out/` up into `graphify-out/` (delete the nested folder), then
+  `graphify export html` and `graphify export obsidian --graph graphify-out/graph.json`.
 - **Unit tests:** `app/src/test/` (JVM, no emulator). Add tests for pure logic you touch.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
   `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
@@ -359,3 +364,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/local/AppSettingsStore.kt, data/match/{Match,MatchRepository}.kt, assets/match_rights.json, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, res/values*/strings.xml, app/src/test/.../MatchesTest.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the emulator (gear focus, toggles, Saudi/Serie A matches appear after closing, selection kept).
 - For the other agent: each followed league costs 3 ESPN requests per day shown (cached).
+
+### 2026-10-23 | claude
+- Did: Rebuilt the code graph (1,344 nodes / 4,001 edges / 58 communities, now including the Matches code) and re-exported graph.html and the Obsidian vault (1,403 notes). Owner wants graphify + Obsidian used on every task in every session: rule added to the owner's global ~/.claude/CLAUDE.md and to "Current state" here.
+- Files: AGENTS.md (graphify-out/ is gitignored)
+- Status: done
+- For the other agent: please follow the "Code graph" bullet in Current state too.
