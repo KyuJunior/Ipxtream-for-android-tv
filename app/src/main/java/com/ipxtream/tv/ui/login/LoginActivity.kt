@@ -12,7 +12,9 @@ import androidx.lifecycle.lifecycleScope
 import com.ipxtream.tv.data.local.CredentialStore
 import com.ipxtream.tv.ui.dashboard.DashboardActivity
 import com.ipxtream.tv.ui.theme.IpxTvTheme
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 /**
@@ -59,13 +61,20 @@ class LoginActivity : ComponentActivity() {
 
         val isAddAccountMode = intent.getBooleanExtra(EXTRA_ADD_ACCOUNT, false)
 
+        // The brand intro plays only on a launch from the TV home screen, not after logout or
+        // when adding an account. Auto-login runs underneath it; navigation waits for it to end.
+        val showIntro = savedInstanceState == null && !isAddAccountMode &&
+            intent.action == Intent.ACTION_MAIN
+        val introDone = MutableStateFlow(!showIntro)
+
         // ── Observe success → navigate to Dashboard ───────────────────────────
         lifecycleScope.launch {
-            viewModel.uiState.collectLatest { state ->
-                if (state is LoginUiState.Success) {
-                    openDashboard(state)
+            combine(viewModel.uiState, introDone) { state, done -> state.takeIf { done } }
+                .collectLatest { state ->
+                    if (state is LoginUiState.Success) {
+                        openDashboard(state)
+                    }
                 }
-            }
         }
 
         // ── Try auto-login from saved credentials ─────────────────────────────
@@ -81,14 +90,22 @@ class LoginActivity : ComponentActivity() {
                 // Pre-fill fields with saved credentials if available (not in add account mode)
                 val saved = if (isAddAccountMode) null else credentialStore.loadCredentials()
 
-                LoginScreen(
-                    uiState       = uiState,
-                    savedServer   = saved?.server   ?: "",
-                    savedUsername = saved?.username ?: "",
-                    onLogin       = { server, username, password ->
-                        viewModel.login(server, username, password)
-                    }
-                )
+                val introFinished by introDone.collectAsStateWithLifecycle()
+
+                // The form composes after the intro so its field doesn't take focus (and open the
+                // keyboard) underneath it.
+                if (introFinished) {
+                    LoginScreen(
+                        uiState       = uiState,
+                        savedServer   = saved?.server   ?: "",
+                        savedUsername = saved?.username ?: "",
+                        onLogin       = { server, username, password ->
+                            viewModel.login(server, username, password)
+                        }
+                    )
+                } else {
+                    com.ipxtream.tv.ui.intro.BrandIntro(onFinished = { introDone.value = true })
+                }
             }
         }
     }

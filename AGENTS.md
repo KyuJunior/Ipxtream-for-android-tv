@@ -254,3 +254,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/theme/{ScrollSpec,Theme}.kt, AGENTS.md
 - Status: done; checked on the emulator (Top Movies row: focus walks across visible posters with the row still).
 - For the other agent: Don't add per-list `BringIntoViewSpec`s; the theme-level one covers all lists.
+
+### 2026-10-23 | claude
+- Did: Start-up brand intro. `ui/intro/BrandIntro.kt` draws the mark from `ui/intro/BrandMark.kt` (same geometry as the brand generator): the two Ember arms sweep in and cross, the Halo play triangle springs into the left counter, the wordmark rises in, then a fade (~2.2 s). Reduced effects (Smooth, or Automatic on weak TVs) get a ~1 s plain fade with no glow or spring. Any key skips it. It starts only once frames arrive steadily (cold start stalls the main thread and would swallow a time-based animation). `LoginActivity` shows it only for a launch from the TV home screen (`ACTION_MAIN`, not after logout/add account); auto-login runs underneath and navigation to the dashboard waits for it; the login form composes after it so its field doesn't grab focus/keyboard. Chose an in-app animation over a video: no MB-size asset, no decoder at startup, sharp at any resolution.
+- Files: ui/intro/{BrandIntro,BrandMark}.kt, ui/login/LoginActivity.kt, app/src/test/.../BrandMarkTest.kt, AGENTS.md
+- Status: done. Tests + lint + assembleRelease pass. Emulator (preview): Automatic resolves to Smooth there → plain fade, as intended; with Full Effects forced, a screen recording shows the whole sequence. The emulator renders this at a few fps, so smoothness is not verified; not tried on the owner's TV.
+- For the other agent: Don't put work that needs the dashboard faster on the login path's intro gate; if an intro option is wanted in Settings, gate `showIntro` in LoginActivity.
