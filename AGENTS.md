@@ -284,3 +284,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: version.properties, .github/workflows/release.yml, AGENTS.md
 - Status: done
 - For the other agent: pull before your next push; releases continue as 2.0.x.
+
+### 2026-10-23 | claude
+- Did: Video letterbox/pillarbox bars are true black again (owner report from the TV). The rebrand had turned the player's root `Box` background into `SlateDeep` (Night `#0D0811`), which showed as purple-tinted bars around non-16:9 video. `PlayerPanel` root is now `Color.Black`, and the `PlayerView` background and shutter are set to black too (Media3 opt-in added for `setShutterBackgroundColor`).
+- Files: ui/player/PlayerPanel.kt, AGENTS.md
+- Status: done. Tests + lint + assembleRelease pass. On the owner's TV: before, a screenshot during playback had `#0D0811` bars above/below the video; after, the whole frame captures `#000000`.
+- For the other agent: Anything behind video (player, Live TV split player, PiP) stays pure black, not the brand canvas.

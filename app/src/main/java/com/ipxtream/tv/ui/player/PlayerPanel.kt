@@ -65,7 +65,6 @@ import coil.compose.AsyncImage
 import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentGreen
 import com.ipxtream.tv.ui.theme.IpxTypography
-import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlateGlass
 import com.ipxtream.tv.ui.theme.TextSecondary
 import androidx.compose.foundation.border
@@ -134,6 +133,7 @@ import com.ipxtream.tv.ui.theme.SurfaceElevated2
  * @param onStop      Called when the user closes the panel (BACK when HUD hidden,
  *                    or Close button press).
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun PlayerPanel(
@@ -166,6 +166,10 @@ fun PlayerPanel(
             isFocusable             = false
             isFocusableInTouchMode  = false
             descendantFocusability  = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            // Letterbox/pillarbox bars and the pre-first-frame shutter are true black, not the
+            // brand canvas: video is mastered against black, and a tinted bar shows on TVs.
+            setBackgroundColor(android.graphics.Color.BLACK)
+            setShutterBackgroundColor(android.graphics.Color.BLACK)
         }
     }.apply {
         resizeMode = when (appSettings.defaultAspectRatio) {
@@ -287,7 +291,7 @@ fun PlayerPanel(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SlateDeep)
+            .background(Color.Black)   // video letterbox stays true black (see PlayerView above)
             .focusRequester(focusRequester)
             .onFocusChanged { isRootFocused = it.isFocused }
             .focusProperties {
