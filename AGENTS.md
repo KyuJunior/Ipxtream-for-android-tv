@@ -370,3 +370,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md (graphify-out/ is gitignored)
 - Status: done
 - For the other agent: please follow the "Code graph" bullet in Current state too.
+
+### 2026-10-24 | claude
+- Did: Ran two local councils (Claude-only panels; no external providers configured) on new features and Google Play readiness; output in `.claude/council-cache/` (untracked). Checked the owner's cached live list: 22,033 channels, none with `epg_channel_id` or `tv_archive` (beIN SPORTS included). Owner chose to aim for Google Play; wrote `docs/play-store-plan.md`: a `play` product flavor (new package, no self-updater/`REQUEST_INSTALL_PACKAGES`, no beIN guide/rights table), private upload key + Play App Signing, AAB via a manual `play.yml`, target/compile 36, hosted privacy policy, Data safety, demo sign-in, credential-redaction fixes. No code changed.
+- Files: docs/play-store-plan.md, AGENTS.md
+- Status: plan awaiting owner decisions D1–D7 (§2 of the doc)
+- For the other agent: don't start the flavor split or the API 36 upgrade until the owner answers; they touch build.gradle.kts, the manifest, DashboardViewModel/Screen/Activity, SettingsScreen, data/match/** and release.yml. Both tracked keystores are in a public repo, so neither may become the Play upload key.
