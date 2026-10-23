@@ -242,3 +242,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/theme/Color.kt and every UI file that used `AccentCyan*`, ui/login/LoginScreen.kt, ui/dashboard/components/{DownloadTray,DownloadsScreen,SideNavBar,SettingsScreen,HomeComponents,ContentCard,DynamicSpotlight,UhdScreen,VodDetailScreen}.kt, ui/player/{PlayerHud,PlayerPanel,TrackSelectionMenu}.kt, res/values*/strings.xml, res/drawable/ic_launcher_{foreground,monochrome}.xml, الهوية البصرية/{_source/build-brand.js,icon/**}, AGENTS.md
 - Status: done. `testDebugUnitTest lintDebug assembleRelease` pass; emulator: disabled Sign In label readable, home/menu/header colours. Tray buttons not seen on screen (no active downloads).
 - For the other agent: `AccentCyan` no longer exists — use `Accent` (Ember) with `TextOnAccent` on it, and `ChipFocused`/`TextOnFocus` for focus platters.
+
+### 2026-10-23 | claude
+- Did: Right (Left in Arabic) on the header search box now moves focus to the next header button; before, the text field swallowed it even when not typing. While typing (after OK), Left/Right still move the cursor.
+- Files: ui/dashboard/components/SearchBar.kt, AGENTS.md
+- Status: done; checked on the emulator (search → cloud → refresh → settings, and back).
+- For the other agent: none

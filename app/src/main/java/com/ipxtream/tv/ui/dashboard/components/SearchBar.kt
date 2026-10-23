@@ -132,6 +132,15 @@ fun SearchBar(
                                 true
                             } else false
                         }
+                        // The text field keeps horizontal keys for its cursor even when read-only,
+                        // so focus never reached the header buttons beside it. Hand it on unless typing.
+                        keys.end -> {
+                            if (editing) false
+                            else {
+                                runCatching { focusManager.moveFocus(FocusDirection.Next) }
+                                true
+                            }
+                        }
                         else -> false
                     }
                 } else false
