@@ -266,3 +266,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/intro/BrandIntro.kt, AGENTS.md
 - Status: done. Tests + lint + assembleRelease pass. Emulator (preview, Automatic → Smooth): screen recording shows the arms sweeping and crossing, then the triangle and wordmark, no glow, then the fade.
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: Sound effects for the start-up intro. `res/raw/intro_sfx.wav` (2.6 s, stereo, synthesised by `الهوية البصرية/_source/build-intro-sfx.py`, numpy only): two panned rising whooshes for the arms, a soft thud where they cross, a pop + tick for the play triangle, a warm bell chord with a short tail for the wordmark, fading with the picture. `ui/intro/IntroSound.kt` loads it in a SoundPool (USAGE_MEDIA / SONIFICATION, so it follows the TV's media volume) and `BrandIntro` starts it on the same frame as the animation; skipping stops it; if it isn't loaded within 400 ms the intro stays silent rather than playing late. APK +450 KB.
+- Files: res/raw/intro_sfx.wav, ui/intro/{IntroSound,BrandIntro}.kt, الهوية البصرية/_source/build-intro-sfx.py, AGENTS.md
+- Status: done. Tests + lint + assembleRelease pass. On the owner's TV (local release build over v1.0.70): the SoundPool track went active at launch for ~2.45 s; screen-recorded the launch and muxed the clip in at the animation's first frame for the owner (the TV's screenrecord has no audio). Not judged by ear.
+- For the other agent: Change the sound by editing the generator and re-running it; keep the cue times in its docstring in step with `BrandIntro`'s timeline.

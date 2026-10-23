@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +37,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.ipxtream.tv.R
@@ -52,7 +54,8 @@ import kotlinx.coroutines.launch
  * Start-up intro built from the brand mark: the two Ember arms sweep in and cross, the Halo play
  * triangle springs into the left counter, then the wordmark rises in, and everything fades out.
  * About 2.2 s once frames run smoothly. With reduced effects the same sequence plays without the
- * glow (the only costly part: a full-size radial gradient redrawn every frame). Any key skips it.
+ * glow (the only costly part: a full-size radial gradient redrawn every frame). Sound effects
+ * ([IntroSound]) start on the same frame as the sequence. Any key skips it and stops the sound.
  *
  * Draw it on top of the first screen; [onFinished] is called once, after the fade-out.
  */
@@ -68,6 +71,9 @@ fun BrandIntro(onFinished: () -> Unit, modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val focus = remember { FocusRequester() }
     val finished = remember { booleanArrayOf(false) }
+    val context = LocalContext.current
+    val sound = remember { IntroSound(context) }
+    DisposableEffect(Unit) { onDispose { sound.release() } }
 
     fun finish() {
         if (finished[0]) return
@@ -81,6 +87,9 @@ fun BrandIntro(onFinished: () -> Unit, modifier: Modifier = Modifier) {
         // login), and a time-based animation would finish during that stall unseen. Start once
         // frames are actually arriving at a steady rate, or after 1.5 s at the latest.
         awaitSteadyFrames()
+        sound.awaitLoaded()
+        withFrameNanos { }
+        sound.play()
         coroutineScope {
             if (!reduced) launch { glow.animateTo(1f, tween(900, easing = IpxMotion.EaseOut)) }
             launch { armDown.animateTo(1f, tween(420, easing = IpxMotion.EaseApple)) }
@@ -105,6 +114,7 @@ fun BrandIntro(onFinished: () -> Unit, modifier: Modifier = Modifier) {
             .focusable()
             .onPreviewKeyEvent { e ->
                 if (e.type == KeyEventType.KeyDown && !finished[0]) {
+                    sound.stop()
                     scope.launch {
                         content.animateTo(0f, tween(180))
                         finish()
