@@ -44,10 +44,18 @@ jobs:
           current_code=$(grep -oP '^VERSION_CODE=\K[0-9]+' $props)
           echo "Current: $current_version ($current_code)"
 
-          # Increment patch version (e.g. 1.0.0 -> 1.0.1)
-          IFS='.' read -r major minor patch <<< "$current_version"
-          new_version="$major.$minor.$((patch + 1))"
-          new_code=$((current_code + 1))
+          # A push that edits version.properties itself sets the version on purpose
+          # (e.g. a major release): publish it as written. Otherwise bump the patch.
+          before="${{ github.event.before }}"
+          if [ -n "$before" ] && [ "$before" != "0000000000000000000000000000000000000000" ]              && git diff --name-only "$before" "${{ github.sha }}" | grep -qx "$props"; then
+            new_version="$current_version"
+            new_code="$current_code"
+            echo "Version set explicitly in this push"
+          else
+            IFS='.' read -r major minor patch <<< "$current_version"
+            new_version="$major.$minor.$((patch + 1))"
+            new_code=$((current_code + 1))
+          fi
           echo "New: $new_version ($new_code)"
 
           sed -i "s/^VERSION_NAME=.*/VERSION_NAME=$new_version/" $props
@@ -91,6 +99,10 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add version.properties
+          if git diff --cached --quiet; then
+            echo "Version was set in the pushed commit; nothing to bump"
+            exit 0
+          fi
           git commit -m "chore: bump version to ${{ steps.versioning.outputs.new_version }}"
           # main may have moved while we built; replay the bump on top of it.
           git pull --rebase origin main

@@ -18,7 +18,7 @@ Both agents MUST read this whole file at the start of every task and append to t
    - Commit messages start with `[claude]` or `[antigravity]`.
    - Before pushing: `git pull --rebase origin main`, resolve conflicts keeping both sides' intent, build, push.
 4. **Version number** (`VERSION_CODE` / `VERSION_NAME` in `/version.properties`, read by `app/build.gradle.kts`):
-   never edit it by hand. CI (`.github/workflows/release.yml`) bumps it and publishes a GitHub release after every push to `main` that touches code; the in-app updater
+   never edit it by hand (only the owner asks for a major/minor jump; a push that edits the file is published with exactly that version and code, so raise `VERSION_CODE` too). CI (`.github/workflows/release.yml`) bumps it and publishes a GitHub release after every push to `main` that touches code; the in-app updater
    offers that release. So after any push, `origin/main` gains a `chore: bump version to vX` bot commit —
    always `git pull --rebase origin main` before your next push. Pushes that only change `*.md` / `docs/**` /
    `reviews/**` / `.gitignore` don't trigger a release.
@@ -278,3 +278,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/DashboardScreen.kt, ui/dashboard/components/{PosterGrid,FocusMemory,UhdScreen,HomeComponents}.kt, app/src/test/.../PosterGridAnchorTest.kt, AGENTS.md
 - Status: done. Tests + lint + assembleRelease pass. Reproduced first on the emulator (preview build, a local mock with 120 movies/80 channels): Live TV last row → menu → Right → Down did nothing. After the fix, verified Live TV, Movies (incl. details open/close and a category switch), What's New, Home shelves, My Library, and Live TV in Arabic (menu on the right). Not checked: the 4K grid with real titles (the mock has none) and the owner's TV.
 - For the other agent: New poster/channel grids must use `PosterGrid`; new shelf rows on Home/Library should wrap cards in `FocusMemoryItem`. Never leave a shared `FocusRequester` on one fixed lazy item; it detaches when scrolled away. Known, not fixed: Down from a grid's bottom-left card can land in the side menu (geometric), the disabled "Previous" page button takes focus with almost no visible focus, and the Live split-view player keeps D-Pad focus until Back.
+
+### 2026-10-23 | claude
+- Did: Version 2.0.0 (owner request). `version.properties` set to 2.0.0 / code 74; CI now publishes a version as written when the pushed commit itself edits `version.properties`, and otherwise keeps bumping the patch (next routine push → 2.0.1).
+- Files: version.properties, .github/workflows/release.yml, AGENTS.md
+- Status: done
+- For the other agent: pull before your next push; releases continue as 2.0.x.
