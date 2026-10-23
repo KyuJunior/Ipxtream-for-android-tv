@@ -17,9 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -156,17 +153,15 @@ fun UhdScreen(
             }
     }
     val count = if (kind == UhdKind.MOVIES) visibleMovies.size else visibleSeries.size
-    val firstPosterFocus = remember { FocusRequester() }
-    // The page's "return focus here" requester follows the last poster opened, so closing
-    // its details or the player lands back on it instead of on the search field.
-    var lastOpenedKey by remember { mutableStateOf<String?>(null) }
-    fun posterFocus(key: String, index: Int): Modifier = when {
-        key == lastOpenedKey           -> Modifier.focusRequester(firstItemFocusRequester)
-        index == 0                     -> Modifier.focusRequester(firstPosterFocus)
-        else                           -> Modifier
-    }
-    // D-Pad Down from any control goes straight to the first poster.
-    val toGrid = Modifier.focusProperties { if (count > 0 && !isLoading) down = firstPosterFocus }
+    // The page's "return focus here" requester sits on the Movies chip until a poster has been
+    // focused, then on the grid's last focused poster (PosterGrid keeps it on a composed one),
+    // so the side menu, details and the player all come back to where the user was.
+    val gridFocus = remember { FocusRequester() }
+    var gridVisited by remember { mutableStateOf(false) }
+    val gridOwnsReturn = gridVisited && count > 0 && !isLoading
+    val gridRequester = if (gridOwnsReturn) firstItemFocusRequester else gridFocus
+    // D-Pad Down from any control goes straight to the grid.
+    val toGrid = Modifier.focusProperties { if (count > 0 && !isLoading) down = gridRequester }
     val total = if (kind == UhdKind.MOVIES) movies.size else series.size
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -206,7 +201,7 @@ fun UhdScreen(
                 selected = kind == UhdKind.MOVIES,
                 onClick  = { kindName = UhdKind.MOVIES.name },
                 modifier = Modifier
-                    .then(if (lastOpenedKey == null) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
+                    .then(if (!gridOwnsReturn) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     .focusProperties { start = sideNavFocusRequester }
                     .then(toGrid)
             )
@@ -256,44 +251,57 @@ fun UhdScreen(
                     scanning = scan.isRunning,
                     canScanLibrary = scan.unchecked > 0
                 )
-                else -> LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 180.dp),
-                    state = rememberLazyGridState(),
-                    contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 20.dp, bottom = 48.dp),
-                    verticalArrangement = Arrangement.spacedBy(28.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-                    // On TV, scrollable containers are themselves focusable; the grid must hand
-                    // focus to its posters instead of taking it (that left focus invisible).
-                    modifier = Modifier.fillMaxSize().focusProperties { canFocus = false }
-                ) {
-                    if (kind == UhdKind.MOVIES) {
-                        // Stable keys: the list updates while titles are being measured, and
-                        // index-based keys would recreate (and unfocus) the poster you're on.
-                        itemsIndexed(visibleMovies, key = { _, m -> "uhd_m_${m.streamId}" }) { i, m ->
-                            VodPosterCard(
-                                modifier = posterFocus("m${m.streamId}", i),
-                                stream = m,
-                                onClick = { lastOpenedKey = "m${m.streamId}"; onStreamSelected(m) },
-                                watchProgress = watchProgress(m.streamId.toString()),
-                                badge = uhdBadge(resolutions["m${m.streamId}"])
-                            )
-                        }
-                    } else {
-                        itemsIndexed(visibleSeries, key = { _, s -> "uhd_s_${s.seriesId}" }) { i, s ->
-                            SeriesPosterCard(
-                                modifier = posterFocus("s${s.seriesId}", i),
-                                series = s,
-                                onClick = { lastOpenedKey = "s${s.seriesId}"; onSeriesSelected(s) },
-                                watchProgress = watchProgress(s.seriesId.toString()),
-                                badge = uhdBadge(resolutions["s${s.seriesId}"])
-                            )
-                        }
-                    }
+                kind == UhdKind.MOVIES -> PosterGrid(
+                    items                   = visibleMovies,
+                    id                      = { "m${it.streamId}" },
+                    // Stable keys: the list updates while titles are being measured, and
+                    // index-based keys would recreate (and unfocus) the poster you're on.
+                    key                     = { _, m -> "uhd_m_${m.streamId}" },
+                    columns                 = UHD_COLUMNS,
+                    firstItemFocusRequester = gridRequester,
+                    sideNavFocusRequester   = sideNavFocusRequester,
+                    onItemFocused           = { gridVisited = true },
+                    contentPadding          = UHD_GRID_PADDING,
+                    spacingH                = 20.dp,
+                    spacingV                = 28.dp,
+                    modifier                = Modifier.fillMaxSize()
+                ) { m, mod, open ->
+                    VodPosterCard(
+                        modifier = mod,
+                        stream = m,
+                        onClick = { open(); onStreamSelected(m) },
+                        watchProgress = watchProgress(m.streamId.toString()),
+                        badge = uhdBadge(resolutions["m${m.streamId}"])
+                    )
+                }
+                else -> PosterGrid(
+                    items                   = visibleSeries,
+                    id                      = { "s${it.seriesId}" },
+                    key                     = { _, s -> "uhd_s_${s.seriesId}" },
+                    columns                 = UHD_COLUMNS,
+                    firstItemFocusRequester = gridRequester,
+                    sideNavFocusRequester   = sideNavFocusRequester,
+                    onItemFocused           = { gridVisited = true },
+                    contentPadding          = UHD_GRID_PADDING,
+                    spacingH                = 20.dp,
+                    spacingV                = 28.dp,
+                    modifier                = Modifier.fillMaxSize()
+                ) { s, mod, open ->
+                    SeriesPosterCard(
+                        modifier = mod,
+                        series = s,
+                        onClick = { open(); onSeriesSelected(s) },
+                        watchProgress = watchProgress(s.seriesId.toString()),
+                        badge = uhdBadge(resolutions["s${s.seriesId}"])
+                    )
                 }
             }
         }
     }
 }
+
+private val UHD_COLUMNS = GridCells.Adaptive(minSize = 180.dp)
+private val UHD_GRID_PADDING = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 20.dp, bottom = 48.dp)
 
 @Composable
 private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String, scanning: Boolean, canScanLibrary: Boolean) {

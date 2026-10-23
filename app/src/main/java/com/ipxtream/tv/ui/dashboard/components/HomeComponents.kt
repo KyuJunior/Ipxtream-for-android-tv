@@ -606,13 +606,15 @@ fun ContinueWatchingRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(horizontal = IpxSpacing.Gutter, vertical = 18.dp)
         ) {
-            itemsIndexed(items, key = { index, item -> "cw_${item.type}_${item.id}_$index" }, contentType = { _, _ -> "continue_watching" }) { _, item ->
-                ContinueWatchingCard(
-                    item = item,
-                    onStreamSelected = onStreamSelected,
-                    onSeriesSelected = onSeriesSelected,
-                    onEpisodePlay = onEpisodePlay
-                )
+            itemsIndexed(items, key = { index, item -> "cw_${item.type}_${item.id}_$index" }, contentType = { _, _ -> "continue_watching" }) { index, item ->
+                FocusMemoryItem("cw_${item.type}_${item.id}_$index") {
+                    ContinueWatchingCard(
+                        item = item,
+                        onStreamSelected = onStreamSelected,
+                        onSeriesSelected = onSeriesSelected,
+                        onEpisodePlay = onEpisodePlay
+                    )
+                }
             }
         }
     }
@@ -632,8 +634,10 @@ fun HomeHighlightsRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(horizontal = IpxSpacing.Gutter, vertical = 16.dp)
         ) {
-            itemsIndexed(items, key = { index, item -> "hl_${item.streamId}_$index" }, contentType = { _, _ -> "live_channel" }) { _, item ->
-                LiveChannelCard(stream = item, onClick = { onStreamSelected(item) }, showChannelNumber = showChannelNumber)
+            itemsIndexed(items, key = { index, item -> "hl_${item.streamId}_$index" }, contentType = { _, _ -> "live_channel" }) { index, item ->
+                FocusMemoryItem("hl_${item.streamId}_$index") {
+                    LiveChannelCard(stream = item, onClick = { onStreamSelected(item) }, showChannelNumber = showChannelNumber)
+                }
             }
         }
     }
@@ -653,13 +657,15 @@ fun HomeMoviesRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 18.dp, bottom = 4.dp)
         ) {
-            itemsIndexed(items, key = { index, item -> "hm_${item.streamId}_$index" }, contentType = { _, _ -> "vod_movie" }) { _, item ->
-                CaptionedPoster(title = item.name) {
-                    VodPosterCard(
-                        stream = item,
-                        onClick = { onStreamSelected(item) },
-                        watchProgress = watchProgress(item.streamId.toString())
-                    )
+            itemsIndexed(items, key = { index, item -> "hm_${item.streamId}_$index" }, contentType = { _, _ -> "vod_movie" }) { index, item ->
+                FocusMemoryItem("hm_${item.streamId}_$index") {
+                    CaptionedPoster(title = item.name) {
+                        VodPosterCard(
+                            stream = item,
+                            onClick = { onStreamSelected(item) },
+                            watchProgress = watchProgress(item.streamId.toString())
+                        )
+                    }
                 }
             }
         }
@@ -680,13 +686,15 @@ fun HomeSeriesRow(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
             contentPadding = PaddingValues(start = IpxSpacing.Gutter, end = IpxSpacing.Gutter, top = 18.dp, bottom = 4.dp)
         ) {
-            itemsIndexed(items, key = { index, item -> "hs_${item.seriesId}_$index" }, contentType = { _, _ -> "tv_series" }) { _, item ->
-                CaptionedPoster(title = item.name) {
-                    SeriesPosterCard(
-                        series = item,
-                        onClick = { onSeriesSelected(item) },
-                        watchProgress = watchProgress(item.seriesId.toString())
-                    )
+            itemsIndexed(items, key = { index, item -> "hs_${item.seriesId}_$index" }, contentType = { _, _ -> "tv_series" }) { index, item ->
+                FocusMemoryItem("hs_${item.seriesId}_$index") {
+                    CaptionedPoster(title = item.name) {
+                        SeriesPosterCard(
+                            series = item,
+                            onClick = { onSeriesSelected(item) },
+                            watchProgress = watchProgress(item.seriesId.toString())
+                        )
+                    }
                 }
             }
         }

@@ -249,6 +249,27 @@ fun DashboardScreen(
     val seriesCardFocusRequester = remember { FocusRequester() }
     val userProfileFocusRequester = remember { FocusRequester() }
     var isSideNavFocused by remember { mutableStateOf(false) }
+    // Live/Movies/Series: true while the user was last on a poster rather than a category chip,
+    // so Right from the side menu goes back to that poster instead of the chips.
+    var lastContentInGrid by remember { mutableStateOf(false) }
+    // Home and My Library: the last focused shelf card, for the same trip back from the menu.
+    val homeFocusMemory = remember { com.ipxtream.tv.ui.dashboard.components.FocusMemory() }
+    val libraryFocusMemory = remember { com.ipxtream.tv.ui.dashboard.components.FocusMemory() }
+    LaunchedEffect(uiState.activeSection) {
+        lastContentInGrid = false
+        homeFocusMemory.forget()
+        libraryFocusMemory.forget()
+    }
+    // Back to the page after details, the player or a dialog: the remembered shelf card on
+    // Home / My Library (the hero or update card may have scrolled away), else the page's target.
+    val restorePageFocus: () -> Unit = {
+        val restored = when (uiState.activeSection) {
+            ContentSection.HOME       -> homeFocusMemory.restore()
+            ContentSection.MY_LIBRARY -> libraryFocusMemory.restore()
+            else                      -> false
+        }
+        if (!restored) runCatching { firstItemFocusRequester.requestFocus() }
+    }
 
     // My Library's first card leaves composition when the list is scrolled; scroll back first.
     val libraryListState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -258,9 +279,11 @@ fun DashboardScreen(
     val focusContentForSection: () -> Unit = {
         val ok: Boolean = when (uiState.activeSection) {
             ContentSection.MY_LIBRARY -> {
-                focusScope.launch {
-                    libraryListState.scrollToItem(0)
-                    runCatching { firstItemFocusRequester.requestFocus() }
+                if (!libraryFocusMemory.restore()) {
+                    focusScope.launch {
+                        libraryListState.scrollToItem(0)
+                        runCatching { firstItemFocusRequester.requestFocus() }
+                    }
                 }
                 true
             }
@@ -268,14 +291,16 @@ fun DashboardScreen(
                 if (uiState.searchQuery.isNotBlank()) {
                     runCatching { searchFirstCardFocusRequester.requestFocus() }.isSuccess
                 } else {
-                    runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
+                    homeFocusMemory.restore() ||
+                        runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
                 }
             }
             ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES -> {
-                val catOk = runCatching { categoryRowFocusRequester.requestFocus() }.isSuccess
-                if (!catOk) {
-                    runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
-                } else true
+                val (first, second) =
+                    if (lastContentInGrid) firstItemFocusRequester to categoryRowFocusRequester
+                    else categoryRowFocusRequester to firstItemFocusRequester
+                runCatching { first.requestFocus() }.isSuccess ||
+                    runCatching { second.requestFocus() }.isSuccess
             }
             else -> {
                 runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
@@ -378,7 +403,7 @@ fun DashboardScreen(
         if (prevPlayerOpen && !showFullScreenPlayer && !isDetailsOpen) {
             // Wait out the player's 300 ms fade-out; it holds focus until it leaves composition.
             kotlinx.coroutines.delay(360)
-            runCatching { firstItemFocusRequester.requestFocus() }
+            restorePageFocus()
         }
         prevPlayerOpen = showFullScreenPlayer
     }
@@ -393,7 +418,7 @@ fun DashboardScreen(
             if (uiState.searchQuery.isNotBlank()) {
                 runCatching { searchFirstCardFocusRequester.requestFocus() }
             } else {
-                runCatching { firstItemFocusRequester.requestFocus() }
+                restorePageFocus()
             }
         }
         prevDetailsOpen = isDetailsOpen
@@ -407,7 +432,7 @@ fun DashboardScreen(
         } else if (hadUpdateDialog) {
             // Hand focus back to the page instead of letting it fall to the search field.
             hadUpdateDialog = false
-            runCatching { firstItemFocusRequester.requestFocus() }
+            restorePageFocus()
         }
     }
 
@@ -596,9 +621,14 @@ fun DashboardScreen(
                             )
                         } else {
                             // Normal Home Layout
+                            androidx.compose.runtime.CompositionLocalProvider(
+                                com.ipxtream.tv.ui.dashboard.components.LocalFocusMemory provides homeFocusMemory
+                            ) {
                             LazyColumn(
                                 state = homeListState,
-                                modifier = Modifier.fillMaxSize(),
+                                // The list itself must not take focus (TV scroll containers do):
+                                // the menu's fallback move would land on it with nothing lit.
+                                modifier = Modifier.fillMaxSize().focusProperties { canFocus = false },
                                 contentPadding = PaddingValues(bottom = 120.dp)
                             ) {
                                 if (hasHero) {
@@ -618,6 +648,7 @@ fun DashboardScreen(
                                             },
                                             onIndexChange = { heroIndex = it },
                                             height = heroHeight - 64.dp,
+                                            modifier = Modifier.onFocusChanged { if (it.hasFocus) homeFocusMemory.forget() },
                                             primaryModifier = Modifier
                                                 .focusRequester(liveTvCardFocusRequester)
                                                 .focusRequester(firstItemFocusRequester)
@@ -632,6 +663,7 @@ fun DashboardScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
+                                            .onFocusChanged { if (it.hasFocus) homeFocusMemory.forget() }
                                             .padding(horizontal = IpxSpacing.Gutter, vertical = 20.dp),
                                         horizontalArrangement = Arrangement.spacedBy(20.dp)
                                     ) {
@@ -723,6 +755,7 @@ fun DashboardScreen(
                                     }
                                 }
                             }
+                            }
                         }
                     }
                     ContentSection.WHATS_NEW -> {
@@ -785,7 +818,9 @@ fun DashboardScreen(
                             modifier = Modifier.fillMaxSize()
                         )
                     }
-                    ContentSection.MY_LIBRARY -> {
+                    ContentSection.MY_LIBRARY -> androidx.compose.runtime.CompositionLocalProvider(
+                        com.ipxtream.tv.ui.dashboard.components.LocalFocusMemory provides libraryFocusMemory
+                    ) {
                         LibrarySection(
                             uiState = uiState,
                             listState = libraryListState,
@@ -826,7 +861,9 @@ fun DashboardScreen(
                                 sideNavFocusRequester   = sideNavFocusRequester,
                                 gridFocusRequester      = firstItemFocusRequester,
                                 searchBarFocusRequester = searchBarFocusRequester,
-                                modifier                = Modifier.fillMaxWidth()
+                                modifier                = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged { if (it.hasFocus) lastContentInGrid = false }
                             )
                             Spacer(Modifier.height(8.dp))
                         }
@@ -848,7 +885,10 @@ fun DashboardScreen(
                                         firstItemFocusRequester   = firstItemFocusRequester,
                                         sideNavFocusRequester     = sideNavFocusRequester,
                                         categoryRowFocusRequester = categoryRowFocusRequester,
-                                        onItemFocused             = { focusedSeriesItem.value = it; focusedStreamItem.value = null },
+                                        onItemFocused             = {
+                                            focusedSeriesItem.value = it; focusedStreamItem.value = null
+                                            lastContentInGrid = true
+                                        },
                                         hasPrevPage               = uiState.hasPrevPage,
                                         hasNextPage               = uiState.hasNextPage,
                                         currentPage               = uiState.currentPage,
@@ -865,7 +905,10 @@ fun DashboardScreen(
                                         firstItemFocusRequester   = firstItemFocusRequester,
                                         sideNavFocusRequester     = sideNavFocusRequester,
                                         categoryRowFocusRequester = categoryRowFocusRequester,
-                                        onItemFocused             = { focusedStreamItem.value = it; focusedSeriesItem.value = null },
+                                        onItemFocused             = {
+                                            focusedStreamItem.value = it; focusedSeriesItem.value = null
+                                            lastContentInGrid = true
+                                        },
                                         hasPrevPage               = uiState.hasPrevPage,
                                         hasNextPage               = uiState.hasNextPage,
                                         currentPage               = uiState.currentPage,
@@ -1345,6 +1388,7 @@ private fun LibrarySection(
     onDownloadUpdate: () -> Unit,
     onRefresh: () -> Unit
 ) {
+    val focusMemory = com.ipxtream.tv.ui.dashboard.components.LocalFocusMemory.current
     androidx.compose.foundation.lazy.LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize().focusProperties { canFocus = false },
@@ -1364,6 +1408,7 @@ private fun LibrarySection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
+                    .onFocusChanged { if (it.isFocused) focusMemory?.forget() }
                     .focusRequester(firstItemFocusRequester)
                     .focusProperties {
                         up = searchBarFocusRequester
@@ -1440,8 +1485,10 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        itemsIndexed(uiState.historyList, key = { index, item -> "lib_hist_${item.type}_${item.id}_$index" }) { _, item ->
-                            LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
+                        itemsIndexed(uiState.historyList, key = { index, item -> "lib_hist_${item.type}_${item.id}_$index" }) { index, item ->
+                            com.ipxtream.tv.ui.dashboard.components.FocusMemoryItem("lib_hist_${item.type}_${item.id}_$index") {
+                                LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
+                            }
                         }
                     }
                 }
@@ -1455,8 +1502,10 @@ private fun LibrarySection(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
                     ) {
-                        itemsIndexed(uiState.favoritesList, key = { index, item -> "lib_fav_${item.type}_${item.id}_$index" }) { _, item ->
-                            LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
+                        itemsIndexed(uiState.favoritesList, key = { index, item -> "lib_fav_${item.type}_${item.id}_$index" }) { index, item ->
+                            com.ipxtream.tv.ui.dashboard.components.FocusMemoryItem("lib_fav_${item.type}_${item.id}_$index") {
+                                LibraryCard(item = item, onStreamSelected = onStreamSelected, onSeriesSelected = onSeriesSelected, onEpisodePlay = onEpisodePlay)
+                            }
                         }
                     }
                 }
