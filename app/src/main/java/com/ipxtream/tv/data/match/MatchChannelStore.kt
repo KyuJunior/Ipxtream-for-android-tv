@@ -14,10 +14,12 @@ class MatchChannelStore(context: Context, accountKey: String) {
         "ipxtream_match_channels_${accountKey.md5()}", Context.MODE_PRIVATE
     )
 
-    /** The saved channel for [match]: this match first, then its competition. */
-    fun channelFor(match: Match): Int? =
-        prefs.getInt(matchKey(match.id), -1).takeIf { it >= 0 }
-            ?: prefs.getInt(competitionKey(match.competition.slug), -1).takeIf { it >= 0 }
+    /** The channel the user picked for this very match. */
+    fun matchChannel(match: Match): Int? = prefs.getInt(matchKey(match.id), -1).takeIf { it >= 0 }
+
+    /** The channel the user picked for every match of [match]'s competition. */
+    fun competitionChannel(match: Match): Int? =
+        prefs.getInt(competitionKey(match.competition.slug), -1).takeIf { it >= 0 }
 
     fun remember(match: Match, streamId: Int, forCompetition: Boolean) {
         prefs.edit().apply {

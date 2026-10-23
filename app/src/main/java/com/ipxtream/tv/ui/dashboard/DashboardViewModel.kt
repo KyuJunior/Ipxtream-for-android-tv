@@ -332,6 +332,7 @@ class DashboardViewModel(
     private val matchRepository by lazy { MatchRepository(context) }
     private val matchChannelStore by lazy { MatchChannelStore(context, repository.accountKey) }
     private val matchRights by lazy { MatchRights.load(context) }
+    private val beinGuide by lazy { com.ipxtream.tv.data.match.BeinGuideSource(context) }
     private var channelIndex: ChannelMatcher.ChannelIndex? = null
     private var channelIndexSource: List<StreamItem>? = null
     private var matchesJob: Job? = null
@@ -355,10 +356,15 @@ class DashboardViewModel(
             var refresh = force
             while (true) {
                 val day = async { matchRepository.matchesFor(offset, force = refresh) }
+                val guide = async {
+                    val tz = java.util.TimeZone.getDefault()
+                    beinGuide.liveProgrammes(com.ipxtream.tv.data.match.MatchDays.localDay(System.currentTimeMillis(), offset, tz))
+                }
                 val channels = repository.getLiveStreams().getOrNull().orEmpty()
                 val categories = repository.getLiveCategories().getOrNull().orEmpty()
                 val result = day.await()
-                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, categories) }
+                val programmes = guide.await()
+                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, categories, programmes) }
                 _uiState.update { it.copy(
                     matches             = listings,
                     isLoadingMatches    = false,
@@ -382,7 +388,8 @@ class DashboardViewModel(
     private fun buildMatchListings(
         matches:    List<Match>,
         channels:   List<StreamItem>,
-        categories: List<com.ipxtream.tv.data.model.Category>
+        categories: List<com.ipxtream.tv.data.model.Category>,
+        programmes: List<com.ipxtream.tv.data.match.GuideProgramme>
     ): List<MatchListing> {
         // Suggestions come only from the provider's sports categories (owner request: no "beIN DRAMA").
         // The picker still offers every channel, and a remembered pick can be any channel.
@@ -394,13 +401,24 @@ class DashboardViewModel(
             timeZoneId = java.util.TimeZone.getDefault().id
         )
         val byId by lazy { channels.associateBy { it.streamId } }
+        val guideOf = com.ipxtream.tv.data.match.BeinGuide
         return matches.map { m ->
-            val guesses = ChannelMatcher.candidates(m, index, matchRights.familiesFor(m.competition.slug), regions)
-            val saved = matchChannelStore.channelFor(m)?.let { byId[it] }
+            // beIN's guide names the exact channel (beIN SPORTS 3); the matcher puts the provider's copy of it first.
+            val onGuide = guideOf.channelsFor(m, programmes)
+            val guesses = ChannelMatcher.candidates(
+                m, index, matchRights.familiesFor(m.competition.slug), regions, guideChannels = onGuide
+            )
+            val guideHit = onGuide.firstOrNull()?.takeIf {
+                guesses.firstOrNull()?.let { s -> guideOf.parseChannel(s.name) } in onGuide.mapNotNull(guideOf::parseChannel)
+            }
+            // A pick for this very match wins; a competition-wide pick only when the guide has nothing.
+            val saved = matchChannelStore.matchChannel(m)?.let { byId[it] }
+                ?: matchChannelStore.competitionChannel(m)?.takeIf { guideHit == null }?.let { byId[it] }
             MatchListing(
-                match      = m,
-                channels   = listOfNotNull(saved) + guesses.filter { it.streamId != saved?.streamId },
-                remembered = saved != null
+                match        = m,
+                channels     = listOfNotNull(saved) + guesses.filter { it.streamId != saved?.streamId },
+                remembered   = saved != null,
+                guideChannel = guideHit.takeIf { saved == null }
             )
         }
     }

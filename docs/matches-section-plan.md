@@ -76,6 +76,14 @@ network. A pure function `ChannelMatcher` (JVM unit-tested, like `PosterGridAnch
 4. Return the **top 3–5 candidates**, not one guess. The exact channel number (beIN 1 vs beIN 3) is not
    in the API; only layer 2c or 2d can know it.
 
+### 2b′. beIN's own MENA guide (built 2026-10-23)
+The owner's provider has no EPG for any beIN channel, so the exact channel (beIN SPORTS 1 vs 3) comes from
+beIN's public guide: one JSON file per channel per day at
+`storagebeincom-b4dvftgkaebcayar.z01.azurefd.net/epg/<yyyy-MM-dd>/<code>.json` (the files behind
+bein.com/tv-guide; no key). `BeinGuideSource` reads beIN SPORTS 1–9, EN 1–2 and 4K, keeps live broadcasts
+whose title names both teams near kick-off, and `ChannelMatcher` puts the provider's copies of that channel first
+(never TR/FR/AU/US beIN). Undocumented like ESPN: if beIN changes it, matching falls back to the guesses.
+
 ### 2c. EPG cross-check (Release 3, optional)
 Xtream panels expose `get_short_epg&stream_id=…` (now/next per channel). For the 3–5 candidates only,
 read now/next around kick-off and look for both team names in the programme title. A hit moves that

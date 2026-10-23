@@ -38,7 +38,9 @@ enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
 data class MatchListing(
     val match:      com.ipxtream.tv.data.match.Match,
     val channels:   List<StreamItem>,
-    val remembered: Boolean
+    val remembered: Boolean,
+    /** The beIN channel beIN's own guide lists for this match ("beIN SPORTS 3"), when it is first in [channels]. */
+    val guideChannel: String? = null
 )
 
 // ─── 4K scan progress ─────────────────────────────────────────────────────────

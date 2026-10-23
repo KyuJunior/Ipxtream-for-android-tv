@@ -335,6 +335,7 @@
     <string name="matches_starts_in">in %1$d min</string>
     <string name="matches_channel_suggested">Suggested channel · hold OK to change</string>
     <string name="matches_channel_saved">Your channel · hold OK to change</string>
+    <string name="matches_channel_guide">On %1$s (beIN guide) · hold OK to change</string>
     <string name="matches_no_channel">No channel found · press OK to choose</string>
     <string name="matches_loading">Loading matches…</string>
     <string name="matches_empty">No matches on this day</string>

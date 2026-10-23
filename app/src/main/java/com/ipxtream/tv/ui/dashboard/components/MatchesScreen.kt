@@ -447,6 +447,7 @@ private fun ChannelHint(listing: MatchListing, modifier: Modifier) {
             text     = when {
                 best == null        -> stringResource(R.string.matches_no_channel)
                 listing.remembered  -> stringResource(R.string.matches_channel_saved)
+                listing.guideChannel != null -> stringResource(R.string.matches_channel_guide, listing.guideChannel)
                 else                -> stringResource(R.string.matches_channel_suggested)
             },
             style    = IpxTypography.LabelSmall,

@@ -80,6 +80,7 @@ object ChannelMatcher {
     )
     /** Broadcasters that also run movie/kids/food channels: only their channels named "sport…" count. */
     private val MIXED_FAMILIES = setOf("bein", "shahid", "canal+", "movistar", "viaplay", "amazon prime", "nbc", "cbs")
+    private val GUIDE_FOREIGN = FOREIGN_REGIONS + setOf("au", "us", "usa", "ca")
     private val PENALTY = setOf("news", "backup", "test", "replay", "radio", "fm", "24")
     private val VERSUS = setOf("vs", "v", "x", "ضد")
     private val PREFIX = Regex("""^[^\p{L}\p{N}]*([a-z]{2,4})\s*(?:[|:\]]|\s-\s)\s*""")
@@ -160,6 +161,8 @@ object ChannelMatcher {
         val family:  String?,
         val number:  Int?,
         val sport:   Boolean,
+        /** The beIN MENA channel this is, for matching the beIN guide; null for other channels and foreign beIN feeds. */
+        val guide:   BeinGuide.GuideChannel?,
         val penalty: Boolean,
         val versus:  Boolean
     )
@@ -187,16 +190,19 @@ object ChannelMatcher {
             }
         }
         val words = n.text.split(' ').toSet()
+        // beIN DRAMA / MOVIES / SERIES share the brand but never show football.
+        val sportsFamily = family.takeIf {
+            words.none { w -> w in ENTERTAINMENT } && (it !in MIXED_FAMILIES || words.any { w -> w in SPORT_WORDS })
+        }
         return Entry(
             stream  = stream,
             padded  = padded,
             region  = n.region,
             quality = n.quality,
-            // beIN DRAMA / MOVIES / SERIES share the brand but never show football.
-            family  = family.takeIf {
-                words.none { w -> w in ENTERTAINMENT } && (it !in MIXED_FAMILIES || words.any { w -> w in SPORT_WORDS })
-            },
+            family  = sportsFamily,
             sport   = words.any { it in SPORT_WORDS },
+            // TR / FR / AU / US beIN are different networks with their own numbering.
+            guide   = if (sportsFamily == "bein" && n.region !in GUIDE_FOREIGN) BeinGuide.parseChannel(stream.name) else null,
             number  = number,
             penalty = words.any { it in PENALTY },
             versus  = words.any { it in VERSUS }
@@ -214,12 +220,14 @@ object ChannelMatcher {
         index:            ChannelIndex,
         families:         List<String>,
         preferredRegions: Set<String>,
-        limit:            Int = 8
+        limit:            Int = 8,
+        guideChannels:    List<String> = emptyList()
     ): List<StreamItem> {
         val home = teamForms(match.home)
         val away = teamForms(match.away)
+        val guide = guideChannels.mapNotNull { BeinGuide.parseChannel(it) }
         return index.entries
-            .mapNotNull { e -> score(e, home, away, families, preferredRegions)?.let { e to it } }
+            .mapNotNull { e -> score(e, home, away, families, preferredRegions, guide)?.let { e to it } }
             .sortedWith(
                 compareByDescending<Pair<Entry, Int>> { it.second }
                     .thenBy { it.first.stream.name.length }
@@ -231,7 +239,8 @@ object ChannelMatcher {
 
     private fun score(
         e: Entry, home: List<String>, away: List<String>,
-        families: List<String>, preferredRegions: Set<String>
+        families: List<String>, preferredRegions: Set<String>,
+        guide: List<BeinGuide.GuideChannel> = emptyList()
     ): Int? {
         val hasHome = home.any { e.padded.contains(" $it ") }
         val hasAway = away.any { e.padded.contains(" $it ") }
@@ -242,6 +251,9 @@ object ChannelMatcher {
             else                                                -> 0
         }
         if (rank >= 0) score += maxOf(15, 60 - 8 * rank)
+        // beIN's own guide says this very channel (beIN SPORTS 3) shows the match: that beats every guess.
+        val guideAt = e.guide?.let { guide.indexOf(it) } ?: -1
+        if (guideAt >= 0) score += 300 - 10 * guideAt
         if (score == 0) return null
         if (e.region != null) score += if (e.region in preferredRegions) 8 else -4
         if (e.sport) score += 4

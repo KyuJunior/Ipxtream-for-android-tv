@@ -323,3 +323,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/match/ChannelMatcher.kt, ui/dashboard/DashboardViewModel.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. Category names of the owner's provider not seen (not cached yet), so the category filter itself is checked by unit tests only.
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: Matches now knows the exact beIN channel per match (owner request: "check each game is on which channel"). The owner's provider has no EPG for its beIN channels, so `data/match/BeinGuide.kt` reads beIN's public MENA guide (JSON per channel per day behind bein.com/tv-guide, Doha time, cached 3 h) for beIN SPORTS 1–9, EN 1–2 and 4K, finds the live broadcast naming both teams near kick-off, and `ChannelMatcher.candidates(guideChannels=…)` puts the provider's copies of that channel first (4K/FHD/HD, SS/NM/SA sources; never TR/FR/AU/US beIN). A pick for that exact match still wins; a competition-wide pick only when the guide has nothing. Row hint: "On beIN SPORTS 3 (beIN guide)". On the owner's TV tonight: Ipswich–Forest → beIN SPORTS 4K 1, Alavés–Málaga → beIN SPORTS 4K 3, matching beIN's schedule.
+- Files: data/match/{BeinGuide,ChannelMatcher,MatchChannelStore}.kt, ui/dashboard/{DashboardUiState,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, res/values*/strings.xml, app/src/test/.../MatchesTest.kt, docs/matches-section-plan.md, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the owner's TV (preview build).
+- For the other agent: beIN guide endpoint is undocumented; if suggestions stop showing "(beIN guide)", check `BeinGuideSource.BASE_URL` / `CHANNEL_FILES` against bein.com/tv-guide's page source (`basePath`, `channelSets`).

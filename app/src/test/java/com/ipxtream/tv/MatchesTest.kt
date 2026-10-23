@@ -160,6 +160,51 @@ class MatchesTest {
             ChannelMatcher.sportsChannels(channels, listOf(cats[1])).size)
     }
 
+    // ── beIN guide (entries from beIN's MENA guide for 2026-10-23, times in Doha time) ──
+
+    private fun guideItem(channel: String, title: String, start: String, end: String, live: Boolean = true) =
+        com.ipxtream.tv.data.match.BeinGuideItem(
+            if (live) "True" else "False", channel, com.ipxtream.tv.data.match.BeinText(title), start, end
+        )
+
+    private val guide = com.ipxtream.tv.data.match.BeinGuide.parse(com.ipxtream.tv.data.match.BeinGuideFile(listOf(
+        guideItem("beIN SPORTS 1", "Ipswich Town vs Nottingham Forest - English Premier League 2026/2027 - Week 8", "2026-10-23T21:45:00", "2026-10-24T00:30:00"),
+        guideItem("beIN SPORTS EN 1", "Ipswich Town vs Nottingham Forest - English Premier League 2026/2027 - Week 8", "2026-10-23T21:30:00", "2026-10-24T01:30:00"),
+        guideItem("beIN SPORTS 3", "Alaves vs Malaga - Spanish LaLiga 2026/2027 - Week 10", "2026-10-23T21:50:00", "2026-10-24T00:15:00"),
+        guideItem("beIN SPORTS 3", "Alaves vs Malaga - Spanish LaLiga 2026/2027 - Week 10", "2026-10-24T02:15:00", "2026-10-24T04:15:00", live = false),
+        guideItem("beIN SPORTS 3", "Celta Vigo vs Alaves - Spanish LaLiga 2026/2027 - Week 9", "2026-10-22T07:30:00", "2026-10-22T09:30:00", live = false)
+    )))
+
+    private fun tonight(home: String, away: String, slug: String) =
+        match(home, away, slug).copy(kickoffMs = EspnMapper.parseUtc("2026-10-23T19:00Z")!!)
+
+    @Test fun guideFindsTheLiveBeinChannel() {
+        val g = com.ipxtream.tv.data.match.BeinGuide
+        assertEquals(listOf("beIN SPORTS 1", "beIN SPORTS EN 1"), g.channelsFor(tonight("Ipswich Town", "Nottingham Forest", "eng.1"), guide))
+        assertEquals("accents and replays don't matter", listOf("beIN SPORTS 3"), g.channelsFor(tonight("Alavés", "Málaga", "esp.1"), guide))
+        assertTrue(g.channelsFor(tonight("Arsenal", "Everton", "eng.1"), guide).isEmpty())
+    }
+
+    @Test fun guideChannelWinsOverGuesses() {
+        val channels = ChannelMatcher.ChannelIndex(listOf(
+            live(60, "ⒶⓂ BeIN SPORTS FHD 1 (SS)"),
+            live(61, "ⒶⓂ TR ★ BEIN SPORTS 3 HD"),
+            live(62, "ⒶⓂ AR_beIN_DRAMA_3_FHD"),
+            live(63, "ⒶⓂ BeIN SPORTS FHD 3 (SS)"),
+            live(64, "ⒶⓂ BeIN SPORTS 4K 3 (SS)"),
+            live(65, "ⒶⓂ beIN SPORTS 3 SD (SA)")
+        ))
+        val m = tonight("Alavés", "Málaga", "esp.1")
+        val best = ChannelMatcher.candidates(
+            m, channels, rights.familiesFor("esp.1"), ChannelMatcher.ARABIC_REGIONS,
+            guideChannels = com.ipxtream.tv.data.match.BeinGuide.channelsFor(m, guide)
+        )
+        assertEquals("the provider's beIN SPORTS 3 copies come first", setOf(63, 64, 65), best.take(3).map { it.streamId }.toSet())
+        assertEquals("SD last of the three", 65, best[2].streamId)
+        assertTrue("Turkish beIN 3 and beIN DRAMA are not the guide's channel", best.none { it.streamId == 62 })
+        assertTrue(best.indexOfFirst { it.streamId == 61 } > 2)
+    }
+
     @Test fun rightsTableCoversDefaultCompetitions() {
         listOf("uefa.champions", "eng.1", "esp.1").forEach { slug ->
             val families = rights.familiesFor(slug)

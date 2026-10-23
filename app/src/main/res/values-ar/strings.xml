@@ -335,6 +335,7 @@
     <string name="matches_starts_in">بعد %1$d د</string>
     <string name="matches_channel_suggested">قناة مقترحة · اضغط مطولًا على OK للتغيير</string>
     <string name="matches_channel_saved">قناتك · اضغط مطولًا على OK للتغيير</string>
+    <string name="matches_channel_guide">على %1$s (دليل beIN) · اضغط مطولًا على OK للتغيير</string>
     <string name="matches_no_channel">لم يُعثر على قناة · اضغط OK للاختيار</string>
     <string name="matches_loading">جارٍ تحميل المباريات…</string>
     <string name="matches_empty">لا توجد مباريات في هذا اليوم</string>
