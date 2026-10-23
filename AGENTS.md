@@ -329,3 +329,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/match/{BeinGuide,ChannelMatcher,MatchChannelStore}.kt, ui/dashboard/{DashboardUiState,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, res/values*/strings.xml, app/src/test/.../MatchesTest.kt, docs/matches-section-plan.md, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the owner's TV (preview build).
 - For the other agent: beIN guide endpoint is undocumented; if suggestions stop showing "(beIN guide)", check `BeinGuideSource.BASE_URL` / `CHANNEL_FILES` against bein.com/tv-guide's page source (`basePath`, `channelSets`).
+
+### 2026-10-23 | claude
+- Did: Tried the in-app update on the owner's TV: v2.0.2 → v2.0.6 installed from Settings › About & Updates, login kept. Fixed two issues found in v2.0.6: (1) Up from the Matches day chips went into the side menu (level with the chips) — chips now go Up to the header search; (2) a per-match pick saved by older versions ("AR_beIN_DRAMA_1_FHD") beat beIN's guide — a saved pick that isn't a sports channel (`ChannelMatcher.isSportsChannel`) now yields to the guide. Both checked on the TV (preview build).
+- Files: data/match/ChannelMatcher.kt, ui/dashboard/{DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass.
+- For the other agent: the 4K section's chips may have the same Up-goes-to-menu issue (not checked).

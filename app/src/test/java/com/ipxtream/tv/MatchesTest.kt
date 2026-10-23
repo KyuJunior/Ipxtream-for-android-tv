@@ -205,6 +205,13 @@ class MatchesTest {
         assertTrue(best.indexOfFirst { it.streamId == 61 } > 2)
     }
 
+    @Test fun tellsSportsChannelsFromOthers() {
+        assertTrue(ChannelMatcher.isSportsChannel(live(1, "ⒶⓂ BeIN SPORTS FHD 3 (SS)")))
+        assertTrue(ChannelMatcher.isSportsChannel(live(2, "ⒶⓂ AR: DUBAI SPORTS 1 4K")))
+        assertTrue(!ChannelMatcher.isSportsChannel(live(3, "ⒶⓂ AR_beIN_DRAMA_1_FHD")))
+        assertTrue(!ChannelMatcher.isSportsChannel(live(4, "AR| MBC 1")))
+    }
+
     @Test fun rightsTableCoversDefaultCompetitions() {
         listOf("uefa.champions", "eng.1", "esp.1").forEach { slug ->
             val families = rights.familiesFor(slug)

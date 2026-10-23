@@ -411,8 +411,11 @@ class DashboardViewModel(
             val guideHit = onGuide.firstOrNull()?.takeIf {
                 guesses.firstOrNull()?.let { s -> guideOf.parseChannel(s.name) } in onGuide.mapNotNull(guideOf::parseChannel)
             }
-            // A pick for this very match wins; a competition-wide pick only when the guide has nothing.
+            // A pick for this very match wins, unless the guide knows the channel and the pick isn't a sports
+            // channel at all (picks saved before v2.0.4 could be "beIN DRAMA"). A competition-wide pick only
+            // counts when the guide has nothing.
             val saved = matchChannelStore.matchChannel(m)?.let { byId[it] }
+                ?.takeIf { guideHit == null || ChannelMatcher.isSportsChannel(it) }
                 ?: matchChannelStore.competitionChannel(m)?.takeIf { guideHit == null }?.let { byId[it] }
             MatchListing(
                 match        = m,

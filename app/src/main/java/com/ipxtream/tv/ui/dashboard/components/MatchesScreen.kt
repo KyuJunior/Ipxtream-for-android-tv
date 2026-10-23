@@ -106,6 +106,7 @@ fun MatchesScreen(
     onPick:                  (MatchListing, StreamItem, Boolean) -> Unit,
     firstItemFocusRequester: FocusRequester,
     sideNavFocusRequester:   FocusRequester,
+    headerFocusRequester:    FocusRequester,
     modifier:                Modifier = Modifier
 ) {
     val timeFormat = remember(use24Hour) {
@@ -164,6 +165,8 @@ fun MatchesScreen(
                     selected = offset == dayOffset,
                     onClick  = { onDaySelected(offset) },
                     modifier = Modifier
+                        // Up goes to the top bar; geometry alone picked the side menu (it is level with the chips).
+                        .focusProperties { up = headerFocusRequester }
                         .then(if (offset == dayOffset) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                         .then(if (offset == MATCH_DAYS.first) Modifier.focusProperties { start = sideNavFocusRequester } else Modifier)
                 )

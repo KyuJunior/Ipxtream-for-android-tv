@@ -167,6 +167,9 @@ object ChannelMatcher {
         val versus:  Boolean
     )
 
+    /** A broadcaster's sports channel or a channel named "sport…" (not beIN DRAMA, not MBC 1). */
+    fun isSportsChannel(stream: StreamItem): Boolean = entry(stream).let { it.family != null || it.sport }
+
     /** Every live channel, normalised once per channel list. */
     class ChannelIndex(channels: List<StreamItem>) {
         val entries: List<Entry> = channels.map { entry(it) }

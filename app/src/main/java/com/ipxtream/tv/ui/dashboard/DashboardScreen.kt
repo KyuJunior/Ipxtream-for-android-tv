@@ -867,6 +867,7 @@ fun DashboardScreen(
                             onPick                  = onPickMatchChannel,
                             firstItemFocusRequester = firstItemFocusRequester,
                             sideNavFocusRequester   = sideNavFocusRequester,
+                            headerFocusRequester    = searchBarFocusRequester,
                             modifier                = Modifier.fillMaxSize()
                         )
                     }
