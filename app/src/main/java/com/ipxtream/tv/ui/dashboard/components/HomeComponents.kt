@@ -249,7 +249,9 @@ fun UserProfileCard(
                     color = TextSecondary
                 )
                 Spacer(Modifier.height(2.dp))
-                if (isCheckingForUpdate) {
+                if (!com.ipxtream.tv.BuildConfig.SELF_UPDATE) {
+                    // Play build: Google Play handles updates, so there is no status to show here.
+                } else if (isCheckingForUpdate) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         androidx.compose.material3.CircularProgressIndicator(
                             modifier = Modifier.size(10.dp),

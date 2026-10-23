@@ -31,7 +31,7 @@ class MatchesTest {
         clock = "10'", home = MatchTeam(home, home, null, "0"), away = MatchTeam(away, away, null, "0")
     )
 
-    private val rights = MatchRights.parse(File("src/main/assets/match_rights.json").readText())
+    private val rights = MatchRights.parse(File("src/github/assets/match_rights.json").readText())
 
     // ── Normalisation ────────────────────────────────────────────────────────
 

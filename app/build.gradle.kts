@@ -21,11 +21,31 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.ipxtream.tv"
-        minSdk        = 23          // EncryptedSharedPreferences requires API 23
+        minSdk       = 23          // EncryptedSharedPreferences requires API 23
         targetSdk     = 35
         versionCode   = versionProps.getProperty("VERSION_CODE").toInt()
         versionName   = versionProps.getProperty("VERSION_NAME")
+    }
+
+    // Two release channels from one codebase (docs/play-store-plan.md). Flavor-only code lives in
+    // src/github and src/play; anything that downloads/installs code or names a rights holder is github only.
+    flavorDimensions += "store"
+    productFlavors {
+        create("github") {
+            dimension = "store"
+            // Sideloaded build: same package and key as every install so far, self-updates from GitHub releases.
+            applicationId = "com.ipxtream.tv"
+            buildConfigField("boolean", "SELF_UPDATE", "true")
+            buildConfigField("boolean", "MATCH_AUTO_PLAY", "true")
+        }
+        create("play") {
+            dimension = "store"
+            // Google Play build (owner decision D1): its own package, updated only by Play.
+            applicationId = "com.xtream.kyu"
+            buildConfigField("boolean", "SELF_UPDATE", "false")
+            // Matches never starts a channel the user hasn't confirmed (decision D3).
+            buildConfigField("boolean", "MATCH_AUTO_PLAY", "false")
+        }
     }
 
     buildFeatures {

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- ─── Permissions ─────────────────────────────────────────────────── -->
 
@@ -15,9 +14,8 @@
 
     <!-- Android 13+: required to show the download progress notification -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    
-    <!-- Required to prompt package installation for in-app updates -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
+    <!-- The self-updater's install permission and FileProvider live in src/github/AndroidManifest.xml. -->
 
     <!-- ─── TV Feature Declaration ──────────────────────────────────────── -->
     <!-- Declares this as a TV app; required for the Leanback launcher icon  -->
@@ -43,9 +41,6 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:networkSecurityConfig="@xml/network_security_config">
-
-        <!-- Lets `adb shell` CPU-profile release builds on a real TV (no access to app data). -->
-        <profileable android:shell="true" tools:targetApi="29" />
 
         <!-- ── Login Activity (Entry Point) ──────────────────────────────── -->
         <!--
@@ -88,16 +83,6 @@
             android:name=".data.download.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
-
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.provider"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths" />
-        </provider>
 
     </application>
 

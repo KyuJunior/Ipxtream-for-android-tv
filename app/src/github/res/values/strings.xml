@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- GitHub build only: names a third-party guide the Play build does not use. -->
+<resources>
+    <string name="matches_channel_guide">On %1$s (beIN guide) · hold OK to change</string>
+</resources>

@@ -1,7 +1,7 @@
 # Google Play build: plan for owner approval
 
-Status: **plan only, nothing built. Owner answered D1–D7 on 2026-10-24 (§9); open: the app name and the final package
-check (before Phase 4).** Written 2026-10-24 after the local council review
+Status: **Phase 1 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
+(before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
 The GitHub build and every TV that already runs it stay exactly as they are.
@@ -62,40 +62,39 @@ One codebase, one `store` flavor dimension:
 | Privacy/terms text | current (corrected, §6) | Play version (§6) |
 | Demo sign-in | no | yes (D4) |
 
-How the split is done, so that the Play build contains none of the removed code (reviewers can decompile an AAB):
+How the split is done (**built in Phase 1, 2026-10-24**), so that the Play build contains none of the removed code
+(reviewers can decompile an AAB):
 
-1. **Source sets, not just `if (BuildConfig…)`.** Move flavor-only code into `app/src/github/` and give `app/src/play/`
-   a stand-in with the same shape:
-   - `UpdateManager.kt` → `src/github/java/.../data/api/`. `main` gets a small interface (e.g. `AppUpdater` with
-     `check()`, `download()`, `install()`, `isSupported`) used by `DashboardViewModel`; `src/play` provides
-     `NoUpdater` (`isSupported = false`). The Software Update card, the banner and the 30 s startup check hide when
-     `isSupported` is false.
-   - `BeinGuide.kt`, `ChannelMatcher.kt` (suggestions, sports-category index, rights table) → `src/github`. `main`
-     keeps fixtures, `MatchRepository`, `MatchChannelStore` and the picker; a `MatchSuggestions` interface with a
-     github implementation (today's behaviour) and a play implementation that is provider-neutral (D3, final answer
-     2026-10-24). In the Play build:
-     - suggestions come only from the user's own data: live channel names that contain **both** team names (any
-       provider's event channels, e.g. "Al Hilal vs Al Nassr"), and later the provider's own EPG programmes naming both
-       teams. Team-name matching (aliases, Arabic/English spellings) can be shared code in `main`; no broadcaster
-       families, no sports-category ranking, no region preference, no bundled list of broadcasters;
-     - a match row shows the remembered channel, else the number of matching channels, else "Choose a channel";
-     - **nothing plays by itself**: OK opens the picker with "Found in your channels" on top (or plays the remembered
-       pick); the user confirms with OK. Long-press always opens the picker;
-     - the picker also lists all live channels with search; "use for all <competition> matches" stays;
-     - CH+/CH− during a match steps through normal live channels, not match suggestions;
-     - the beIN-guide hint and string are absent.
-   - `assets/match_rights.json` → `src/github/assets/`.
-2. **Manifest per flavor.** `REQUEST_INSTALL_PACKAGES` and the FileProvider move to `src/github/AndroidManifest.xml`
-   (merged into main); `profileable` too. `src/play/AndroidManifest.xml` adds nothing, and the merged Play manifest is
-   checked in CI (§4) to contain no `REQUEST_INSTALL_PACKAGES`.
-3. **Strings.** `matches_channel_guide` and the update strings stay in `main` only if both flavors use them; otherwise
-   move them to `src/github/res/values*/` (English + Arabic, so `StringResourcesTest` keeps passing; extend the test
-   to read flavor folders).
-4. **Unit tests.** `MatchesTest` tests beIN logic → `src/testGithub/`. Add a Play test that fails if the play
-   flavor's classpath contains `UpdateManager` or `BeinGuide` (simple reflection check), so a later edit can't bring
-   them back by accident.
-5. **AGENTS.md "Current state"** gets a bullet: flavor-only code lives in `src/github` / `src/play`; new features go in
-   `main`; anything that downloads/installs code or names a rights-holder goes in `github` only.
+1. **Source sets plus two BuildConfig flags.** Flavor-only code lives in `app/src/github/` and `app/src/play/`; each
+   flavor has a class with the same name and public shape, so `main` compiles against either:
+   - `data/api/UpdateManager.kt`: the real updater in `src/github`; in `src/play` a stand-in whose methods return
+     null/false and touch no network. `BuildConfig.SELF_UPDATE` (false in play) skips the 30 s startup check and makes
+     the update spots say "updates come from Google Play" (Settings → About, My Library card, header status hidden);
+     "check for updates" there opens the app's Play Store page (`DashboardViewModel.openStorePage`).
+   - `data/match/MatchChannelFinder.kt`: in `src/github` it holds today's logic (beIN guide, rights table,
+     `ChannelMatcher`, sports-category index), moved out of `DashboardViewModel` unchanged. `BeinGuide.kt`,
+     `ChannelMatcher.kt` (with `MatchRights`) and `assets/match_rights.json` are github-only.
+     In `src/play` it is provider-neutral (D3): it suggests the user's live channels whose names hold **both** team
+     names (`TeamNames`, any provider's event channels such as "Al Hilal vs Al Nassr"), plus the user's remembered pick.
+     No broadcaster families, no sports-category ranking, no region preference, no third-party guide.
+     `BuildConfig.MATCH_AUTO_PLAY` (false in play): OK plays only a channel the user picked before; otherwise it opens
+     the picker, where "Found in your channels" is on top. Long-press always opens the picker. CH+/CH− during a
+     match steps through the match's channels (the remembered pick and the found ones), as in the GitHub build.
+   - Later: the provider's own EPG programmes naming both teams can feed the same play finder.
+2. **Manifest per flavor.** `REQUEST_INSTALL_PACKAGES`, the FileProvider (`res/xml/file_paths.xml`) and `profileable`
+   are in `src/github/AndroidManifest.xml` only; the main manifest has none of them.
+3. **Strings.** Shared update strings stay in `main`. `matches_channel_guide` (names beIN) is in
+   `src/github/res/values*/`. `src/play/res/values*/` overrides a few labels ("Found in your channels", "About").
+   `StringResourcesTest` checks English/Arabic keys and placeholders in main and in both flavors.
+4. **Unit tests.** `src/testGithub/`: `MatchesTest`, `UpdateVersionTest`. `src/testPlay/PlayBuildTest`: flags off, no
+   install permission or FileProvider in the main/play manifests, `BeinGuide`/`ChannelMatcher`/`MatchRights` absent
+   from the classpath, no rights table in main assets, team-name matching.
+5. **CI.** `release.yml` runs `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug
+   assembleGithubRelease` and publishes `app-github-release.apk` as `app-release.apk` and `app-debug.apk` (same names
+   and signing key as before, so installed apps keep updating). The Play AAB pipeline is Phase 4.
+6. **AGENTS.md "Current state"** has a "Build flavors" bullet.
+
+Until Phase 4, a local `assemblePlayRelease` is signed with `debugCI` like the GitHub build; it is for testing only.
 
 Shared files touched (post a lock in AGENTS.md first): `app/build.gradle.kts`, `AndroidManifest.xml`,
 `DashboardViewModel.kt`, `DashboardScreen.kt`, `DashboardActivity.kt`, `SettingsScreen.kt`, `data/match/**`,
@@ -221,7 +220,7 @@ These are fixes, not features, and they come before the first Play upload:
 | Phase | Work | Who | Done when |
 |---|---|---|---|
 | 0 | Decisions D1–D7; Play Console account and identity check; upload key + secrets; support e-mail; list of legal demo streams | Owner | Answers recorded in §9 of this file |
-| 1 | Flavors and source-set split (§3); `release.yml` moved to the github flavor | Claude | GitHub APK behaves exactly as v2.0.x on the owner's TV (updater, Matches with beIN guide); a self-update from the previous release installs over it; Play debug build runs with no updater UI and per-D3 Matches; the Play flavor contains no `UpdateManager`/`BeinGuide` classes |
+| 1 | **Done 2026-10-24.** Flavors and source-set split (§3); `release.yml` moved to the github flavor | Claude | GitHub APK behaves exactly as v2.0.x on the owner's TV (updater, Matches with beIN guide); a self-update from the previous release installs over it; Play debug build runs with no updater UI and per-D3 Matches; the Play flavor contains no `UpdateManager`/`BeinGuide` classes |
 | 2 | Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
 | 3 | Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
 | 4 | Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |

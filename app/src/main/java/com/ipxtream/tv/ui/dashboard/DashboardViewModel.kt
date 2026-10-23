@@ -29,11 +29,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import com.ipxtream.tv.data.local.LibraryStore
 import com.ipxtream.tv.data.local.LibraryItem
-import com.ipxtream.tv.data.match.ChannelMatcher
 import com.ipxtream.tv.data.match.Match
 import com.ipxtream.tv.data.match.MatchChannelStore
 import com.ipxtream.tv.data.match.MatchRepository
-import com.ipxtream.tv.data.match.MatchRights
 import com.ipxtream.tv.data.match.MatchState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -331,10 +329,8 @@ class DashboardViewModel(
 
     private val matchRepository by lazy { MatchRepository(context) }
     private val matchChannelStore by lazy { MatchChannelStore(context, repository.accountKey) }
-    private val matchRights by lazy { MatchRights.load(context) }
-    private val beinGuide by lazy { com.ipxtream.tv.data.match.BeinGuideSource(context) }
-    /** Sports-channel index plus the channel and category lists it was built from (main thread only). */
-    private var channelIndex: Triple<List<StreamItem>, List<com.ipxtream.tv.data.model.Category>, ChannelMatcher.ChannelIndex>? = null
+    /** Channel suggestions per match; differs per build flavor (src/github, src/play). */
+    private val matchChannelFinder by lazy { com.ipxtream.tv.data.match.MatchChannelFinder(context, matchChannelStore) }
     private var matchesJob: Job? = null
 
     /** The leagues Matches shows (from the gear screen); reloads the list. */
@@ -364,22 +360,14 @@ class DashboardViewModel(
             while (true) {
                 val leagues = appSettingsStore.settings.value.followedLeagues
                 val day = async { matchRepository.matchesFor(offset, competitions = leagues, force = refresh) }
-                val guide = async {
-                    val tz = java.util.TimeZone.getDefault()
-                    beinGuide.liveProgrammes(com.ipxtream.tv.data.match.MatchDays.localDay(System.currentTimeMillis(), offset, tz))
-                }
+                val dayData = async { matchChannelFinder.dayData(offset) }
                 val channels = repository.getLiveStreams().getOrNull().orEmpty()
                 val categories = repository.getLiveCategories().getOrNull().orEmpty()
                 val result = day.await()
-                val programmes = guide.await()
-                // Rebuilt only when the channel or category list changes. The new index is stored here, on the
-                // main thread, so a cancelled run still finishing on Default can't overwrite it.
-                val cachedIndex = channelIndex?.takeIf { it.first === channels && it.second === categories }?.third
-                val index = cachedIndex ?: withContext(Dispatchers.Default) {
-                    ChannelMatcher.ChannelIndex(ChannelMatcher.sportsChannels(channels, categories))
-                }
-                channelIndex = Triple(channels, categories, index)
-                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, index, programmes) }
+                val listings = matchChannelFinder.listings(
+                    result.matches, channels, categories, dayData.await(),
+                    arabicApp = _uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC
+                )
                 _uiState.update { it.copy(
                     matches             = listings,
                     isLoadingMatches    = false,
@@ -400,46 +388,6 @@ class DashboardViewModel(
     }
 
     /**
-     * Suggestions come only from [index] (the provider's sports categories; owner request: no "beIN DRAMA").
-     * The picker still offers every channel, and a remembered pick can be any channel.
-     */
-    private fun buildMatchListings(
-        matches:    List<Match>,
-        channels:   List<StreamItem>,
-        index:      ChannelMatcher.ChannelIndex,
-        programmes: List<com.ipxtream.tv.data.match.GuideProgramme>
-    ): List<MatchListing> {
-        val regions = ChannelMatcher.preferredRegions(
-            arabicApp  = _uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC,
-            timeZoneId = java.util.TimeZone.getDefault().id
-        )
-        val byId by lazy { channels.associateBy { it.streamId } }
-        val guideOf = com.ipxtream.tv.data.match.BeinGuide
-        return matches.map { m ->
-            // beIN's guide names the exact channel (beIN SPORTS 3); the matcher puts the provider's copy of it first.
-            val onGuide = guideOf.channelsFor(m, programmes)
-            val guesses = ChannelMatcher.candidates(
-                m, index, matchRights.familiesFor(m.competition.slug), regions, guideChannels = onGuide
-            )
-            // The guide channel the top suggestion actually is (beIN SPORTS EN 1 when only that copy exists).
-            val top = guesses.firstOrNull()?.let { s -> guideOf.parseChannel(s.name) }
-            val guideHit = onGuide.firstOrNull { top != null && guideOf.parseChannel(it) == top }
-            // A pick for this very match wins, unless the guide knows the channel and the pick is one of a
-            // broadcaster's non-sports channels (versions before 2.0.4 suggested "beIN DRAMA"). Event channels
-            // and anything else the user chose stay. A competition-wide pick counts only when the guide has nothing.
-            val saved = matchChannelStore.matchChannel(m)?.let { byId[it] }
-                ?.takeIf { guideHit == null || !ChannelMatcher.isEntertainmentChannel(it) }
-                ?: matchChannelStore.competitionChannel(m)?.takeIf { guideHit == null }?.let { byId[it] }
-            MatchListing(
-                match        = m,
-                channels     = listOfNotNull(saved) + guesses.filter { it.streamId != saved?.streamId },
-                remembered   = saved != null,
-                guideChannel = guideHit.takeIf { saved == null }
-            )
-        }
-    }
-
-    /**
      * Plays [stream] for a match in full screen; CH+/CH- follow [channels] (the match's channels).
      * The caller also loads it in the player.
      */
@@ -456,7 +404,7 @@ class DashboardViewModel(
         matchChannelStore.remember(match, stream.streamId, forCompetition)
         _uiState.update { state ->
             val updated = state.matches.map { l ->
-                // Same rule as buildMatchListings: a competition-wide pick doesn't replace a guide channel.
+                // Same rule as MatchChannelFinder (github): a competition-wide pick doesn't replace a guide channel.
                 val affected = l.match.id == match.id ||
                     (forCompetition && l.match.competition.slug == match.competition.slug && l.guideChannel == null)
                 if (!affected) l
@@ -683,7 +631,7 @@ class DashboardViewModel(
      * steals focus; a found update shows a banner, not a dialog. Survives Activity recreation.
      */
     fun scheduleStartupUpdateCheck() {
-        if (startupCheckScheduled) return
+        if (startupCheckScheduled || !com.ipxtream.tv.BuildConfig.SELF_UPDATE) return
         startupCheckScheduled = true
         viewModelScope.launch {
             kotlinx.coroutines.delay(30_000)
@@ -693,7 +641,7 @@ class DashboardViewModel(
 
     /** [manual]: the user asked, so an available update opens the dialog. */
     fun checkForUpdates(manual: Boolean = true) {
-        if (_uiState.value.isCheckingForUpdate) return
+        if (_uiState.value.isCheckingForUpdate || !com.ipxtream.tv.BuildConfig.SELF_UPDATE) return
         _uiState.update { it.copy(isCheckingForUpdate = true, updateErrorMessage = null) }
         viewModelScope.launch {
             val release = updateManager.checkForUpdates()
@@ -751,6 +699,18 @@ class DashboardViewModel(
 
     fun dismissUpdate() {
         _uiState.update { it.copy(updateRelease = null, showUpdateDialog = false, updateErrorMessage = null) }
+    }
+
+    /** Play build: updates come from Google Play, so "App updates" opens this app's store page. */
+    fun openStorePage() {
+        val id = context.packageName
+        val market = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("market://details?id=$id"))
+        val web = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://play.google.com/store/apps/details?id=$id"))
+        for (intent in listOf(market, web)) {
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            if (runCatching { context.startActivity(intent) }.isSuccess) return
+        }
+        _uiState.update { it.copy(updateErrorMessage = text(R.string.update_store_unavailable)) }
     }
 
     /** UI text resolved in the in-app language (application context alone uses the system language). */

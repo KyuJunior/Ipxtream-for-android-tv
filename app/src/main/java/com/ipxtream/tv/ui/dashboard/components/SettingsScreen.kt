@@ -882,6 +882,9 @@ private fun AboutSettingsContent(
                     val release = uiState.updateRelease
                     Text(stringResource(R.string.update_new_version, release.tagName), style = IpxTypography.BodyMedium, color = AccentGreen, fontWeight = FontWeight.Bold)
                 }
+                !BuildConfig.SELF_UPDATE -> {
+                    Text(stringResource(R.string.update_via_play, BuildConfig.VERSION_NAME), style = IpxTypography.BodyMedium, color = TextSecondary)
+                }
                 else -> {
                     Text(stringResource(R.string.update_running_latest, BuildConfig.VERSION_NAME), style = IpxTypography.BodyMedium, color = TextSecondary)
                 }
@@ -924,7 +927,11 @@ private fun AboutSettingsContent(
                         enabled = !uiState.isCheckingForUpdate && uiState.updateDownloadProgress == null,
                         modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
                     ) {
-                        Text(if (uiState.isCheckingForUpdate) stringResource(R.string.update_checking) else stringResource(R.string.update_check))
+                        Text(when {
+                            !BuildConfig.SELF_UPDATE      -> stringResource(R.string.update_open_play)
+                            uiState.isCheckingForUpdate   -> stringResource(R.string.update_checking)
+                            else                          -> stringResource(R.string.update_check)
+                        })
                     }
                 }
             }

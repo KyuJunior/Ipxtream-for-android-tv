@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Play build wording: updates come from Google Play; Matches suggests only from the user's own channel names (docs/play-store-plan.md). -->
+<resources>
+    <string name="matches_channel_suggested">وُجدت في قنواتك · اضغط OK للاختيار</string>
+    <string name="picker_suggested">في قنواتك</string>
+    <string name="settings_about_title">حول التطبيق</string>
+    <string name="settings_cat_about">حول التطبيق</string>
+    <string name="settings_about_sub">معلومات الإصدار والإشعارات القانونية. يثبّت Google Play التحديثات.</string>
+</resources>

@@ -165,7 +165,11 @@ class DashboardActivity : ComponentActivity() {
                     onToggleFavoriteSeries = dashboardViewModel::toggleFavoriteSeries,
                     isStreamFavorite   = dashboardViewModel::isStreamFavorite,
                     isSeriesFavorite   = dashboardViewModel::isSeriesFavorite,
-                    onCheckForUpdates  = dashboardViewModel::checkForUpdates,
+                    // Play build: "check for updates" opens the app's Play Store page instead.
+                    onCheckForUpdates  = {
+                        if (com.ipxtream.tv.BuildConfig.SELF_UPDATE) dashboardViewModel.checkForUpdates()
+                        else dashboardViewModel.openStorePage()
+                    },
                     onDownloadUpdate   = dashboardViewModel::downloadAndInstallUpdate,
                     onDismissUpdate    = dashboardViewModel::dismissUpdate,
                     onNextPage         = dashboardViewModel::nextPage,

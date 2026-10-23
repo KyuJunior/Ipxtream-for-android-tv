@@ -61,6 +61,7 @@ import com.ipxtream.tv.R
 import com.ipxtream.tv.data.match.Competition
 import com.ipxtream.tv.data.match.FollowedCompetitions
 import com.ipxtream.tv.data.match.Match
+import com.ipxtream.tv.data.match.MatchChannelFinder
 import com.ipxtream.tv.data.match.MatchDays
 import com.ipxtream.tv.data.match.MatchState
 import com.ipxtream.tv.data.match.MatchTeam
@@ -93,8 +94,8 @@ private val MATCH_DAYS = -1..5
 
 /**
  * Matches: the followed competitions' fixtures for one day, grouped by competition (today's live
- * matches pinned on top). OK on a live match plays its best channel; long-press OK (or OK on a
- * match that isn't live) opens the channel picker, where a choice can be remembered.
+ * matches pinned on top). OK on a live match plays its best channel (Play build: only a channel the
+ * user chose before); long-press OK, or OK otherwise, opens the channel picker, where a choice can be remembered.
  */
 @Composable
 fun MatchesScreen(
@@ -250,7 +251,10 @@ fun MatchesScreen(
                                     nowMs      = nowMs,
                                     onClick    = {
                                         val best = listing.channels.firstOrNull()
-                                        if (listing.match.state == MatchState.LIVE && best != null) onPlay(listing, best)
+                                        // The Play build plays only a channel the user chose; suggestions open the picker.
+                                        val autoPlay = if (com.ipxtream.tv.BuildConfig.MATCH_AUTO_PLAY) listing.match.state == MatchState.LIVE
+                                                       else listing.remembered
+                                        if (autoPlay && best != null) onPlay(listing, best)
                                         else pickerFor = listing
                                     },
                                     onLongClick = { pickerFor = listing },
@@ -617,7 +621,8 @@ private fun ChannelHint(listing: MatchListing, modifier: Modifier) {
             text     = when {
                 best == null        -> stringResource(R.string.matches_no_channel)
                 listing.remembered  -> stringResource(R.string.matches_channel_saved)
-                listing.guideChannel != null -> stringResource(R.string.matches_channel_guide, listing.guideChannel)
+                listing.guideChannel != null && MatchChannelFinder.GUIDE_HINT != 0 ->
+                    stringResource(MatchChannelFinder.GUIDE_HINT, listing.guideChannel)
                 else                -> stringResource(R.string.matches_channel_suggested)
             },
             style    = IpxTypography.LabelSmall,

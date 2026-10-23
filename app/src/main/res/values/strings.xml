@@ -309,6 +309,9 @@
     <string name="update_installer_failed">This TV couldn\'t open the installer. Allow installs from this app in Settings, then try again.</string>
     <string name="update_new_version">New version %1$s is available!</string>
     <string name="update_running_latest">Running the latest version (v%1$s).</string>
+    <string name="update_via_play">Version %1$s · updates come from Google Play</string>
+    <string name="update_open_play">Open in Google Play</string>
+    <string name="update_store_unavailable">Google Play isn\'t available on this TV.</string>
     <string name="update_up_to_date">Up to date</string>
     <string name="update_verify_failed">The downloaded update isn\'t signed by IPXtream, so it was deleted and not installed.</string>
     <string name="vod_cast">Cast</string>
@@ -335,7 +338,6 @@
     <string name="matches_starts_in">in %1$d min</string>
     <string name="matches_channel_suggested">Suggested channel · hold OK to change</string>
     <string name="matches_channel_saved">Your channel · hold OK to change</string>
-    <string name="matches_channel_guide">On %1$s (beIN guide) · hold OK to change</string>
     <string name="matches_no_channel">No channel found · press OK to choose</string>
     <string name="matches_loading">Loading matches…</string>
     <string name="matches_empty">No matches on this day</string>

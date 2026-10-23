@@ -1480,6 +1480,8 @@ private fun LibrarySection(
                             Text(stringResource(R.string.library_checking_updates), style = IpxTypography.BodySmall, color = TextSecondary)
                         } else if (uiState.updateRelease != null) {
                             Text(stringResource(R.string.library_update_new, uiState.updateRelease.tagName, currentVersion), style = IpxTypography.BodySmall, color = TextPrimary)
+                        } else if (!com.ipxtream.tv.BuildConfig.SELF_UPDATE) {
+                            Text(stringResource(R.string.update_via_play, currentVersion), style = IpxTypography.BodySmall, color = TextMuted)
                         } else {
                             Text(stringResource(R.string.library_up_to_date, currentVersion), style = IpxTypography.BodySmall, color = TextMuted)
                         }
@@ -1507,7 +1509,10 @@ private fun LibrarySection(
                                 .background(Color.White.copy(alpha = 0.15f))
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         ) {
-                            Text(stringResource(R.string.update_check), color = Color.White, style = IpxTypography.BodyMedium)
+                            Text(
+                                stringResource(if (com.ipxtream.tv.BuildConfig.SELF_UPDATE) R.string.update_check else R.string.update_open_play),
+                                color = Color.White, style = IpxTypography.BodyMedium
+                            )
                         }
                     }
                 }

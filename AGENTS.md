@@ -73,13 +73,23 @@ Both agents MUST read this whole file at the start of every task and append to t
   provider text (titles, server, username) goes through `bidi(text)`, and the player timeline/transport stay LTR.
 - **Code graph (owner rule: use on every task):** `graphify-out/graph.json` + Obsidian vault `graphify-out/obsidian`
   (gitignored). CLI `%USERPROFILE%\.local\bin\graphify.exe`: query before reading code broadly
-  (`query`, `explain`, `path`, `affected`); after code changes run `graphify update app/src/main/java`, move the
-  files it writes to `app/src/main/java/graphify-out/` up into `graphify-out/` (delete the nested folder), then
+  (`query`, `explain`, `path`, `affected`); after code changes run `graphify update app/src` (covers main, both
+  flavors and tests), move the files it writes to `app/src/graphify-out/` up into `graphify-out/` (delete the nested folder), then
   `graphify export html` and `graphify export obsidian --graph graphify-out/graph.json`.
-- **Unit tests:** `app/src/test/` (JVM, no emulator). Add tests for pure logic you touch.
+- **Build flavors (2026-10-24, `docs/play-store-plan.md`):** `github` (`com.ipxtream.tv`, debugCI key, self-updater,
+  beIN guide + rights table in Matches; what CI publishes) and `play` (`com.xtream.kyu`, for Google Play: no
+  updater/install permission/FileProvider, Matches suggests only channels whose names hold both team names and never
+  auto-plays). New features go in `src/main`; anything that downloads/installs code or names a rights holder goes in
+  `src/github` only. Flavor-specific classes share a name and shape (`UpdateManager`, `MatchChannelFinder`); UI checks
+  `BuildConfig.SELF_UPDATE` / `MATCH_AUTO_PLAY`. Gradle tasks carry the flavor: CI runs
+  `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubRelease`.
+- **Unit tests:** `app/src/test/` (JVM, no emulator), flavor-only tests in `src/testGithub/` / `src/testPlay/`. Add tests for pure logic you touch.
 - **Testing:** the Android TV emulator (`Television_1080p`) has a side-by-side debug copy,
   `com.ipxtream.tv.preview`, signed in with the user's account. Build it with a Gradle init script that sets
-  `applicationIdSuffix = ".preview"` on the debug build type, so the installed release app is untouched.
+  `applicationIdSuffix = ".preview"` on the debug build type, so the installed release app is untouched
+  (`assembleGithubDebug`; the Play build's preview is `com.xtream.kyu.preview`). If Gradle fails with "Unable to
+  establish loopback connection" on Windows, set `TEMP`/`TMP` to a short folder (e.g. `C:\gtmp`) and
+  `JAVA_TOOL_OPTIONS=-Djdk.net.unixdomain.tmpdir=C:\gtmp`.
 
 ## Log entry format
 
@@ -376,3 +386,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: docs/play-store-plan.md, AGENTS.md
 - Status: plan awaiting owner decisions D1–D7 (§2 of the doc)
 - For the other agent: don't start the flavor split or the API 36 upgrade until the owner answers; they touch build.gradle.kts, the manifest, DashboardViewModel/Screen/Activity, SettingsScreen, data/match/** and release.yml. Both tracked keystores are in a public repo, so neither may become the Play upload key.
+
+### 2026-10-24 | claude
+- Did: Starting Phase 1 of `docs/play-store-plan.md` (owner request): `github` / `play` product flavors. GitHub build stays as today; Play build (`com.xtream.kyu`) has no self-updater/install permission/FileProvider and provider-neutral Matches suggestions.
+- Files (locked until my next entry — please don't edit): app/build.gradle.kts, app/src/main/AndroidManifest.xml, new app/src/github/** and app/src/play/**, data/api/UpdateManager.kt, data/match/{BeinGuide,ChannelMatcher}.kt, assets/match_rights.json, res/xml/file_paths.xml, ui/dashboard/{DashboardViewModel,DashboardScreen,DashboardActivity}.kt, ui/dashboard/components/{MatchesScreen,SettingsScreen}.kt, res/values*/strings.xml, app/src/test/**, .github/workflows/release.yml, app/lint-baseline.xml.
+- Status: in progress
+- For the other agent: Gradle tasks get flavor names after this (`assembleGithubRelease`, `testGithubDebugUnitTest`, …).
+
+### 2026-10-24 | claude
+- Did: Phase 1 of `docs/play-store-plan.md`: `github` / `play` product flavors (see "Build flavors" in Current state). GitHub build unchanged for users: same package, debugCI key (cert matches CI's pin), updater, beIN guide and rights table; `release.yml` builds `assembleGithubRelease` and publishes it under the same asset names. Play build `com.xtream.kyu`: no updater code, no `REQUEST_INSTALL_PACKAGES`/FileProvider/`profileable`, update spots say "updates come from Google Play" and open the Play Store page; Matches suggests only the user's channels whose names hold both team names, OK plays only a remembered pick, otherwise opens the picker ("Found in your channels"). Moved: `UpdateManager`, `BeinGuide`, `ChannelMatcher`, `match_rights.json`, `file_paths.xml` → `src/github`; Matches suggestion logic moved from `DashboardViewModel` into `MatchChannelFinder` (per flavor). New `PlayBuildTest`; `StringResourcesTest` covers flavor strings.
+- Files: app/build.gradle.kts, app/src/main/AndroidManifest.xml, app/src/github/**, app/src/play/**, app/src/testGithub/**, app/src/testPlay/**, app/src/test/.../StringResourcesTest.kt, ui/dashboard/{DashboardViewModel,DashboardScreen,DashboardActivity,DashboardUiState}.kt, ui/dashboard/components/{MatchesScreen,SettingsScreen,HomeComponents}.kt, res/values*/strings.xml, .github/workflows/release.yml, docs/play-store-plan.md, AGENTS.md
+- Status: done. Both flavors: 81 unit tests, lint (no new errors) and release builds pass. APKs checked: GitHub has the install permission, GitHub URL and beIN endpoint; Play has none of them and no rights table. Emulator (preview builds, local mock server with event + beIN channels): GitHub Matches shows "On beIN SPORTS 1 (beIN guide)" as before; Play Matches finds "EVENT 1: Arsenal vs Everton", never suggests beIN, OK opens the picker, the pick plays full screen and is remembered; Play About shows "Open in Google Play" and opens the Play Store. Not checked: a self-update install of the new GitHub release on a real TV (next CI release).
+- For the other agent: locks from my previous entry are released. Gradle task names now carry the flavor. Known limit in the Play matcher: a channel must name both teams as ESPN spells them or by their short name ("Chelsea v Tottenham" doesn't match "Tottenham Hotspur"/"Spurs").

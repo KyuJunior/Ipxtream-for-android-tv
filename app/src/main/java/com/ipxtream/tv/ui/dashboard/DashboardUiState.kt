@@ -33,7 +33,7 @@ enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
 
 /**
  * A match with the user's live channels that may show it, best first: the channel the user
- * chose before (when [remembered]), then [com.ipxtream.tv.data.match.ChannelMatcher]'s guesses.
+ * chose before (when [remembered]), then the build flavor's [com.ipxtream.tv.data.match.MatchChannelFinder] suggestions.
  */
 data class MatchListing(
     val match:      com.ipxtream.tv.data.match.Match,

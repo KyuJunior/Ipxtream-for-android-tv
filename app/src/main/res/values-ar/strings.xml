@@ -309,6 +309,9 @@
     <string name="update_installer_failed">تعذّر على التلفاز فتح أداة التثبيت. اسمح بالتثبيت من هذا التطبيق في الإعدادات ثم حاول مجددًا.</string>
     <string name="update_new_version">الإصدار %1$s متاح الآن!</string>
     <string name="update_running_latest">أنت تستخدم أحدث إصدار (v%1$s).</string>
+    <string name="update_via_play">الإصدار %1$s · تصل التحديثات من Google Play</string>
+    <string name="update_open_play">فتح في Google Play</string>
+    <string name="update_store_unavailable">متجر Google Play غير متاح على هذا التلفاز.</string>
     <string name="update_up_to_date">محدّث</string>
     <string name="update_verify_failed">التحديث الذي تم تنزيله غير موقّع من IPXtream، لذلك تم حذفه ولم يُثبَّت.</string>
     <string name="vod_cast">البطولة</string>
@@ -335,7 +338,6 @@
     <string name="matches_starts_in">بعد %1$d د</string>
     <string name="matches_channel_suggested">قناة مقترحة · اضغط مطولًا على OK للتغيير</string>
     <string name="matches_channel_saved">قناتك · اضغط مطولًا على OK للتغيير</string>
-    <string name="matches_channel_guide">على %1$s (دليل beIN) · اضغط مطولًا على OK للتغيير</string>
     <string name="matches_no_channel">لم يُعثر على قناة · اضغط OK للاختيار</string>
     <string name="matches_loading">جارٍ تحميل المباريات…</string>
     <string name="matches_empty">لا توجد مباريات في هذا اليوم</string>
