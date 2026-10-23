@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **plan only, nothing built.** Written 2026-10-24 after the local council review
+Status: **plan only, nothing built. D1 and D3 answered 2026-10-24 (§9); D2, D4–D7 open.** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
 The GitHub build and every TV that already runs it stay exactly as they are.
@@ -69,9 +69,16 @@ How the split is done, so that the Play build contains none of the removed code 
      `check()`, `download()`, `install()`, `isSupported`) used by `DashboardViewModel`; `src/play` provides
      `NoUpdater` (`isSupported = false`). The Software Update card, the banner and the 30 s startup check hide when
      `isSupported` is false.
-   - `BeinGuide.kt` and the `MatchRights` part of `ChannelMatcher.kt` → `src/github`. `main` keeps fixtures,
-     `MatchRepository`, `MatchChannelStore` and the picker; a `MatchSuggestions` interface with a github implementation
-     (today's behaviour) and a play implementation per D3.
+   - `BeinGuide.kt`, `ChannelMatcher.kt` (suggestions, sports-category index, rights table) → `src/github`. `main`
+     keeps fixtures, `MatchRepository`, `MatchChannelStore` and the picker; a `MatchSuggestions` interface with a
+     github implementation (today's behaviour) and a play implementation that returns only the user's remembered pick
+     (D3 answered: (b)). In the Play build:
+     - a match row shows the remembered channel, or "Choose a channel" when there is none;
+     - OK on any match (live or not) opens the picker when nothing is remembered, and plays the remembered channel
+       when there is one; long-press always opens the picker;
+     - the picker lists all live channels with search, no "Suggested" group; "use for all <competition> matches" stays;
+     - CH+/CH− during a match steps through normal live channels, not match suggestions;
+     - the beIN-guide hint and string are absent.
    - `assets/match_rights.json` → `src/github/assets/`.
 2. **Manifest per flavor.** `REQUEST_INSTALL_PACKAGES` and the FileProvider move to `src/github/AndroidManifest.xml`
    (merged into main); `profileable` too. `src/play/AndroidManifest.xml` adds nothing, and the merged Play manifest is
@@ -226,9 +233,9 @@ Phases 1–3 are independent of the owner's Play Console work, so they can start
 
 | # | Answer | Date |
 |---|---|---|
-| D1 | | |
+| D1 | New package for the Play app (not `com.ipxtream.tv`); exact name still to choose, together with D2 | 2026-10-24 |
 | D2 | | |
-| D3 | | |
+| D3 | (b): fixtures and scores only; the user picks a channel by hand and the pick is remembered; no suggestions, no beIN guide, no rights table, no auto-play | 2026-10-24 |
 | D4 | | |
 | D5 | | |
 | D6 | | |
