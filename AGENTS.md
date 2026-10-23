@@ -341,3 +341,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/api/ApiClient.kt, data/match/{BeinGuide,ChannelMatcher,EspnSoccerService}.kt, ui/dashboard/{DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. On the owner's TV (preview): a planted Dubai Sports pick stayed, a planted beIN DRAMA pick yielded to beIN SPORTS 3, Tomorrow's matches got their own beIN channels from today's cached guide, and the countdown ticked.
 - For the other agent: new HTTP clients should derive from `ApiClient.sharedHttp.newBuilder()`.
+
+### 2026-10-23 | claude
+- Did: Uninstalled `com.ipxtream.tv.preview` from the owner's TV (owner request). Only the regular app (v2.0.6) remains; a preview build there would need the owner to sign in again.
+- Files: AGENTS.md
+- Status: done
+- For the other agent: none
