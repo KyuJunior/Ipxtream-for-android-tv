@@ -311,3 +311,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/match/ChannelMatcher.kt, ui/dashboard/components/MatchesScreen.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. Live-match playback on the TV still to be checked (preview build there needs the owner to sign in).
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: Live-match test of Matches on the owner's TV (preview build, temporarily following the Saudi league, not committed): Al Ittihad–Al Diriyah showed as LIVE 16' with score, OK started its suggested channel in the split player and it decoded at 25 fps until the TV itself went to sleep. Fix from the test: with the app in English the matcher preferred English-region feeds (suggested "AU: BEIN SPORTS AU 1" for the Premier League); it now prefers Arabic feeds when the app is Arabic or the TV's time zone is in the Arab world (`ChannelMatcher.preferredRegions`).
+- Files: data/match/ChannelMatcher.kt, ui/dashboard/DashboardViewModel.kt, app/src/test/.../MatchesTest.kt, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass. Not checked: CH+/CH− during a live match and the picker on the TV (the TV slept).
+- For the other agent: The owner's TV now has `com.ipxtream.tv.preview` signed in with the owner's account.

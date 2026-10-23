@@ -48,6 +48,18 @@ object ChannelMatcher {
     val ARABIC_REGIONS = setOf("ar", "arab", "mena", "me", "ksa", "sa", "uae", "ae", "qa", "eg", "kw", "bh", "om", "jo")
     val ENGLISH_REGIONS = setOf("uk", "gb", "en", "eng", "us", "usa", "ie", "ca", "au")
 
+    /** Time zones of the Arab world: there the MENA feeds are wanted even with the app in English. */
+    private val MENA_ZONES = setOf(
+        "Asia/Riyadh", "Asia/Dubai", "Asia/Qatar", "Asia/Kuwait", "Asia/Bahrain", "Asia/Muscat", "Asia/Aden",
+        "Asia/Baghdad", "Asia/Amman", "Asia/Beirut", "Asia/Damascus", "Asia/Gaza", "Asia/Hebron",
+        "Africa/Cairo", "Africa/Khartoum", "Africa/Tripoli", "Africa/Tunis", "Africa/Algiers", "Africa/Casablanca",
+        "Africa/El_Aaiun", "Africa/Nouakchott"
+    )
+
+    /** Region tags to prefer: Arabic feeds for an Arabic app or a TV set to an Arab time zone, else English ones. */
+    fun preferredRegions(arabicApp: Boolean, timeZoneId: String): Set<String> =
+        if (arabicApp || timeZoneId in MENA_ZONES) ARABIC_REGIONS else ENGLISH_REGIONS
+
     private val QUALITY = mapOf(
         "4k" to 3, "uhd" to 3, "fhd" to 3, "hd" to 2, "hq" to 1, "sd" to -3,
         "hevc" to 0, "h265" to 0, "h264" to 0, "50fps" to 0, "60fps" to 0, "raw" to 0

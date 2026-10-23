@@ -124,6 +124,17 @@ class MatchesTest {
         assertTrue("entertainment channels are never suggested", best.none { it.streamId in 30..32 })
     }
 
+    @Test fun arabTimeZonePrefersArabicFeedsWithEnglishApp() {
+        val channels = ChannelMatcher.ChannelIndex(listOf(
+            live(40, "ⒶⓂ AU: BEIN SPORTS AU 1 FHD"),
+            live(41, "ⒶⓂ AR_beIN_SPORTS_1_FHD")
+        ))
+        val regions = ChannelMatcher.preferredRegions(arabicApp = false, timeZoneId = "Africa/Cairo")
+        val best = ChannelMatcher.candidates(match("Everton", "Fulham"), channels, rights.familiesFor("eng.1"), regions)
+        assertEquals(41, best.first().streamId)
+        assertEquals(ChannelMatcher.ENGLISH_REGIONS, ChannelMatcher.preferredRegions(false, "Europe/London"))
+    }
+
     @Test fun rightsTableCoversDefaultCompetitions() {
         listOf("uefa.champions", "eng.1", "esp.1").forEach { slug ->
             val families = rights.familiesFor(slug)

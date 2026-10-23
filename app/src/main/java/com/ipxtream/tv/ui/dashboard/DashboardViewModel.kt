@@ -381,8 +381,10 @@ class DashboardViewModel(
     private fun buildMatchListings(matches: List<Match>, channels: List<StreamItem>): List<MatchListing> {
         val index = channelIndex.takeIf { channelIndexSource === channels }
             ?: ChannelMatcher.ChannelIndex(channels).also { channelIndex = it; channelIndexSource = channels }
-        val regions = if (_uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC)
-            ChannelMatcher.ARABIC_REGIONS else ChannelMatcher.ENGLISH_REGIONS
+        val regions = ChannelMatcher.preferredRegions(
+            arabicApp  = _uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC,
+            timeZoneId = java.util.TimeZone.getDefault().id
+        )
         val byId by lazy { channels.associateBy { it.streamId } }
         return matches.map { m ->
             val guesses = ChannelMatcher.candidates(m, index, matchRights.familiesFor(m.competition.slug), regions)
