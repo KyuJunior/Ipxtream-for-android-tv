@@ -52,6 +52,18 @@ object ChannelMatcher {
         "4k" to 3, "uhd" to 3, "fhd" to 3, "hd" to 2, "hq" to 1, "sd" to -3,
         "hevc" to 0, "h265" to 0, "h264" to 0, "50fps" to 0, "60fps" to 0, "raw" to 0
     )
+    /** Country tags seen in provider names ("AR_beIN…", "TR ★ BEIN…", "UK: Sky…"). */
+    private val FOREIGN_REGIONS = setOf(
+        "tr", "fr", "es", "de", "it", "pt", "nl", "pl", "ru", "gr", "ro", "se", "dk", "fi", "br", "mx", "latino", "ir", "ku", "pk"
+    )
+    /** Tags recognised anywhere in the first few words; short words that are also real words ("al", "in", "me") only as a "XX|" prefix. */
+    private val SCANNED_REGIONS: Set<String> by lazy { (ARABIC_REGIONS + ENGLISH_REGIONS + FOREIGN_REGIONS) - setOf("me", "ca", "ie") }
+    /** Words that mark a broadcaster's non-sports channel (beIN DRAMA, beIN MOVIES…). */
+    private val ENTERTAINMENT = setOf(
+        "drama", "movies", "movie", "series", "cinema", "film", "films", "box", "office", "junior", "jeem", "baraem",
+        "gourmet", "fatafeat", "kids", "documentary", "docs", "doc", "music", "entertainment", "comedy"
+    )
+    private val SPORT_WORDS = setOf("sport", "sports", "رياضة", "رياضية", "سبورت")
     private val PENALTY = setOf("news", "backup", "test", "replay", "radio", "fm", "24")
     private val VERSUS = setOf("vs", "v", "x", "ضد")
     private val PREFIX = Regex("""^[^\p{L}\p{N}]*([a-z]{2,4})\s*(?:[|:\]]|\s-\s)\s*""")
@@ -74,7 +86,16 @@ object ChannelMatcher {
             }
         }
         s = s.replace("+", " plus ")
-        val words = s.split(NON_WORD).filter { it.isNotEmpty() }
+        var words = s.split(NON_WORD).filter { it.isNotEmpty() }
+        if (region == null) {
+            // "ⒶⓂ AR_beIN_SPORTS_1" / "TR ★ BEIN SPORTS 1": a country tag among the first words,
+            // after decorations (the circled letters fold to plain ones).
+            val at = words.take(3).indexOfFirst { it in SCANNED_REGIONS }
+            if (at >= 0) {
+                region = words[at]
+                words = words.drop(at + 1)
+            }
+        }
         var quality = 0
         val kept = words.filter { w ->
             val q = QUALITY[w]
@@ -97,6 +118,7 @@ object ChannelMatcher {
         val quality: Int,
         val family:  String?,
         val number:  Int?,
+        val sport:   Boolean,
         val penalty: Boolean,
         val versus:  Boolean
     )
@@ -129,7 +151,9 @@ object ChannelMatcher {
             padded  = padded,
             region  = n.region,
             quality = n.quality,
-            family  = family,
+            // beIN DRAMA / MOVIES / SERIES share the brand but never show football.
+            family  = family.takeIf { words.none { it in ENTERTAINMENT } },
+            sport   = words.any { it in SPORT_WORDS },
             number  = number,
             penalty = words.any { it in PENALTY },
             versus  = words.any { it in VERSUS }
@@ -176,7 +200,8 @@ object ChannelMatcher {
         }
         if (rank >= 0) score += maxOf(15, 60 - 8 * rank)
         if (score == 0) return null
-        if (e.region != null && e.region in preferredRegions) score += 8
+        if (e.region != null) score += if (e.region in preferredRegions) 8 else -4
+        if (e.sport) score += 4
         score += e.quality
         e.number?.let { score += maxOf(0, 6 - it) }
         if (e.penalty) score -= 25

@@ -94,6 +94,36 @@ class MatchesTest {
         assertTrue("SSC has no Premier League rights", best.none { it.streamId == 16 })
     }
 
+    // Names as the owner's provider writes them (seen on the TV, 2026-10-23).
+    private val providerChannels = listOf(
+        live(30, "ⒶⓂ AR_beIN_DRAMA_1_FHD"),
+        live(31, "ⒶⓂ AR_beIN_MOVIES_1_FHD"),
+        live(32, "ⒶⓂ AR_beIN_Series_1_FHD"),
+        live(33, "ⒶⓂ TR: BEIN SPORTS 1 4K"),
+        live(34, "ⒶⓂ TR ★ BEIN SPORTS 1 4K"),
+        live(35, "ⒶⓂ BeIN SPORTS 4K 1 (SS)"),
+        live(36, "ⒶⓂ AR_beIN_SPORTS_1_FHD"),
+        live(37, "ⒶⓂ AR_beIN_SPORTS_2_FHD")
+    )
+
+    @Test fun readsDecoratedAndUnderscoredNames() {
+        val n = ChannelMatcher.normalize("ⒶⓂ AR_beIN_SPORTS_1_FHD")
+        assertEquals("ar", n.region)
+        assertEquals("bein sports 1", n.text)
+        assertEquals("tr", ChannelMatcher.normalize("ⒶⓂ TR ★ BEIN SPORTS 1 4K").region)
+        assertEquals(1, ChannelMatcher.entry(live(1, "ⒶⓂ BeIN SPORTS 4K 1 (SS)")).number)
+        assertNull("beIN DRAMA is not a sports channel", ChannelMatcher.entry(live(2, "ⒶⓂ AR_beIN_DRAMA_1_FHD")).family)
+    }
+
+    @Test fun providerNamesSuggestArabicBeinSportsFirst() {
+        val best = ChannelMatcher.candidates(
+            match("Alavés", "Málaga", slug = "esp.1"), ChannelMatcher.ChannelIndex(providerChannels),
+            rights.familiesFor("esp.1"), ChannelMatcher.ARABIC_REGIONS
+        )
+        assertEquals(listOf(36, 37), best.take(2).map { it.streamId })
+        assertTrue("entertainment channels are never suggested", best.none { it.streamId in 30..32 })
+    }
+
     @Test fun rightsTableCoversDefaultCompetitions() {
         listOf("uefa.champions", "eng.1", "esp.1").forEach { slug ->
             val families = rights.familiesFor(slug)

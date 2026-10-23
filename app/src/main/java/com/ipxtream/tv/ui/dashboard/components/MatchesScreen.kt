@@ -523,6 +523,7 @@ private fun ChannelPicker(
     var query by remember { mutableStateOf("") }
     var forCompetition by remember { mutableStateOf(false) }
     val firstFocus = remember { FocusRequester() }
+    val searchFocus = remember { FocusRequester() }
     val suggestedIds = remember(listing) { listing.channels.map { it.streamId }.toSet() }
     val shown = remember(query, allChannels, listing) {
         val q = query.trim()
@@ -560,7 +561,12 @@ private fun ChannelPicker(
                     )
                     Spacer(Modifier.width(16.dp))
                     Box(Modifier.weight(1f)) {
-                        SearchBar(query = query, onQueryChange = { query = it }, placeholder = stringResource(R.string.picker_search_hint))
+                        SearchBar(
+                            query         = query,
+                            onQueryChange = { query = it },
+                            placeholder   = stringResource(R.string.picker_search_hint),
+                            modifier      = Modifier.focusRequester(searchFocus)
+                        )
                     }
                 }
                 Spacer(Modifier.height(14.dp))
@@ -582,7 +588,8 @@ private fun ChannelPicker(
                             PickerRow(
                                 stream   = stream,
                                 onClick  = { onPick(stream, forCompetition) },
-                                modifier = if (i == 0) Modifier.focusRequester(firstFocus) else Modifier
+                                // Up from the first channel goes to the search, not back into the list.
+                                modifier = if (i == 0) Modifier.focusRequester(firstFocus).focusProperties { up = searchFocus } else Modifier
                             )
                         }
                     }
