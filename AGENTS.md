@@ -248,3 +248,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/components/SearchBar.kt, AGENTS.md
 - Status: done; checked on the emulator (search → cloud → refresh → settings, and back).
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: Poster rows no longer slide on every Left/Right. On TV devices Compose's default bring-into-view keeps the focused item pinned at 30% of the row, so the whole row moved each press. `ui/theme/ScrollSpec.kt` (`EdgeBringIntoViewSpec`, provided in `IpxTvTheme`) scrolls only when the focused item comes within 48dp of an edge, and then just far enough. Applies to every LazyRow/LazyColumn/grid.
+- Files: ui/theme/{ScrollSpec,Theme}.kt, AGENTS.md
+- Status: done; checked on the emulator (Top Movies row: focus walks across visible posters with the row still).
+- For the other agent: Don't add per-list `BringIntoViewSpec`s; the theme-level one covers all lists.

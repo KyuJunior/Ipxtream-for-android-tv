@@ -10,6 +10,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.MaterialTheme as TvMaterialTheme
@@ -84,9 +85,14 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
     }
     val reducedEffects = remember(perfMode) { reducedEffectsFor(context, perfMode) }
 
+    // Rows and grids stay still while focus moves across visible items (see EdgeBringIntoViewSpec).
+    val bringIntoView = remember(scaledDensity) { EdgeBringIntoViewSpec(edgePx = with(scaledDensity) { 48.dp.toPx() }) }
+
+    @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
     androidx.compose.runtime.CompositionLocalProvider(
         androidx.compose.ui.platform.LocalDensity provides scaledDensity,
-        LocalReducedEffects provides reducedEffects
+        LocalReducedEffects provides reducedEffects,
+        androidx.compose.foundation.gestures.LocalBringIntoViewSpec provides bringIntoView
     ) {
         // Standard M3 theme (for non-TV composables like TextField, SnackBar)
         MaterialTheme(
