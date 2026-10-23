@@ -316,4 +316,38 @@
     <string name="vod_director">Director</string>
     <string name="vod_loading">Loading movie details...</string>
     <string name="whats_new_empty">No new high-rated releases found.</string>
+
+    <!-- Matches -->
+    <string name="section_matches">Matches</string>
+    <string name="matches_eyebrow">FOOTBALL</string>
+    <string name="matches_title">Matches</string>
+    <string name="matches_updated">Updated %1$s · Data: ESPN</string>
+    <string name="matches_offline">Offline · showing fixtures saved at %1$s</string>
+    <string name="matches_source">Data: ESPN</string>
+    <string name="matches_day_yesterday">Yesterday</string>
+    <string name="matches_day_today">Today</string>
+    <string name="matches_day_tomorrow">Tomorrow</string>
+    <string name="matches_live">LIVE</string>
+    <string name="matches_live_now">Live now</string>
+    <string name="matches_ft">Full time</string>
+    <string name="matches_halftime">HT</string>
+    <string name="matches_postponed">Postponed</string>
+    <string name="matches_starts_in">in %1$d min</string>
+    <string name="matches_channel_suggested">Suggested channel · hold OK to change</string>
+    <string name="matches_channel_saved">Your channel · hold OK to change</string>
+    <string name="matches_no_channel">No channel found · press OK to choose</string>
+    <string name="matches_loading">Loading matches…</string>
+    <string name="matches_empty">No matches on this day</string>
+    <string name="matches_empty_hint">Champions League, Premier League and La Liga fixtures appear here.</string>
+    <string name="matches_unavailable">Couldn\'t load matches</string>
+    <string name="matches_unavailable_hint">Check the internet connection, then press Refresh.</string>
+    <string name="competition_uefa_champions">Champions League</string>
+    <string name="competition_eng_1">Premier League</string>
+    <string name="competition_esp_1">La Liga</string>
+    <string name="picker_title">CHOOSE A CHANNEL</string>
+    <string name="picker_suggested">SUGGESTED</string>
+    <string name="picker_all">ALL CHANNELS</string>
+    <string name="picker_search_hint">Search channels</string>
+    <string name="picker_remember_competition">Use for all %1$s matches</string>
+    <string name="picker_none">No channels match</string>
 </resources>

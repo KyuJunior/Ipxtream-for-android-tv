@@ -337,7 +337,7 @@ private fun EmptyUhdMessage(filtered: Boolean, kindLabel: String, scanning: Bool
 /** Capsule toggle: frosted when selected, Halo platter when focused. */
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-private fun PillChip(
+internal fun PillChip(
     label:    String,
     selected: Boolean,
     onClick:  () -> Unit,

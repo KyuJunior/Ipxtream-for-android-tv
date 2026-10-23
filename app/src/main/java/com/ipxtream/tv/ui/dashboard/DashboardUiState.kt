@@ -18,6 +18,7 @@ import com.ipxtream.tv.data.local.LibraryItem
  */
 enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
     HOME(R.string.section_home, "ic_home"),
+    MATCHES(R.string.section_matches, "ic_matches"),
     LIVE(R.string.section_live,   "ic_live_tv"),
     VOD(R.string.section_movies,    "ic_movie"),
     SERIES(R.string.section_series, "ic_series"),
@@ -27,6 +28,18 @@ enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
     SETTINGS(R.string.section_settings, "ic_settings"),
     DOWNLOADS(R.string.section_downloads, "ic_downloads")
 }
+
+// ─── Matches ──────────────────────────────────────────────────────────────────
+
+/**
+ * A match with the user's live channels that may show it, best first: the channel the user
+ * chose before (when [remembered]), then [com.ipxtream.tv.data.match.ChannelMatcher]'s guesses.
+ */
+data class MatchListing(
+    val match:      com.ipxtream.tv.data.match.Match,
+    val channels:   List<StreamItem>,
+    val remembered: Boolean
+)
 
 // ─── 4K scan progress ─────────────────────────────────────────────────────────
 
@@ -128,6 +141,20 @@ data class DashboardUiState(
     val activeAccount:       com.ipxtream.tv.data.model.AuthCredentials? = null,
     // ─── App Settings ───
     val settings:            com.ipxtream.tv.data.local.AppSettings = com.ipxtream.tv.data.local.AppSettings(),
+
+    // ─── Matches ───
+    /** Day shown in Matches, relative to today (-1 = yesterday). */
+    val matchDayOffset:      Int = 0,
+    val matches:             List<MatchListing> = emptyList(),
+    val isLoadingMatches:    Boolean = false,
+    /** When the shown fixtures were downloaded; null if never. */
+    val matchesUpdatedAt:    Long? = null,
+    /** True when the fixture source couldn't be reached and cached data is shown. */
+    val matchesOffline:      Boolean = false,
+    /** Every live channel, for the channel picker's search. */
+    val matchPickerChannels: List<StreamItem> = emptyList(),
+    /** What CH+/CH- steps through while a match plays: its channels, best first. */
+    val matchChannelQueue:   List<StreamItem> = emptyList(),
 
     // ─── Pagination ───
     val currentPage:         Int = 0

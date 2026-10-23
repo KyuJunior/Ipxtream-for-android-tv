@@ -1,6 +1,6 @@
 # Matches section: plan for owner approval
 
-Status: **plan approved, not built yet.** The owner's decisions (§7) are final and override anything
+Status: **plan approved; Release 1 built (2026-10-23), Releases 2–3 not started.** The owner's decisions (§7) are final and override anything
 earlier in this doc that disagrees with them.
 
 Goal (owner): most people use IPTV to watch football. Add a **Matches** section, fed by a free API,

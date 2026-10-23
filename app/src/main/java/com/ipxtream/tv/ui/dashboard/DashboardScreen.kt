@@ -235,7 +235,10 @@ fun DashboardScreen(
     onClearImageCache: () -> Unit = {},
     onClearWatchHistory: () -> Unit = {},
     onUhdScanLibrary: () -> Unit = {},
-    onUhdStopScan: () -> Unit = {}
+    onUhdStopScan: () -> Unit = {},
+    onMatchDaySelected: (Int) -> Unit = {},
+    onPlayMatch: (com.ipxtream.tv.ui.dashboard.MatchListing, StreamItem) -> Unit = { _, _ -> },
+    onPickMatchChannel: (com.ipxtream.tv.ui.dashboard.MatchListing, StreamItem, Boolean) -> Unit = { _, _, _ -> }
 ) {
     val focusManager = LocalFocusManager.current
     val firstItemFocusRequester = remember { FocusRequester() }
@@ -255,10 +258,12 @@ fun DashboardScreen(
     // Home and My Library: the last focused shelf card, for the same trip back from the menu.
     val homeFocusMemory = remember { com.ipxtream.tv.ui.dashboard.components.FocusMemory() }
     val libraryFocusMemory = remember { com.ipxtream.tv.ui.dashboard.components.FocusMemory() }
+    val matchesFocusMemory = remember { com.ipxtream.tv.ui.dashboard.components.FocusMemory() }
     LaunchedEffect(uiState.activeSection) {
         lastContentInGrid = false
         homeFocusMemory.forget()
         libraryFocusMemory.forget()
+        matchesFocusMemory.forget()
     }
     // Back to the page after details, the player or a dialog: the remembered shelf card on
     // Home / My Library (the hero or update card may have scrolled away), else the page's target.
@@ -266,6 +271,7 @@ fun DashboardScreen(
         val restored = when (uiState.activeSection) {
             ContentSection.HOME       -> homeFocusMemory.restore()
             ContentSection.MY_LIBRARY -> libraryFocusMemory.restore()
+            ContentSection.MATCHES    -> matchesFocusMemory.restore()
             else                      -> false
         }
         if (!restored) runCatching { firstItemFocusRequester.requestFocus() }
@@ -294,6 +300,10 @@ fun DashboardScreen(
                     homeFocusMemory.restore() ||
                         runCatching { liveTvCardFocusRequester.requestFocus() }.isSuccess
                 }
+            }
+            ContentSection.MATCHES -> {
+                matchesFocusMemory.restore() ||
+                    runCatching { firstItemFocusRequester.requestFocus() }.isSuccess
             }
             ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES -> {
                 val (first, second) =
@@ -436,8 +446,13 @@ fun DashboardScreen(
         }
     }
 
-    val liveChannelList = remember(uiState.displayedStreams, uiState.streams) {
-        if (uiState.displayedStreams.isNotEmpty()) uiState.displayedStreams else uiState.streams
+    // A match playing from Matches steps through that match's channels (beIN 1 → beIN 2…).
+    val liveChannelList = remember(uiState.displayedStreams, uiState.streams, uiState.activeSection, uiState.matchChannelQueue) {
+        when {
+            uiState.activeSection == ContentSection.MATCHES && uiState.matchChannelQueue.isNotEmpty() -> uiState.matchChannelQueue
+            uiState.displayedStreams.isNotEmpty() -> uiState.displayedStreams
+            else -> uiState.streams
+        }
     }
     val currentLiveIndex = remember(playback.activeStream, uiState.selectedStream, liveChannelList) {
         val activeId = playback.activeStream?.streamId ?: uiState.selectedStream?.streamId
@@ -495,7 +510,8 @@ fun DashboardScreen(
             val isHomeSection = uiState.activeSection == ContentSection.HOME
             // Sections without a category row: the header's D-Pad Down goes to their first item.
             val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY ||
-                uiState.activeSection == ContentSection.UHD
+                uiState.activeSection == ContentSection.UHD ||
+                uiState.activeSection == ContentSection.MATCHES
             val isHomeNormal = isHomeSection && uiState.searchQuery.isBlank()
             // Header → content: a requester that isn't attached in this section crashes focus
             // search, so only name one that exists; otherwise let geometry pick (Settings, Downloads).
@@ -503,6 +519,7 @@ fun DashboardScreen(
                 setOf(ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES)
             val hasFirstItem = when (uiState.activeSection) {
                 ContentSection.MY_LIBRARY -> true
+                ContentSection.MATCHES -> true
                 ContentSection.UHD -> !uiState.isLoadingContent
                 ContentSection.WHATS_NEW -> uiState.whatsNewItems.isNotEmpty()
                 ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES ->
@@ -832,6 +849,25 @@ fun DashboardScreen(
                             onCheckForUpdates = onCheckForUpdates,
                             onDownloadUpdate = onDownloadUpdate,
                             onRefresh = onRefresh
+                        )
+                    }
+                    ContentSection.MATCHES -> androidx.compose.runtime.CompositionLocalProvider(
+                        com.ipxtream.tv.ui.dashboard.components.LocalFocusMemory provides matchesFocusMemory
+                    ) {
+                        com.ipxtream.tv.ui.dashboard.components.MatchesScreen(
+                            matches                 = uiState.matches,
+                            dayOffset               = uiState.matchDayOffset,
+                            isLoading               = uiState.isLoadingMatches,
+                            updatedAt               = uiState.matchesUpdatedAt,
+                            offline                 = uiState.matchesOffline,
+                            use24Hour               = uiState.settings.is24HourClockFormat,
+                            allChannels             = uiState.matchPickerChannels,
+                            onDaySelected           = onMatchDaySelected,
+                            onPlay                  = onPlayMatch,
+                            onPick                  = onPickMatchChannel,
+                            firstItemFocusRequester = firstItemFocusRequester,
+                            sideNavFocusRequester   = sideNavFocusRequester,
+                            modifier                = Modifier.fillMaxSize()
                         )
                     }
                     ContentSection.UHD -> {

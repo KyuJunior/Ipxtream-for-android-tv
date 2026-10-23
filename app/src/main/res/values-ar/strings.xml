@@ -316,4 +316,38 @@
     <string name="vod_director">الإخراج</string>
     <string name="vod_loading">جارٍ تحميل تفاصيل الفيلم…</string>
     <string name="whats_new_empty">لا توجد إصدارات جديدة عالية التقييم.</string>
+
+    <!-- Matches -->
+    <string name="section_matches">المباريات</string>
+    <string name="matches_eyebrow">كرة القدم</string>
+    <string name="matches_title">المباريات</string>
+    <string name="matches_updated">آخر تحديث %1$s · البيانات: ESPN</string>
+    <string name="matches_offline">غير متصل · تُعرض المباريات المحفوظة الساعة %1$s</string>
+    <string name="matches_source">البيانات: ESPN</string>
+    <string name="matches_day_yesterday">أمس</string>
+    <string name="matches_day_today">اليوم</string>
+    <string name="matches_day_tomorrow">غدًا</string>
+    <string name="matches_live">مباشر</string>
+    <string name="matches_live_now">مباشر الآن</string>
+    <string name="matches_ft">انتهت</string>
+    <string name="matches_halftime">استراحة</string>
+    <string name="matches_postponed">مؤجلة</string>
+    <string name="matches_starts_in">بعد %1$d د</string>
+    <string name="matches_channel_suggested">قناة مقترحة · اضغط مطولًا على OK للتغيير</string>
+    <string name="matches_channel_saved">قناتك · اضغط مطولًا على OK للتغيير</string>
+    <string name="matches_no_channel">لم يُعثر على قناة · اضغط OK للاختيار</string>
+    <string name="matches_loading">جارٍ تحميل المباريات…</string>
+    <string name="matches_empty">لا توجد مباريات في هذا اليوم</string>
+    <string name="matches_empty_hint">تظهر هنا مباريات دوري أبطال أوروبا والدوري الإنجليزي الممتاز والدوري الإسباني.</string>
+    <string name="matches_unavailable">تعذّر تحميل المباريات</string>
+    <string name="matches_unavailable_hint">تحقق من اتصال الإنترنت ثم اضغط تحديث.</string>
+    <string name="competition_uefa_champions">دوري أبطال أوروبا</string>
+    <string name="competition_eng_1">الدوري الإنجليزي الممتاز</string>
+    <string name="competition_esp_1">الدوري الإسباني</string>
+    <string name="picker_title">اختر قناة</string>
+    <string name="picker_suggested">مقترحة</string>
+    <string name="picker_all">كل القنوات</string>
+    <string name="picker_search_hint">ابحث في القنوات</string>
+    <string name="picker_remember_competition">استخدمها لكل مباريات %1$s</string>
+    <string name="picker_none">لا توجد قنوات مطابقة</string>
 </resources>

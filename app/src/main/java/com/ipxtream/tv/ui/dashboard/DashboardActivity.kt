@@ -128,6 +128,18 @@ class DashboardActivity : ComponentActivity() {
 
                     onSeriesSelected   = dashboardViewModel::showSeriesDetails,
 
+                    onMatchDaySelected = dashboardViewModel::selectMatchDay,
+                    onPlayMatch        = { listing, stream ->
+                        dashboardViewModel.setMatchChannelQueue(listing.channels)
+                        dashboardViewModel.startPlayback(stream)
+                        playerViewModel.loadStream(stream, credentials)
+                    },
+                    onPickMatchChannel = { listing, stream, forCompetition ->
+                        dashboardViewModel.rememberMatchChannel(listing.match, stream, forCompetition)
+                        dashboardViewModel.startPlayback(stream)
+                        playerViewModel.loadStream(stream, credentials)
+                    },
+
                     onVodPlay = { stream ->
                         dashboardViewModel.startPlayback(stream)
                         playerViewModel.loadStream(stream, credentials)

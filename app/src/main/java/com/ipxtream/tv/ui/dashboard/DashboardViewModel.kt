@@ -29,6 +29,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import com.ipxtream.tv.data.local.LibraryStore
 import com.ipxtream.tv.data.local.LibraryItem
+import com.ipxtream.tv.data.match.ChannelMatcher
+import com.ipxtream.tv.data.match.Match
+import com.ipxtream.tv.data.match.MatchChannelStore
+import com.ipxtream.tv.data.match.MatchRepository
+import com.ipxtream.tv.data.match.MatchRights
+import com.ipxtream.tv.data.match.MatchState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for the [DashboardActivity].
@@ -141,6 +149,7 @@ class DashboardViewModel(
      */
     fun selectSection(section: ContentSection) {
         if (_uiState.value.activeSection == section) return
+        matchesJob?.cancel()
 
         _uiState.update { state ->
             state.copy(
@@ -165,6 +174,8 @@ class DashboardViewModel(
             loadWhatsNew()
         } else if (section == ContentSection.UHD) {
             loadUhdCatalog()
+        } else if (section == ContentSection.MATCHES) {
+            loadMatches()
         } else if (section == ContentSection.SETTINGS || section == ContentSection.DOWNLOADS) {
             // No data loading needed for Settings or Downloads
         } else {
@@ -307,8 +318,105 @@ class DashboardViewModel(
         _uiState.update { it.copy(selectedCategoryId = null, searchQuery = "", error = null) }
         if (section == ContentSection.MY_LIBRARY) {
             refreshLibraryLists()
+        } else if (section == ContentSection.MATCHES) {
+            loadMatches(force = true)
         } else {
             loadSectionData(section, forceRefresh = true)
+        }
+    }
+
+    // =========================================================================
+    //  Matches
+    // =========================================================================
+
+    private val matchRepository by lazy { MatchRepository(context) }
+    private val matchChannelStore by lazy { MatchChannelStore(context, repository.accountKey) }
+    private val matchRights by lazy { MatchRights.load(context) }
+    private var channelIndex: ChannelMatcher.ChannelIndex? = null
+    private var channelIndexSource: List<StreamItem>? = null
+    private var matchesJob: Job? = null
+
+    fun selectMatchDay(offset: Int) {
+        if (_uiState.value.matchDayOffset == offset) return
+        _uiState.update { it.copy(matchDayOffset = offset, matches = emptyList()) }
+        loadMatches()
+    }
+
+    /**
+     * Loads the shown day's fixtures and matches them to live channels. While something on
+     * today's list is playing (or due within 15 min), it re-checks every minute as long as
+     * Matches stays open and no video is playing.
+     */
+    fun loadMatches(force: Boolean = false) {
+        matchesJob?.cancel()
+        val offset = _uiState.value.matchDayOffset
+        matchesJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMatches = it.matches.isEmpty()) }
+            var refresh = force
+            while (true) {
+                val day = async { matchRepository.matchesFor(offset, force = refresh) }
+                val channels = repository.getLiveStreams().getOrNull().orEmpty()
+                val result = day.await()
+                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels) }
+                _uiState.update { it.copy(
+                    matches             = listings,
+                    isLoadingMatches    = false,
+                    matchesUpdatedAt    = result.fetchedAtMs,
+                    matchesOffline      = result.offline,
+                    matchPickerChannels = channels
+                ) }
+                refresh = false
+                val soon = System.currentTimeMillis() + 15 * 60_000L
+                val inPlay = listings.any {
+                    it.match.state == MatchState.LIVE ||
+                        (it.match.state == MatchState.UPCOMING && it.match.kickoffMs <= soon)
+                }
+                if (offset != 0 || !inPlay) break
+                do { delay(60_000) } while (_uiState.value.hasActivePlayback)
+                if (_uiState.value.activeSection != ContentSection.MATCHES) break
+            }
+        }
+    }
+
+    private fun buildMatchListings(matches: List<Match>, channels: List<StreamItem>): List<MatchListing> {
+        val index = channelIndex.takeIf { channelIndexSource === channels }
+            ?: ChannelMatcher.ChannelIndex(channels).also { channelIndex = it; channelIndexSource = channels }
+        val regions = if (_uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC)
+            ChannelMatcher.ARABIC_REGIONS else ChannelMatcher.ENGLISH_REGIONS
+        val byId by lazy { channels.associateBy { it.streamId } }
+        return matches.map { m ->
+            val guesses = ChannelMatcher.candidates(m, index, matchRights.familiesFor(m.competition.slug), regions)
+            val saved = matchChannelStore.channelFor(m)?.let { byId[it] }
+            MatchListing(
+                match      = m,
+                channels   = listOfNotNull(saved) + guesses.filter { it.streamId != saved?.streamId },
+                remembered = saved != null
+            )
+        }
+    }
+
+    /** CH+/CH- follow [channels] while this match plays. */
+    fun setMatchChannelQueue(channels: List<StreamItem>) {
+        _uiState.update { it.copy(matchChannelQueue = channels) }
+    }
+
+    /**
+     * Saves the user's pick for [match] (and every match of its competition when
+     * [forCompetition]) and moves it to the front of the affected listings.
+     */
+    fun rememberMatchChannel(match: Match, stream: StreamItem, forCompetition: Boolean) {
+        matchChannelStore.remember(match, stream.streamId, forCompetition)
+        _uiState.update { state ->
+            val updated = state.matches.map { l ->
+                val affected = l.match.id == match.id ||
+                    (forCompetition && l.match.competition.slug == match.competition.slug)
+                if (!affected) l
+                else l.copy(channels = listOf(stream) + l.channels.filter { it.streamId != stream.streamId }, remembered = true)
+            }
+            state.copy(
+                matches           = updated,
+                matchChannelQueue = updated.firstOrNull { it.match.id == match.id }?.channels ?: listOf(stream)
+            )
         }
     }
 
@@ -1010,6 +1118,7 @@ class DashboardViewModel(
                 ContentSection.HOME -> return@launch
                 ContentSection.WHATS_NEW -> return@launch
                 ContentSection.UHD -> return@launch
+                ContentSection.MATCHES -> return@launch
             }
 
             result
@@ -1084,6 +1193,7 @@ class DashboardViewModel(
                 ContentSection.HOME -> { /* no-op */ }
                 ContentSection.WHATS_NEW -> { /* no-op */ }
                 ContentSection.UHD -> { /* loaded by loadUhdCatalog() */ }
+                ContentSection.MATCHES -> { /* loaded by loadMatches() */ }
             }
         }
     }

@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Slideshow
+import androidx.compose.material.icons.rounded.SportsSoccer
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -101,6 +102,7 @@ data class NavSectionItem(
 
 private val NAV_SECTIONS = listOf(
     NavSectionItem(ContentSection.HOME,       Icons.Rounded.Home),
+    NavSectionItem(ContentSection.MATCHES,    Icons.Rounded.SportsSoccer),
     NavSectionItem(ContentSection.LIVE,       Icons.Rounded.Tv),
     NavSectionItem(ContentSection.VOD,        Icons.Rounded.Movie),
     NavSectionItem(ContentSection.SERIES,     Icons.Rounded.Slideshow),

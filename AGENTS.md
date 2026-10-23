@@ -48,6 +48,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - **Shared state (manual DI):** `di/AppContainer` (via `AppContainer.from(context)`) owns the one `CredentialStore`
   and one `LibraryStore` per account. Never construct those directly. `LibraryStore.favorites/history` are
   `StateFlow`s, so screens update live (the player's progress saves reach Continue Watching on their own).
+- **Matches (football):** `data/match/**` (ESPN fixtures, `ChannelMatcher`, `MatchChannelStore`), rights table in
+  `assets/match_rights.json` (edit each season), UI `ui/dashboard/components/MatchesScreen.kt`. Plan and owner decisions:
+  `docs/matches-section-plan.md`. Fixture models live under `com.ipxtream.tv.data` so R8 keeps them for the cache.
 - **Grids:** use `ui/dashboard/components/PosterGrid` for any poster/channel grid (no container focus, real
   column/row for the side-menu/Up jumps, focus returns to the last opened item). Player state is collected inside
   `ui/player/PlayerHost`; the dashboard only sees `PlaybackSummary` (changes per title, not per second).
@@ -296,3 +299,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: docs/matches-section-plan.md, AGENTS.md
 - Status: done (plan awaiting owner decisions in §7 of the doc)
 - For the other agent: Don't start building Matches until the owner answers §7; it adds `ContentSection.MATCHES` and touches SideNavBar/DashboardScreen/AppSettingsStore.
+
+### 2026-10-23 | claude
+- Did: Matches section, Release 1 of `docs/matches-section-plan.md`. Side menu item 2 (after Home). Fixtures for Champions League, Premier League and La Liga from ESPN's public scoreboard JSON (no key) for Yesterday … +5 days, grouped by competition (live pinned on top today), crests, kick-off in the TV's time zone, score/minute when live, refresh every 60 s only while something is live, Matches is open and nothing plays; cached per (competition, ESPN day) in `cacheDir/matches`, shown offline with "saved at". Each match gets channel suggestions from the user's live list (`data/match/ChannelMatcher`: event channels naming both teams first, then the competition's families from `assets/match_rights.json`, region/quality/number nudges). OK on a live match plays the best channel right away (owner decision); OK on other matches or long-press opens a picker (suggested + all channels + search, "use for all <competition> matches"); the pick is remembered per account (`MatchChannelStore`). While a match plays, CH+/CH− step through its channels.
+- Files: data/match/{Match,EspnSoccerService,MatchRepository,MatchChannelStore,ChannelMatcher}.kt, assets/match_rights.json, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardUiState,DashboardViewModel}.kt, ui/dashboard/components/{MatchesScreen,SideNavBar,UhdScreen}.kt (PillChip now internal), res/values*/strings.xml, app/src/test/.../MatchesTest.kt, AGENTS.md, docs/matches-section-plan.md
+- Status: done. Locks from my previous entry are released. `testDebugUnitTest lintDebug assembleRelease` pass. Emulator (preview, mock account, real ESPN data): list, day chips, menu ↔ chips ↔ rows focus, picker → plays channel in the split player → "Your channel" remembered across restarts, compact rows beside the split player, Arabic RTL. Not checked: auto-play on a live match with real beIN channels (mock has none; covered by unit tests), the owner's TV.
+- For the other agent: The Matches `LazyColumn` took focus itself on D-Pad Down even with `focusProperties { canFocus = false }` (its first item is a non-focusable header); `MatchesScreen` forwards focus from the list to a row. Watch for the same in any lazy list that starts with a header. Release 2 (Home "Live now" shelf, reminder banner, Arabic team names, competition picker) is not started.
