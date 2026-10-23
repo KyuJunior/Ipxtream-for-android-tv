@@ -1,6 +1,7 @@
 # Google Play build: plan for owner approval
 
-Status: **plan only, nothing built. D1 and D3 answered 2026-10-24 (§9); D2, D4–D7 open.** Written 2026-10-24 after the local council review
+Status: **plan only, nothing built. Owner answered D1–D7 on 2026-10-24 (§9); open: the app name, the final package
+check, and whether Play gets provider-neutral match suggestions (D3).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
 The GitHub build and every TV that already runs it stay exactly as they are.
@@ -233,10 +234,10 @@ Phases 1–3 are independent of the owner's Play Console work, so they can start
 
 | # | Answer | Date |
 |---|---|---|
-| D1 | New package for the Play app (not `com.ipxtream.tv`); exact name still to choose, together with D2 | 2026-10-24 |
-| D2 | | |
-| D3 | (b): fixtures and scores only; the user picks a channel by hand and the pick is remembered; no suggestions, no beIN guide, no rights table, no auto-play | 2026-10-24 |
-| D4 | | |
-| D5 | | |
-| D6 | | |
-| D7 | | |
+| D1 | `com.xtream.kyu` (owner). Note: it contains "xtream", which D2 warns about, and it is permanent after the first upload; confirm before Phase 4 | 2026-10-24 |
+| D2 | OK: use a neutral app name on Play; name still to choose | 2026-10-24 |
+| D3 | (b) for now: fixtures and scores only; the user picks a channel by hand and the pick is remembered; no beIN guide, no rights table, no auto-play. Owner asked whether suggestions can work for any provider; open (provider-neutral suggestions from the user's own channel names / provider EPG, see chat 2026-10-24) | 2026-10-24 |
+| D4 | OK: built-in demo with legal streams; stream list to be chosen and checked | 2026-10-24 |
+| D5 | contact@dryaser.me | 2026-10-24 |
+| D6 | Owner has an active Play Console account; check in the Console whether the 12-tester / 14-day closed test applies to it | 2026-10-24 |
+| D7 | OK: GitHub keeps releasing on every push; Play builds only when the owner starts one | 2026-10-24 |
