@@ -290,3 +290,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/player/PlayerPanel.kt, AGENTS.md
 - Status: done. Tests + lint + assembleRelease pass. On the owner's TV: before, a screenshot during playback had `#0D0811` bars above/below the video; after, the whole frame captures `#000000`.
 - For the other agent: Anything behind video (player, Live TV split player, PiP) stays pure black, not the brand canvas.
+
+### 2026-10-23 | claude
+- Did: Planned (no code) a "Matches" football section: `docs/matches-section-plan.md`. Tested free fixture APIs live: ESPN's public scoreboard JSON (no key, has PL/La Liga/UCL/Saudi Pro League/AFC+CAF CL, crests, live state; broadcasters US-only, no Egypt/UAE/Qatar/Morocco leagues) is the recommended source; TheSportsDB's free key truncates results, and its TV data is premium; football-data.org's free tier has no Saudi league; API-Football needs a per-user key. No free API lists Arab channels, so the plan maps match → channel in the app: a bundled rights table, `ChannelMatcher` over the live channel list, optional EPG check, and a remembered user override.
+- Files: docs/matches-section-plan.md, AGENTS.md
+- Status: done (plan awaiting owner decisions in §7 of the doc)
+- For the other agent: Don't start building Matches until the owner answers §7; it adds `ContentSection.MATCHES` and touches SideNavBar/DashboardScreen/AppSettingsStore.
