@@ -130,13 +130,12 @@ class DashboardActivity : ComponentActivity() {
 
                     onMatchDaySelected = dashboardViewModel::selectMatchDay,
                     onPlayMatch        = { listing, stream ->
-                        dashboardViewModel.setMatchChannelQueue(listing.channels)
-                        dashboardViewModel.startPlayback(stream)
+                        dashboardViewModel.startMatchPlayback(stream, listing.channels)
                         playerViewModel.loadStream(stream, credentials)
                     },
                     onPickMatchChannel = { listing, stream, forCompetition ->
                         dashboardViewModel.rememberMatchChannel(listing.match, stream, forCompetition)
-                        dashboardViewModel.startPlayback(stream)
+                        dashboardViewModel.startMatchPlayback(stream, dashboardViewModel.uiState.value.matchChannelQueue)
                         playerViewModel.loadStream(stream, credentials)
                     },
 
@@ -241,8 +240,8 @@ class DashboardActivity : ComponentActivity() {
         if (isExcessRepeat(event)) return true
         if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_DOWN) {
             val state = dashboardViewModel.uiState.value
-            val isFullScreenPlaying = state.selectedEpisode != null || 
-                (state.selectedStream != null && state.selectedStream.streamType == "movie")
+            val isFullScreenPlaying = state.selectedEpisode != null ||
+                (state.selectedStream != null && (state.selectedStream.streamType == "movie" || state.playFullScreen))
 
             if (isFullScreenPlaying) {
                 return super.dispatchKeyEvent(event)

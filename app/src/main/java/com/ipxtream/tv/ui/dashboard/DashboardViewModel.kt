@@ -303,7 +303,7 @@ class DashboardViewModel(
      * Call when the user presses the Stop / Back button in the player overlay.
      */
     fun clearActivePlayback() {
-        _uiState.update { it.copy(selectedStream = null, selectedEpisode = null) }
+        _uiState.update { it.copy(selectedStream = null, selectedEpisode = null, playFullScreen = false) }
         // The player just saved where the user stopped; show it in Continue Watching.
         refreshLibraryLists()
     }
@@ -431,9 +431,13 @@ class DashboardViewModel(
         }
     }
 
-    /** CH+/CH- follow [channels] while this match plays. */
-    fun setMatchChannelQueue(channels: List<StreamItem>) {
-        _uiState.update { it.copy(matchChannelQueue = channels) }
+    /**
+     * Plays [stream] for a match in full screen; CH+/CH- follow [channels] (the match's channels).
+     * The caller also loads it in the player.
+     */
+    fun startMatchPlayback(stream: StreamItem, channels: List<StreamItem>) {
+        _uiState.update { it.copy(matchChannelQueue = channels, playFullScreen = true) }
+        startPlayback(stream)
     }
 
     /**

@@ -331,7 +331,8 @@ fun DashboardScreen(
         }
     }
 
-    val showFullScreenPlayer = uiState.hasActivePlayback && !playback.isLive && exoPlayer != null
+    // Movies/episodes, and a match started from Matches, play full screen; other live channels split.
+    val showFullScreenPlayer = uiState.hasActivePlayback && (!playback.isLive || uiState.playFullScreen) && exoPlayer != null
     val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.isUpdateDialogOpen || showFullScreenPlayer
     val isDetailsOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
 
@@ -475,7 +476,7 @@ fun DashboardScreen(
     } else null
 
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep).trackFocusTravel()) {
-        val showSplitPlayer = uiState.hasActivePlayback && playback.isLive && exoPlayer != null
+        val showSplitPlayer = uiState.hasActivePlayback && playback.isLive && !uiState.playFullScreen && exoPlayer != null
 
         Row(
             modifier = Modifier

@@ -105,6 +105,8 @@ data class DashboardUiState(
     val selectedStream:      StreamItem?      = null,
     /** The episode the user most recently selected for playback. */
     val selectedEpisode:     EpisodeItem?     = null,
+    /** Live playback in full screen instead of the split view (a match started from Matches). */
+    val playFullScreen:      Boolean          = false,
     
     // ─── Library Lists ───
     val favoritesList:       List<LibraryItem> = emptyList(),

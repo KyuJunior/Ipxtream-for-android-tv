@@ -347,3 +347,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: done
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: A match started from Matches now plays full screen (owner report: "the match doesn't start in fullscreen"); other live channels keep the split view. New `DashboardUiState.playFullScreen`, set by `DashboardViewModel.startMatchPlayback` and cleared by `clearActivePlayback`; `showFullScreenPlayer` / `showSplitPlayer` and the Activity's Back routing read it. CH+/CH− still step through the match's channels; Back returns to the Matches row.
+- Files: ui/dashboard/{DashboardUiState,DashboardViewModel,DashboardScreen,DashboardActivity}.kt, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the emulator (preview, mock account): picker pick and OK on a live match both open full screen with the live banner, Back returns to the list.
+- For the other agent: none
