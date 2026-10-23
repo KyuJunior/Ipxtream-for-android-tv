@@ -1,6 +1,7 @@
 # Matches section: plan for owner approval
 
-Status: **plan only, nothing built yet.** The decisions the owner needs to make are in §7.
+Status: **plan approved, not built yet.** The owner's decisions (§7) are final and override anything
+earlier in this doc that disagrees with them.
 
 Goal (owner): most people use IPTV to watch football. Add a **Matches** section, fed by a free API,
 that shows scheduled matches and which channel shows each one. Pressing a match that is live opens
@@ -106,7 +107,7 @@ their channel.
 ### Matches screen
 - **Top row:** day chips `Yesterday · Today · Tomorrow · +2…+6` (the `CategoryRow` chip pattern), plus a
   **Competitions** chip that opens a filter sheet (followed competitions, saved in settings; default
-  set: PL, La Liga, UCL, Saudi Pro League, AFC CL, plus Serie A/Bundesliga/Ligue 1).
+  set: Champions League, Premier League, La Liga).
 - **List**, grouped by competition (header: competition crest + name), sorted by kick-off. In "Today",
   live matches are pinned on top.
 - **Match row (focusable card, `premiumFocus`, own scale 1f, `Border.None`):**
@@ -136,8 +137,8 @@ their channel.
 ### Pressing a match
 | State | OK does | Long-press / Menu |
 |---|---|---|
-| **Live**, a saved or confirmed channel exists | Plays that channel straight away (same `onStreamSelected` → `PlayerViewModel.loadStream` path as Live TV). The banner shows the match name. | Opens the match sheet |
-| **Live**, only heuristic candidates | Opens the **match sheet**: the candidate channels (top one focused) + "Choose channel…". Picking one plays it and offers "Remember for <competition>" | — |
+| **Live** | Plays the best channel straight away (same `onStreamSelected` → `PlayerViewModel.loadStream` path as Live TV): the remembered channel, else the guide-confirmed one, else the top suggestion. The channel banner shows the match name and "CH+/CH− for other channels". | Opens the **match sheet**: the candidates + "Choose channel…"; picking one plays it and offers "Remember for <competition>" |
+| **Live**, no candidate found at all | Opens the match sheet on "Choose channel…" | — |
 | **Upcoming** | Opens the match sheet: kick-off, candidates (you can preview a channel now), **Remind me** | — |
 | **Finished** | Match sheet with the score (no play) | — |
 
@@ -146,11 +147,9 @@ streams). In Matches that list would be empty, so a playback started from a matc
 candidate channels** as the up/down list: CH+ moves to the next candidate (beIN 1 → beIN 2), which is
 what a viewer hunting for the right feed wants.
 
-**Reminders (Release 2):** "Remind me" saves the match locally. While the app is open, a banner appears
-5 min before kick-off ("Al Nassr – Al Hilal starts in 5 min · Watch"), reusing the update banner's
-non-modal pattern. While the app is closed, an exact `AlarmManager` alarm posts a notification that
-opens the match (the app already declares `POST_NOTIFICATIONS`). Android TV launchers often hide
-notifications, so the in-app banner is the primary path and the notification is best effort.
+**Reminders (Release 2), banner only (owner decision):** "Remind me" saves the match locally. While the
+app is open, a banner appears 5 min before kick-off ("Real Madrid – Barcelona starts in 5 min · Watch"),
+reusing the update banner's non-modal pattern. No system notification or alarm.
 
 ---
 
@@ -170,7 +169,7 @@ holds):
 - `data/repository/ChannelMatcher.kt` — pure, unit-tested.
 - `assets/match_rights.json`, `assets/team_names_ar.json`.
 
-**Requests:** one per *followed competition per day*. Today with 8 competitions = 8 small requests
+**Requests:** one per *followed competition per day*. Today with the 3 default competitions = 3 small requests
 (~5–40 KB each). The week view loads days only when their chip is focused.
 
 **Caching** (via `CacheManager`, streamed JSON + temp-file rename, which already exists):
@@ -202,10 +201,9 @@ chips use the local date, so a 00:30 local match appears under the correct day. 
    `ChannelMatcher`, match sheet with candidates, "Choose channel…", remember per match/competition,
    OK on a remembered live match plays it, CH+/CH− across candidates. Unit tests: matcher normalisation
    on ~50 real-world channel names, ESPN parsing from saved fixtures, time-zone day bucketing.
-2. **R2 — Polish.** Home "Live now" shelf, reminders (banner + alarm), Arabic team names, competition
+2. **R2 — Polish.** Home "Live now" shelf, reminders (in-app banner), Arabic team names, competition
    picker, visibility toggle.
-3. **R3 — Accuracy.** EPG cross-check for candidates, optional API-Football source with the user's own
-   key (Egypt/UAE/Qatar/Morocco leagues), rights-table refresh from a JSON in this repo's GitHub
+3. **R3 — Accuracy.** EPG cross-check for candidates and rights-table refresh from a JSON in this repo's GitHub
    releases (same channel as app updates), so it can change without an app release.
 
 Each slice goes through `testDebugUnitTest lintDebug assembleRelease` and is checked on the emulator's
@@ -218,8 +216,8 @@ frame budget measured there).
 
 | Risk | Mitigation |
 |---|---|
-| ESPN's undocumented API changes or blocks clients | `FixtureSource` interface; parse defensively (every field nullable); on failure show cache + "source unavailable"; the API-Football source is the fallback |
-| Wrong channel suggested (heuristics) | Always show candidates, never auto-play an unconfirmed guess; one-click override that is remembered |
+| ESPN's undocumented API changes or blocks clients | `FixtureSource` interface; parse defensively (every field nullable); on failure show cache + "source unavailable"; an API-Football source with a user key can be added later |
+| Wrong channel suggested (heuristics) | OK plays the top guess (owner decision), so CH+/CH− steps through the other candidates and long-press opens the picker; the choice is remembered |
 | Rights table goes stale each season | Season field; owner-editable data; R3 remote refresh |
 | Arab domestic leagues missing on ESPN | Documented gap; R3 user-key source |
 | Legal: showing ESPN data / crests | Personal, non-commercial use of a public endpoint, but its terms don't grant redistribution. Keep the attribution "Data: ESPN", don't re-host crests, and drop the source if asked |
@@ -229,15 +227,15 @@ frame budget measured there).
 
 ---
 
-## 7. Decisions for the owner
+## 7. Owner decisions (2026-10-23)
 
-1. **Source:** ESPN (free, no key, has the Saudi league, lacks Egypt/UAE/Qatar/Morocco), as recommended,
-   or start with API-Football (needs each user to get a free key, 100 requests/day)?
-2. **Default competitions:** PL, La Liga, UCL, Saudi Pro League, AFC CL, Serie A, Bundesliga, Ligue 1. Add
-   or remove any?
-3. **Rights table:** may the app suggest beIN / SSC / AD Sports families per competition, with you
-   checking the table each season?
-4. **Menu position:** second item, right after Home?
-5. **Live match with a remembered channel:** play straight away (recommended), or always show the
-   sheet first?
-6. **Reminders** in R2: in-app banner only, or also a system notification?
+1. **Source:** "use the best free one" → **ESPN** (no key). The API-Football user-key source in R3 is
+   dropped unless the owner asks for the missing Arab leagues later.
+2. **Default competitions:** **Champions League, Premier League, La Liga** (`uefa.champions`, `eng.1`,
+   `esp.1`). Others (Saudi Pro League etc.) stay addable in the R2 competition picker.
+3. **Rights table:** yes. And **pressing a live match goes straight to the suggested channel**, even when
+   it is only a heuristic guess (§3 table updated). CH+/CH− steps through the other candidates if the
+   guess is wrong; long-press opens the sheet to pick and remember.
+4. **Menu position:** second item, right after Home.
+5. **Remembered channel:** plays straight away.
+6. **Reminders:** in-app banner only.
