@@ -1,7 +1,7 @@
 # Google Play build: plan for owner approval
 
-Status: **plan only, nothing built. Owner answered D1–D7 on 2026-10-24 (§9); open: the app name, the final package
-check, and whether Play gets provider-neutral match suggestions (D3).** Written 2026-10-24 after the local council review
+Status: **plan only, nothing built. Owner answered D1–D7 on 2026-10-24 (§9); open: the app name and the final package
+check (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
 The GitHub build and every TV that already runs it stay exactly as they are.
@@ -72,12 +72,16 @@ How the split is done, so that the Play build contains none of the removed code 
      `isSupported` is false.
    - `BeinGuide.kt`, `ChannelMatcher.kt` (suggestions, sports-category index, rights table) → `src/github`. `main`
      keeps fixtures, `MatchRepository`, `MatchChannelStore` and the picker; a `MatchSuggestions` interface with a
-     github implementation (today's behaviour) and a play implementation that returns only the user's remembered pick
-     (D3 answered: (b)). In the Play build:
-     - a match row shows the remembered channel, or "Choose a channel" when there is none;
-     - OK on any match (live or not) opens the picker when nothing is remembered, and plays the remembered channel
-       when there is one; long-press always opens the picker;
-     - the picker lists all live channels with search, no "Suggested" group; "use for all <competition> matches" stays;
+     github implementation (today's behaviour) and a play implementation that is provider-neutral (D3, final answer
+     2026-10-24). In the Play build:
+     - suggestions come only from the user's own data: live channel names that contain **both** team names (any
+       provider's event channels, e.g. "Al Hilal vs Al Nassr"), and later the provider's own EPG programmes naming both
+       teams. Team-name matching (aliases, Arabic/English spellings) can be shared code in `main`; no broadcaster
+       families, no sports-category ranking, no region preference, no bundled list of broadcasters;
+     - a match row shows the remembered channel, else the number of matching channels, else "Choose a channel";
+     - **nothing plays by itself**: OK opens the picker with "Found in your channels" on top (or plays the remembered
+       pick); the user confirms with OK. Long-press always opens the picker;
+     - the picker also lists all live channels with search; "use for all <competition> matches" stays;
      - CH+/CH− during a match steps through normal live channels, not match suggestions;
      - the beIN-guide hint and string are absent.
    - `assets/match_rights.json` → `src/github/assets/`.
@@ -236,7 +240,7 @@ Phases 1–3 are independent of the owner's Play Console work, so they can start
 |---|---|---|
 | D1 | `com.xtream.kyu` (owner). Note: it contains "xtream", which D2 warns about, and it is permanent after the first upload; confirm before Phase 4 | 2026-10-24 |
 | D2 | OK: use a neutral app name on Play; name still to choose | 2026-10-24 |
-| D3 | (b) for now: fixtures and scores only; the user picks a channel by hand and the pick is remembered; no beIN guide, no rights table, no auto-play. Owner asked whether suggestions can work for any provider; open (provider-neutral suggestions from the user's own channel names / provider EPG, see chat 2026-10-24) | 2026-10-24 |
+| D3 | Provider-neutral suggestions: search the user's own channel names (and the provider's EPG later) for both team names; no beIN guide, no rights table, no auto-play; the user confirms with OK; picks remembered (see §3) | 2026-10-24 |
 | D4 | OK: built-in demo with legal streams; stream list to be chosen and checked | 2026-10-24 |
 | D5 | contact@dryaser.me | 2026-10-24 |
 | D6 | Owner has an active Play Console account; check in the Console whether the 12-tester / 14-day closed test applies to it | 2026-10-24 |
