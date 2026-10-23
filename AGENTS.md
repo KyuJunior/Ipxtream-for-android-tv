@@ -260,3 +260,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/intro/{BrandIntro,BrandMark}.kt, ui/login/LoginActivity.kt, app/src/test/.../BrandMarkTest.kt, AGENTS.md
 - Status: done. Tests + lint + assembleRelease pass. Emulator (preview): Automatic resolves to Smooth there → plain fade, as intended; with Full Effects forced, a screen recording shows the whole sequence. The emulator renders this at a few fps, so smoothness is not verified; not tried on the owner's TV.
 - For the other agent: Don't put work that needs the dashboard faster on the login path's intro gate; if an intro option is wanted in Settings, gate `showIntro` in LoginActivity.
+
+### 2026-10-23 | claude
+- Did: The brand intro now plays its full sequence (arm sweep, triangle spring, wordmark) in Smooth/reduced-effects mode too; only the radial Ember glow is dropped there (owner request — the owner's TV resolves Automatic to Smooth and was only getting a plain fade).
+- Files: ui/intro/BrandIntro.kt, AGENTS.md
+- Status: done. Tests + lint + assembleRelease pass. Emulator (preview, Automatic → Smooth): screen recording shows the arms sweeping and crossing, then the triangle and wordmark, no glow, then the fade.
+- For the other agent: none

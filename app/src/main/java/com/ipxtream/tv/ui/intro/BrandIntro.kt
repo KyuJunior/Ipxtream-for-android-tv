@@ -51,7 +51,8 @@ import kotlinx.coroutines.launch
 /**
  * Start-up intro built from the brand mark: the two Ember arms sweep in and cross, the Halo play
  * triangle springs into the left counter, then the wordmark rises in, and everything fades out.
- * About 2.2 s once frames run smoothly; with reduced effects it is a ~1 s fade with no glow or spring. Any key skips it.
+ * About 2.2 s once frames run smoothly. With reduced effects the same sequence plays without the
+ * glow (the only costly part: a full-size radial gradient redrawn every frame). Any key skips it.
  *
  * Draw it on top of the first screen; [onFinished] is called once, after the fade-out.
  */
@@ -59,11 +60,11 @@ import kotlinx.coroutines.launch
 fun BrandIntro(onFinished: () -> Unit, modifier: Modifier = Modifier) {
     val reduced = LocalReducedEffects.current
     val glow = remember { Animatable(0f) }
-    val armDown = remember { Animatable(if (reduced) 1f else 0f) }
-    val armUp = remember { Animatable(if (reduced) 1f else 0f) }
-    val triangle = remember { Animatable(if (reduced) 1f else 0f) }
-    val word = remember { Animatable(if (reduced) 1f else 0f) }
-    val content = remember { Animatable(if (reduced) 0f else 1f) }   // fades the whole intro
+    val armDown = remember { Animatable(0f) }
+    val armUp = remember { Animatable(0f) }
+    val triangle = remember { Animatable(0f) }
+    val word = remember { Animatable(0f) }
+    val content = remember { Animatable(1f) }   // fades the whole intro
     val scope = rememberCoroutineScope()
     val focus = remember { FocusRequester() }
     val finished = remember { booleanArrayOf(false) }
@@ -80,23 +81,18 @@ fun BrandIntro(onFinished: () -> Unit, modifier: Modifier = Modifier) {
         // login), and a time-based animation would finish during that stall unseen. Start once
         // frames are actually arriving at a steady rate, or after 1.5 s at the latest.
         awaitSteadyFrames()
-        if (reduced) {
-            content.animateTo(1f, tween(350, easing = IpxMotion.EaseOut))
-            delay(450)
-        } else {
-            coroutineScope {
-                launch { glow.animateTo(1f, tween(900, easing = IpxMotion.EaseOut)) }
-                launch { armDown.animateTo(1f, tween(420, easing = IpxMotion.EaseApple)) }
-                launch { delay(120); armUp.animateTo(1f, tween(420, easing = IpxMotion.EaseApple)) }
-                launch {
-                    delay(480)
-                    triangle.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMediumLow))
-                }
-                launch { delay(760); word.animateTo(1f, tween(450, easing = IpxMotion.EaseOut)) }
+        coroutineScope {
+            if (!reduced) launch { glow.animateTo(1f, tween(900, easing = IpxMotion.EaseOut)) }
+            launch { armDown.animateTo(1f, tween(420, easing = IpxMotion.EaseApple)) }
+            launch { delay(120); armUp.animateTo(1f, tween(420, easing = IpxMotion.EaseApple)) }
+            launch {
+                delay(480)
+                triangle.animateTo(1f, spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMediumLow))
             }
-            delay(550)
+            launch { delay(760); word.animateTo(1f, tween(450, easing = IpxMotion.EaseOut)) }
         }
-        content.animateTo(0f, tween(if (reduced) 250 else 320, easing = IpxMotion.EaseStandard))
+        delay(550)
+        content.animateTo(0f, tween(320, easing = IpxMotion.EaseStandard))
         finish()
     }
 
