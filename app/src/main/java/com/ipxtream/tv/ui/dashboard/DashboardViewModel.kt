@@ -337,6 +337,13 @@ class DashboardViewModel(
     private var channelIndex: Triple<List<StreamItem>, List<com.ipxtream.tv.data.model.Category>, ChannelMatcher.ChannelIndex>? = null
     private var matchesJob: Job? = null
 
+    /** The leagues Matches shows (from the gear screen); reloads the list. */
+    fun setFollowedLeagues(slugs: Collection<String>) {
+        appSettingsStore.setFollowedLeagues(com.ipxtream.tv.data.match.FollowedCompetitions.ordered(slugs))
+        _uiState.update { it.copy(matches = emptyList()) }
+        loadMatches()
+    }
+
     fun selectMatchDay(offset: Int) {
         if (_uiState.value.matchDayOffset == offset) return
         _uiState.update { it.copy(matchDayOffset = offset, matches = emptyList()) }
@@ -355,7 +362,8 @@ class DashboardViewModel(
             _uiState.update { it.copy(isLoadingMatches = it.matches.isEmpty()) }
             var refresh = force
             while (true) {
-                val day = async { matchRepository.matchesFor(offset, force = refresh) }
+                val leagues = appSettingsStore.settings.value.followedLeagues
+                val day = async { matchRepository.matchesFor(offset, competitions = leagues, force = refresh) }
                 val guide = async {
                     val tz = java.util.TimeZone.getDefault()
                     beinGuide.liveProgrammes(com.ipxtream.tv.data.match.MatchDays.localDay(System.currentTimeMillis(), offset, tz))

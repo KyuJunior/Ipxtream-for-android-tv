@@ -353,3 +353,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/{DashboardUiState,DashboardViewModel,DashboardScreen,DashboardActivity}.kt, AGENTS.md
 - Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the emulator (preview, mock account): picker pick and OK on a live match both open full screen with the live banner, Back returns to the list.
 - For the other agent: none
+
+### 2026-10-23 | claude
+- Did: Matches has a gear button (end of the day chips) that opens a Leagues screen: 20 popular leagues (`FollowedCompetitions.CATALOG`: UCL, PL, La Liga, Saudi Pro League, Serie A, Bundesliga, Ligue 1, UEL, UECL, AFC/CAF CL, King's Cup, FA Cup, Copa del Rey, Portugal, Netherlands, MLS, Nations League, World Cup, WC qualifiers Asia), each toggled with OK; defaults stay UCL/PL/La Liga. Saved in `AppSettings.followedLeagues` (`key_followed_leagues`, comma list; empty = all off); closing the screen reloads the list. English + Arabic names; rights-table entries added for every league (beyond the first three they are best guesses; the beIN guide still decides the exact beIN channel).
+- Files: data/local/AppSettingsStore.kt, data/match/{Match,MatchRepository}.kt, assets/match_rights.json, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/MatchesScreen.kt, res/values*/strings.xml, app/src/test/.../MatchesTest.kt, AGENTS.md
+- Status: done; `testDebugUnitTest lintDebug assembleRelease` pass; checked on the emulator (gear focus, toggles, Saudi/Serie A matches appear after closing, selection kept).
+- For the other agent: each followed league costs 3 ESPN requests per day shown (cached).

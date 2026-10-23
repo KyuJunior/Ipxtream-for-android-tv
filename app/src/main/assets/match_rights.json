@@ -1,9 +1,155 @@
 {
   "season": "2026-27",
-  "about": "Which TV channel families usually show each competition, best first. The first entry is the MENA rights holder; the rest are other regions, for providers that carry them. Suggestions only (docs/matches-section-plan.md §2a). Check every season. Family names must match ChannelMatcher.FAMILIES.",
+  "about": "Which TV channel families usually show each competition, best first. The first entry is the MENA rights holder; the rest are other regions, for providers that carry them. Suggestions only (docs/matches-section-plan.md §2a). Check every season; entries beyond the first three leagues are best guesses. Family names must match ChannelMatcher.FAMILIES.",
   "competitions": {
-    "uefa.champions": ["bein", "tnt sports", "canal+", "movistar", "sky sports", "rmc sport", "dazn", "cbs", "amazon prime", "sport tv"],
-    "eng.1": ["bein", "sky sports", "tnt sports", "canal+", "dazn", "nbc", "viaplay", "sport tv"],
-    "esp.1": ["bein", "movistar", "laliga tv", "dazn", "espn", "premier sports", "viaplay", "sport tv"]
+    "uefa.champions": [
+      "bein",
+      "tnt sports",
+      "canal+",
+      "movistar",
+      "sky sports",
+      "rmc sport",
+      "dazn",
+      "cbs",
+      "amazon prime",
+      "sport tv"
+    ],
+    "eng.1": [
+      "bein",
+      "sky sports",
+      "tnt sports",
+      "canal+",
+      "dazn",
+      "nbc",
+      "viaplay",
+      "sport tv"
+    ],
+    "esp.1": [
+      "bein",
+      "movistar",
+      "laliga tv",
+      "dazn",
+      "espn",
+      "premier sports",
+      "viaplay",
+      "sport tv"
+    ],
+    "ksa.1": [
+      "ssc",
+      "thmanyah",
+      "shahid",
+      "dazn"
+    ],
+    "ksa.kings.cup": [
+      "ssc",
+      "thmanyah",
+      "shahid"
+    ],
+    "ita.1": [
+      "bein",
+      "ad sports",
+      "dazn",
+      "sky sports",
+      "tnt sports",
+      "cbs",
+      "sport tv"
+    ],
+    "ger.1": [
+      "bein",
+      "sky sports",
+      "dazn",
+      "espn",
+      "sport tv"
+    ],
+    "fra.1": [
+      "bein",
+      "canal+",
+      "dazn",
+      "sport tv"
+    ],
+    "uefa.europa": [
+      "bein",
+      "tnt sports",
+      "canal+",
+      "movistar",
+      "sky sports",
+      "dazn",
+      "cbs",
+      "sport tv"
+    ],
+    "uefa.europa.conf": [
+      "bein",
+      "tnt sports",
+      "canal+",
+      "movistar",
+      "sky sports",
+      "dazn",
+      "cbs",
+      "sport tv"
+    ],
+    "afc.champions": [
+      "ssc",
+      "bein",
+      "alkass",
+      "thmanyah",
+      "shahid"
+    ],
+    "caf.champions": [
+      "bein",
+      "ssc",
+      "ad sports"
+    ],
+    "eng.fa": [
+      "bein",
+      "tnt sports",
+      "espn",
+      "sport tv"
+    ],
+    "esp.copa_del_rey": [
+      "bein",
+      "movistar",
+      "ssc",
+      "espn"
+    ],
+    "por.1": [
+      "sport tv",
+      "dazn",
+      "bein",
+      "espn"
+    ],
+    "ned.1": [
+      "espn",
+      "bein",
+      "viaplay"
+    ],
+    "usa.1": [
+      "amazon prime",
+      "espn",
+      "bein"
+    ],
+    "uefa.nations": [
+      "bein",
+      "tnt sports",
+      "canal+",
+      "movistar",
+      "dazn",
+      "sport tv"
+    ],
+    "fifa.world": [
+      "bein",
+      "ssc",
+      "alkass",
+      "ad sports",
+      "nbc",
+      "sport tv"
+    ],
+    "fifa.worldq.afc": [
+      "ssc",
+      "alkass",
+      "ad sports",
+      "bein",
+      "thmanyah",
+      "shahid"
+    ]
   }
 }

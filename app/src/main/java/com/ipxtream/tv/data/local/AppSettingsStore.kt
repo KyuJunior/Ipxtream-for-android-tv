@@ -57,6 +57,8 @@ data class AppSettings(
     val showChannelNumbers: Boolean = true,
     val is24HourClockFormat: Boolean = false,
     val performanceMode: PerformanceMode = PerformanceMode.AUTO,
+    /** ESPN league slugs shown in Matches, in the order chosen (see FollowedCompetitions.CATALOG). */
+    val followedLeagues: List<String> = com.ipxtream.tv.data.match.FollowedCompetitions.DEFAULT,
 
     // Playback & Video Player
     val bufferProfile: BufferProfile = BufferProfile.BALANCED,
@@ -113,6 +115,10 @@ class AppSettingsStore(private val context: Context) {
             showSpotlightBackdrop = prefs.getBoolean(KEY_SHOW_SPOTLIGHT, true),
             showChannelNumbers = prefs.getBoolean(KEY_SHOW_CHANNEL_NUMBERS, true),
             is24HourClockFormat = prefs.getBoolean(KEY_IS_24_HOUR_CLOCK, false),
+            // Stored as "a,b,c"; an empty string means the user turned every league off.
+            followedLeagues = prefs.getString(KEY_FOLLOWED_LEAGUES, null)
+                ?.split(',')?.filter { it.isNotBlank() }
+                ?: com.ipxtream.tv.data.match.FollowedCompetitions.DEFAULT,
 
             bufferProfile = buffer,
             autoPlayNextEpisode = prefs.getBoolean(KEY_AUTOPLAY_NEXT_EPISODE, true),
@@ -127,6 +133,11 @@ class AppSettingsStore(private val context: Context) {
 
             autoRefreshCacheOnStartup = prefs.getBoolean(KEY_AUTO_REFRESH_CACHE, true)
         )
+    }
+
+    fun setFollowedLeagues(slugs: List<String>) {
+        prefs.edit().putString(KEY_FOLLOWED_LEAGUES, slugs.joinToString(",")).apply()
+        _settings.update { it.copy(followedLeagues = slugs) }
     }
 
     fun setAppLanguage(language: AppLanguage) {
@@ -252,6 +263,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_SHOW_LIBRARY = "key_show_library"
         private const val KEY_SHOW_SPOTLIGHT = "key_show_spotlight"
         private const val KEY_SHOW_CHANNEL_NUMBERS = "key_show_channel_numbers"
+        private const val KEY_FOLLOWED_LEAGUES = "key_followed_leagues"
         private const val KEY_IS_24_HOUR_CLOCK = "key_is_24_hour_clock"
         private const val KEY_BUFFER_PROFILE = "key_buffer_profile"
         private const val KEY_AUTOPLAY_NEXT_EPISODE = "key_autoplay_next_episode"

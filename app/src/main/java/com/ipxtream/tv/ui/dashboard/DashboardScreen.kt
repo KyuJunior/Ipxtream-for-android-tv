@@ -237,6 +237,7 @@ fun DashboardScreen(
     onUhdScanLibrary: () -> Unit = {},
     onUhdStopScan: () -> Unit = {},
     onMatchDaySelected: (Int) -> Unit = {},
+    onMatchLeaguesChanged: (Set<String>) -> Unit = {},
     onPlayMatch: (com.ipxtream.tv.ui.dashboard.MatchListing, StreamItem) -> Unit = { _, _ -> },
     onPickMatchChannel: (com.ipxtream.tv.ui.dashboard.MatchListing, StreamItem, Boolean) -> Unit = { _, _, _ -> }
 ) {
@@ -870,6 +871,8 @@ fun DashboardScreen(
                             sideNavFocusRequester   = sideNavFocusRequester,
                             headerFocusRequester    = searchBarFocusRequester,
                             onNewDay                = onRefresh,
+                            followedLeagues         = uiState.settings.followedLeagues,
+                            onLeaguesChanged        = onMatchLeaguesChanged,
                             modifier                = Modifier.fillMaxSize()
                         )
                     }

@@ -41,7 +41,7 @@ class MatchRepository(
 
     suspend fun matchesFor(
         dayOffset:    Int,
-        competitions: List<String> = FollowedCompetitions.DEFAULT,
+        competitions: List<String>,
         force:        Boolean = false,
         timeZone:     TimeZone = TimeZone.getDefault()
     ): MatchDay = withContext(Dispatchers.IO) {

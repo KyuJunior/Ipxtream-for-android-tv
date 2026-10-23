@@ -129,6 +129,7 @@ class DashboardActivity : ComponentActivity() {
                     onSeriesSelected   = dashboardViewModel::showSeriesDetails,
 
                     onMatchDaySelected = dashboardViewModel::selectMatchDay,
+                    onMatchLeaguesChanged = dashboardViewModel::setFollowedLeagues,
                     onPlayMatch        = { listing, stream ->
                         dashboardViewModel.startMatchPlayback(stream, listing.channels)
                         playerViewModel.loadStream(stream, credentials)

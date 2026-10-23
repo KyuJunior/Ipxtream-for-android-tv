@@ -54,6 +54,8 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Settings
 import coil.compose.AsyncImage
 import com.ipxtream.tv.R
 import com.ipxtream.tv.data.match.Competition
@@ -110,6 +112,8 @@ fun MatchesScreen(
     sideNavFocusRequester:   FocusRequester,
     headerFocusRequester:    FocusRequester,
     onNewDay:                () -> Unit,
+    followedLeagues:         List<String>,
+    onLeaguesChanged:        (Set<String>) -> Unit,
     modifier:                Modifier = Modifier
 ) {
     val timeFormat = remember(use24Hour) {
@@ -130,6 +134,7 @@ fun MatchesScreen(
         if (todayKey != shownDayKey) { shownDayKey = todayKey; onNewDay() }
     }
     var pickerFor by remember { mutableStateOf<MatchListing?>(null) }
+    var showLeagues by remember { mutableStateOf(false) }
     val groups = remember(matches, dayOffset) { groupMatches(matches, pinLive = dayOffset == 0) }
 
     val listState = rememberLazyListState()
@@ -170,9 +175,10 @@ fun MatchesScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // ── Day chips ────────────────────────────────────────────────────────
+        // ── Day chips · leagues ──────────────────────────────────────────────
+        Row(verticalAlignment = Alignment.CenterVertically) {
         LazyRow(
-            modifier              = Modifier.fillMaxWidth().focusProperties { canFocus = false },
+            modifier              = Modifier.weight(1f).focusProperties { canFocus = false },
             contentPadding        = PaddingValues(horizontal = IpxSpacing.Gutter),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -188,6 +194,17 @@ fun MatchesScreen(
                         .then(if (offset == MATCH_DAYS.first) Modifier.focusProperties { start = sideNavFocusRequester } else Modifier)
                 )
             }
+        }
+
+        GlassIconButton(
+            icon               = Icons.Rounded.Settings,
+            contentDescription = stringResource(R.string.matches_leagues_title),
+            onClick            = { showLeagues = true },
+            size               = 44.dp,
+            modifier           = Modifier
+                .padding(start = 12.dp, end = IpxSpacing.Gutter)
+                .focusProperties { up = headerFocusRequester }
+        )
         }
 
         Spacer(Modifier.height(8.dp))
@@ -253,6 +270,16 @@ fun MatchesScreen(
         }
     }
 
+    if (showLeagues) {
+        LeaguesDialog(
+            selected  = followedLeagues.toSet(),
+            onDismiss = { changed ->
+                showLeagues = false
+                if (changed != null) onLeaguesChanged(changed)
+            }
+        )
+    }
+
     pickerFor?.let { listing ->
         ChannelPicker(
             listing     = listing,
@@ -274,7 +301,7 @@ private data class MatchGroup(val key: String, val competition: Competition?, va
 private fun groupMatches(matches: List<MatchListing>, pinLive: Boolean): List<MatchGroup> {
     val live = if (pinLive) matches.filter { it.match.state == MatchState.LIVE } else emptyList()
     val rest = matches - live.toSet()
-    val order = FollowedCompetitions.DEFAULT
+    val order = FollowedCompetitions.CATALOG
     val byCompetition = rest.groupBy { it.match.competition.slug }
         .toList()
         .sortedBy { (slug, _) -> order.indexOf(slug).let { if (it < 0) Int.MAX_VALUE else it } }
@@ -283,12 +310,133 @@ private fun groupMatches(matches: List<MatchListing>, pinLive: Boolean): List<Ma
 }
 
 @Composable
-private fun competitionName(c: Competition): String = when (c.slug) {
-    "uefa.champions" -> stringResource(R.string.competition_uefa_champions)
-    "eng.1"          -> stringResource(R.string.competition_eng_1)
-    "esp.1"          -> stringResource(R.string.competition_esp_1)
-    else             -> bidi(c.name)
+private fun competitionName(c: Competition): String =
+    LEAGUE_NAMES[c.slug]?.let { stringResource(it) } ?: bidi(c.name)
+
+/** Translated names of [FollowedCompetitions.CATALOG]. */
+private val LEAGUE_NAMES: Map<String, Int> = mapOf(
+    "uefa.champions" to R.string.competition_uefa_champions,
+    "eng.1" to R.string.competition_eng_1,
+    "esp.1" to R.string.competition_esp_1,
+    "ksa.1" to R.string.competition_ksa_1,
+    "ita.1" to R.string.competition_ita_1,
+    "ger.1" to R.string.competition_ger_1,
+    "fra.1" to R.string.competition_fra_1,
+    "uefa.europa" to R.string.competition_uefa_europa,
+    "uefa.europa.conf" to R.string.competition_uefa_europa_conf,
+    "afc.champions" to R.string.competition_afc_champions,
+    "caf.champions" to R.string.competition_caf_champions,
+    "ksa.kings.cup" to R.string.competition_ksa_kings_cup,
+    "eng.fa" to R.string.competition_eng_fa,
+    "esp.copa_del_rey" to R.string.competition_esp_copa_del_rey,
+    "por.1" to R.string.competition_por_1,
+    "ned.1" to R.string.competition_ned_1,
+    "usa.1" to R.string.competition_usa_1,
+    "uefa.nations" to R.string.competition_uefa_nations,
+    "fifa.world" to R.string.competition_fifa_world,
+    "fifa.worldq.afc" to R.string.competition_fifa_worldq_afc
+)
+
+/**
+ * The leagues Matches follows, each switched on or off with OK. Closing it (Back or Done) hands the
+ * new selection to [onDismiss], or null when nothing changed.
+ */
+@Composable
+private fun LeaguesDialog(selected: Set<String>, onDismiss: (Set<String>?) -> Unit) {
+    var chosen by remember { mutableStateOf(selected) }
+    val firstFocus = remember { FocusRequester() }
+    val close = { onDismiss(chosen.takeIf { it != selected }) }
+    Dialog(onDismissRequest = close, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(
+            Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                Modifier
+                    .fillMaxWidth(0.62f)
+                    .fillMaxHeight(0.86f)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(SlateCard)
+                    .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
+                    .padding(28.dp)
+            ) {
+                Text(stringResource(R.string.matches_leagues_title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.matches_leagues_hint, chosen.size),
+                    style = IpxTypography.BodyMedium,
+                    color = TextSecondary
+                )
+                Spacer(Modifier.height(16.dp))
+                LazyColumn(
+                    // Same as the match list: if the list itself takes focus, hand it to the first league.
+                    modifier            = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .focusProperties { canFocus = false }
+                        .onFocusChanged { if (it.isFocused) runCatching { firstFocus.requestFocus() } },
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(FollowedCompetitions.CATALOG, key = { it }) { slug ->
+                        LeagueToggleRow(
+                            name     = LEAGUE_NAMES[slug]?.let { stringResource(it) } ?: slug,
+                            on       = slug in chosen,
+                            onToggle = { chosen = if (slug in chosen) chosen - slug else chosen + slug },
+                            modifier = if (slug == FollowedCompetitions.CATALOG.first()) Modifier.focusRequester(firstFocus) else Modifier
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                PillChip(label = stringResource(R.string.matches_leagues_done), selected = true, onClick = close)
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(60)
+        runCatching { firstFocus.requestFocus() }
+    }
 }
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+private fun LeagueToggleRow(name: String, on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(10.dp)
+    Surface(
+        onClick  = onToggle,
+        modifier = modifier.fillMaxWidth().height(52.dp),
+        shape    = ClickableSurfaceDefaults.shape(shape),
+        colors   = ClickableSurfaceDefaults.colors(
+            containerColor        = Color.Transparent,
+            contentColor          = TextPrimary,
+            focusedContainerColor = ChipFocused,
+            focusedContentColor   = TextOnFocus
+        ),
+        scale    = ClickableSurfaceDefaults.scale(focusedScale = 1f),
+        border   = ClickableSurfaceDefaults.border(border = Border.None, focusedBorder = Border.None)
+    ) {
+        Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(name, style = IpxTypography.BodyLarge, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // A small switch: Ember track when on, a hairline outline when off.
+            Box(
+                Modifier
+                    .size(width = 44.dp, height = 24.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(if (on) Accent else Color.Transparent)
+                    .border(1.dp, if (on) Accent else GlassStroke, RoundedCornerShape(50)),
+                contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart
+            ) {
+                Box(
+                    Modifier
+                        .padding(3.dp)
+                        .size(18.dp)
+                        .clip(CircleShape)
+                        .background(if (on) TextOnAccent else TextSecondary)
+                )
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun dayLabel(offset: Int, todayKey: Int): String = when (offset) {

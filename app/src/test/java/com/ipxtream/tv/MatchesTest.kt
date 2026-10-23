@@ -213,6 +213,19 @@ class MatchesTest {
         assertTrue("unknown channels are the user's call", !ChannelMatcher.isEntertainmentChannel(live(5, "AR| MBC 1")))
     }
 
+    @Test fun everyLeagueInThePickerHasRights() {
+        com.ipxtream.tv.data.match.FollowedCompetitions.CATALOG.forEach { slug ->
+            val families = rights.familiesFor(slug)
+            assertTrue("$slug has no channel families", families.isNotEmpty())
+            assertTrue("$slug lists unknown families", families.all { it in ChannelMatcher.FAMILIES })
+        }
+    }
+
+    @Test fun selectedLeaguesKeepCatalogOrder() {
+        assertEquals(listOf("uefa.champions", "esp.1", "ksa.1"),
+            com.ipxtream.tv.data.match.FollowedCompetitions.ordered(setOf("ksa.1", "esp.1", "uefa.champions", "not.a.league")))
+    }
+
     @Test fun rightsTableCoversDefaultCompetitions() {
         listOf("uefa.champions", "eng.1", "esp.1").forEach { slug ->
             val families = rights.familiesFor(slug)
