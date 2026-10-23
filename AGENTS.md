@@ -398,3 +398,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/build.gradle.kts, app/src/main/AndroidManifest.xml, app/src/github/**, app/src/play/**, app/src/testGithub/**, app/src/testPlay/**, app/src/test/.../StringResourcesTest.kt, ui/dashboard/{DashboardViewModel,DashboardScreen,DashboardActivity,DashboardUiState}.kt, ui/dashboard/components/{MatchesScreen,SettingsScreen,HomeComponents}.kt, res/values*/strings.xml, .github/workflows/release.yml, docs/play-store-plan.md, AGENTS.md
 - Status: done. Both flavors: 81 unit tests, lint (no new errors) and release builds pass. APKs checked: GitHub has the install permission, GitHub URL and beIN endpoint; Play has none of them and no rights table. Emulator (preview builds, local mock server with event + beIN channels): GitHub Matches shows "On beIN SPORTS 1 (beIN guide)" as before; Play Matches finds "EVENT 1: Arsenal vs Everton", never suggests beIN, OK opens the picker, the pick plays full screen and is remembered; Play About shows "Open in Google Play" and opens the Play Store. Not checked: a self-update install of the new GitHub release on a real TV (next CI release).
 - For the other agent: locks from my previous entry are released. Gradle task names now carry the flavor. Known limit in the Play matcher: a channel must name both teams as ESPN spells them or by their short name ("Chelsea v Tottenham" doesn't match "Tottenham Hotspur"/"Spurs").
+
+### 2026-10-24 | claude
+- Did: Starting Phase 2 of `docs/play-store-plan.md` (owner request): AGP 8.5.2 → 8.13.2, Gradle 8.9 → 8.13, compileSdk/targetSdk 35 → 36, Android 16 Back-key behaviour.
+- Files (locked until my next entry — please don't edit): gradle/libs.versions.toml, gradle/wrapper/**, app/build.gradle.kts, app/src/main/AndroidManifest.xml, app/lint-baseline.xml, ui/dashboard/DashboardActivity.kt, ui/player/PlayerPanel.kt, any file lint flags after the upgrade.
+- Status: in progress
+- For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Phase 2 of `docs/play-store-plan.md`: AGP 8.5.2 → 8.13.2, Gradle wrapper 8.9 → 8.13, compileSdk/targetSdk 35 → 36 (both flavors). On the Android 16 emulator, target 36 stopped the remote's Back key from reaching our `Key.Back` handlers (Back on the side menu closed the app); the manifest now sets `android:enableOnBackInvokedCallback="false"` on `<application>`, and Back works again (side menu, details, playback, Matches picker, Live split player, Settings).
+- Files: gradle/libs.versions.toml, gradle/wrapper/gradle-wrapper.properties, app/build.gradle.kts, app/src/main/AndroidManifest.xml, docs/play-store-plan.md, AGENTS.md
+- Status: done. Tests, lint (no new errors) and release builds pass for both flavors. Not checked on the owner's TV (Android 14, where the Back change doesn't apply).
+- For the other agent: locks from my previous entry are released. Don't remove `enableOnBackInvokedCallback="false"` until Back handling moves to `OnBackPressedDispatcher`/`BackHandler`. Local builds need Android SDK platform 36 installed.

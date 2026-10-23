@@ -18,11 +18,11 @@ val versionProps = Properties().apply {
 
 android {
     namespace  = "com.ipxtream.tv"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk       = 23          // EncryptedSharedPreferences requires API 23
-        targetSdk     = 35
+        targetSdk     = 36
         versionCode   = versionProps.getProperty("VERSION_CODE").toInt()
         versionName   = versionProps.getProperty("VERSION_NAME")
     }

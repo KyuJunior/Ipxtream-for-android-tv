@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **Phase 1 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
+Status: **Phases 1–2 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
 (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
@@ -135,24 +135,21 @@ today; the unused `release` config reading `ipxtream_keystore.jks` can be remove
 
 ---
 
-## 5. Target API 36
+## 5. Target API 36 (built in Phase 2, 2026-10-24)
 
-1. Upgrade AGP to a version that supports `compileSdk 36` (8.9 or later; **verify** the exact minimum in the AGP
-   release notes) and the Gradle wrapper to match; check Kotlin/Compose plugin compatibility.
-2. `compileSdk = 36`, `targetSdk = 36`, both flavors (the GitHub build benefits too, and one target keeps testing simple).
-3. Behaviour changes to test on the emulator and the owner's TV:
-   - **Predictive back.** With target 36 the system may stop dispatching `KEYCODE_BACK` to `dispatchKeyEvent`/`onKeyDown`
-     and stop calling `onBackPressed` (**verify** in the Android 16 behaviour-changes page). Back is handled in
-     `DashboardActivity.dispatchKeyEvent` and in Compose `Key.Back` handlers (player, side menu, details). Either
-     move those to `OnBackPressedDispatcher`/`BackHandler`, or set `android:enableOnBackInvokedCallback="false"` as a
-     stop-gap if still allowed. Test every Back path: player → list, details → grid, Matches picker, settings panes,
-     side menu, Live split view, update dialog (github).
-   - **Orientation / resizability** declarations are ignored on large screens for target 36 (**verify** whether TVs are
-     included). The app is landscape anyway; check nothing stretches.
-   - Edge-to-edge is already forced since target 35; no change expected on TV.
-4. Fix new lint errors, don't baseline them.
-
----
+1. AGP 8.5.2 → **8.13.2**, Gradle 8.9 → **8.13**; Kotlin 2.0.21 and the Compose BOM unchanged.
+2. `compileSdk = 36`, `targetSdk = 36` for both flavors.
+3. Behaviour changes, tested on the Android 16 (API 36) TV emulator:
+   - **Back key.** Confirmed: with target 36 and no opt-out, the remote's Back no longer reached the app's
+     `Key.Back` handlers (Back on the side menu closed the app instead of returning to the content). The manifest now
+     sets `android:enableOnBackInvokedCallback="false"` on `<application>`, which restores the old delivery. Checked
+     after the change: side menu → content, details → Home, playback → Home, Matches picker closes, Live TV split
+     player closes, Settings stays in Settings. Follow-up (not urgent): move the Back handling in `DashboardActivity`,
+     `PlayerPanel`, `SideNavBar` and the detail screens to `OnBackPressedDispatcher`/`BackHandler`, then drop the
+     opt-out before Android removes it.
+   - **Orientation / resizability:** the app is landscape-only on TV; nothing looked stretched on the 1080p emulator.
+   - Edge-to-edge was already forced since target 35; no change seen.
+4. Lint: no new errors on either flavor (the baseline only shows entries that no longer occur).
 
 ## 6. Privacy policy, Data safety, content rating, listing
 
@@ -221,7 +218,7 @@ These are fixes, not features, and they come before the first Play upload:
 |---|---|---|---|
 | 0 | Decisions D1–D7; Play Console account and identity check; upload key + secrets; support e-mail; list of legal demo streams | Owner | Answers recorded in §9 of this file |
 | 1 | **Done 2026-10-24.** Flavors and source-set split (§3); `release.yml` moved to the github flavor | Claude | GitHub APK behaves exactly as v2.0.x on the owner's TV (updater, Matches with beIN guide); a self-update from the previous release installs over it; Play debug build runs with no updater UI and per-D3 Matches; the Play flavor contains no `UpdateManager`/`BeinGuide` classes |
-| 2 | Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
+| 2 | **Done 2026-10-24** (owner TV not checked). Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
 | 3 | Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
 | 4 | Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |
 | 5 | Privacy page, corrected in-app texts, demo sign-in, listing text and assets (§6) | Claude drafts, owner approves | Privacy URL live; listing assets in `الهوية البصرية/store/` (or similar) |

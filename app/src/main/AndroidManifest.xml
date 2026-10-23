@@ -29,6 +29,12 @@
         android:required="false" />
 
     <!-- ─── Application ─────────────────────────────────────────────────── -->
+    <!--
+         enableOnBackInvokedCallback="false": with targetSdk 36 (Android 16) the remote's Back key
+         otherwise stops reaching the app's key handlers (side menu, player, details, pickers use
+         Key.Back / KEYCODE_BACK) and Back on the side menu closed the app. Moving those to
+         OnBackPressedDispatcher/BackHandler would let us drop this opt-out.
+    -->
     <application
         android:name=".IpxApplication"
         android:label="IPXtream TV"
@@ -40,6 +46,7 @@
         android:allowBackup="false"
         android:hardwareAccelerated="true"
         android:largeHeap="true"
+        android:enableOnBackInvokedCallback="false"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <!-- ── Login Activity (Entry Point) ──────────────────────────────── -->

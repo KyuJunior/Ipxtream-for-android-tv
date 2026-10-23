@@ -1,6 +1,6 @@
 [versions]
 # Core tooling
-agp                     = "8.5.2"          # Android Gradle Plugin
+agp                     = "8.13.2"          # Android Gradle Plugin
 kotlin                  = "2.0.21"          # Kotlin (matches compose compiler plugin)
 
 # AndroidX / Compose
