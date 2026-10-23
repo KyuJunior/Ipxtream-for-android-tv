@@ -27,6 +27,18 @@ object ApiClient {
      * @param debug    When true, full request/response bodies are logged via Logcat.
      *                 Should be [BuildConfig.DEBUG] in production code.
      */
+    /**
+     * The app's one HTTP client. Other clients (fixtures, beIN guide) derive from it with
+     * [OkHttpClient.newBuilder], which shares its connection pool and threads.
+     */
+    val sharedHttp: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .readTimeout(READ_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .writeTimeout(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)
+            .build()
+    }
+
     fun create(baseUrl: String, debug: Boolean = false): XtreamApiService {
         // Request lines only, and only in debug builds. BODY logging would copy multi-MB
         // catalogs into logcat, and every request URL carries the account password.
@@ -39,10 +51,7 @@ object ApiClient {
                 HttpLoggingInterceptor.Level.NONE
         }
 
-        val okHttpClient = OkHttpClient.Builder()
-            .connectTimeout(CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
-            .readTimeout(READ_TIMEOUT_SEC, TimeUnit.SECONDS)
-            .writeTimeout(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)
+        val okHttpClient = sharedHttp.newBuilder()
             .addInterceptor(loggingInterceptor)
             .build()
 

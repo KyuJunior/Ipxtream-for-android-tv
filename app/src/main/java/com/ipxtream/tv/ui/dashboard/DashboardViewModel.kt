@@ -333,8 +333,8 @@ class DashboardViewModel(
     private val matchChannelStore by lazy { MatchChannelStore(context, repository.accountKey) }
     private val matchRights by lazy { MatchRights.load(context) }
     private val beinGuide by lazy { com.ipxtream.tv.data.match.BeinGuideSource(context) }
-    private var channelIndex: ChannelMatcher.ChannelIndex? = null
-    private var channelIndexSource: List<StreamItem>? = null
+    /** Sports-channel index plus the channel and category lists it was built from (main thread only). */
+    private var channelIndex: Triple<List<StreamItem>, List<com.ipxtream.tv.data.model.Category>, ChannelMatcher.ChannelIndex>? = null
     private var matchesJob: Job? = null
 
     fun selectMatchDay(offset: Int) {
@@ -364,7 +364,14 @@ class DashboardViewModel(
                 val categories = repository.getLiveCategories().getOrNull().orEmpty()
                 val result = day.await()
                 val programmes = guide.await()
-                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, categories, programmes) }
+                // Rebuilt only when the channel or category list changes. The new index is stored here, on the
+                // main thread, so a cancelled run still finishing on Default can't overwrite it.
+                val cachedIndex = channelIndex?.takeIf { it.first === channels && it.second === categories }?.third
+                val index = cachedIndex ?: withContext(Dispatchers.Default) {
+                    ChannelMatcher.ChannelIndex(ChannelMatcher.sportsChannels(channels, categories))
+                }
+                channelIndex = Triple(channels, categories, index)
+                val listings = withContext(Dispatchers.Default) { buildMatchListings(result.matches, channels, index, programmes) }
                 _uiState.update { it.copy(
                     matches             = listings,
                     isLoadingMatches    = false,
@@ -380,22 +387,20 @@ class DashboardViewModel(
                 }
                 if (offset != 0 || !inPlay) break
                 do { delay(60_000) } while (_uiState.value.hasActivePlayback)
-                if (_uiState.value.activeSection != ContentSection.MATCHES) break
             }
         }
     }
 
+    /**
+     * Suggestions come only from [index] (the provider's sports categories; owner request: no "beIN DRAMA").
+     * The picker still offers every channel, and a remembered pick can be any channel.
+     */
     private fun buildMatchListings(
         matches:    List<Match>,
         channels:   List<StreamItem>,
-        categories: List<com.ipxtream.tv.data.model.Category>,
+        index:      ChannelMatcher.ChannelIndex,
         programmes: List<com.ipxtream.tv.data.match.GuideProgramme>
     ): List<MatchListing> {
-        // Suggestions come only from the provider's sports categories (owner request: no "beIN DRAMA").
-        // The picker still offers every channel, and a remembered pick can be any channel.
-        val index = channelIndex.takeIf { channelIndexSource === channels }
-            ?: ChannelMatcher.ChannelIndex(ChannelMatcher.sportsChannels(channels, categories))
-                .also { channelIndex = it; channelIndexSource = channels }
         val regions = ChannelMatcher.preferredRegions(
             arabicApp  = _uiState.value.settings.appLanguage == com.ipxtream.tv.data.local.AppLanguage.ARABIC,
             timeZoneId = java.util.TimeZone.getDefault().id
@@ -408,14 +413,14 @@ class DashboardViewModel(
             val guesses = ChannelMatcher.candidates(
                 m, index, matchRights.familiesFor(m.competition.slug), regions, guideChannels = onGuide
             )
-            val guideHit = onGuide.firstOrNull()?.takeIf {
-                guesses.firstOrNull()?.let { s -> guideOf.parseChannel(s.name) } in onGuide.mapNotNull(guideOf::parseChannel)
-            }
-            // A pick for this very match wins, unless the guide knows the channel and the pick isn't a sports
-            // channel at all (picks saved before v2.0.4 could be "beIN DRAMA"). A competition-wide pick only
-            // counts when the guide has nothing.
+            // The guide channel the top suggestion actually is (beIN SPORTS EN 1 when only that copy exists).
+            val top = guesses.firstOrNull()?.let { s -> guideOf.parseChannel(s.name) }
+            val guideHit = onGuide.firstOrNull { top != null && guideOf.parseChannel(it) == top }
+            // A pick for this very match wins, unless the guide knows the channel and the pick is one of a
+            // broadcaster's non-sports channels (versions before 2.0.4 suggested "beIN DRAMA"). Event channels
+            // and anything else the user chose stay. A competition-wide pick counts only when the guide has nothing.
             val saved = matchChannelStore.matchChannel(m)?.let { byId[it] }
-                ?.takeIf { guideHit == null || ChannelMatcher.isSportsChannel(it) }
+                ?.takeIf { guideHit == null || !ChannelMatcher.isEntertainmentChannel(it) }
                 ?: matchChannelStore.competitionChannel(m)?.takeIf { guideHit == null }?.let { byId[it] }
             MatchListing(
                 match        = m,
@@ -439,10 +444,15 @@ class DashboardViewModel(
         matchChannelStore.remember(match, stream.streamId, forCompetition)
         _uiState.update { state ->
             val updated = state.matches.map { l ->
+                // Same rule as buildMatchListings: a competition-wide pick doesn't replace a guide channel.
                 val affected = l.match.id == match.id ||
-                    (forCompetition && l.match.competition.slug == match.competition.slug)
+                    (forCompetition && l.match.competition.slug == match.competition.slug && l.guideChannel == null)
                 if (!affected) l
-                else l.copy(channels = listOf(stream) + l.channels.filter { it.streamId != stream.streamId }, remembered = true)
+                else l.copy(
+                    channels     = listOf(stream) + l.channels.filter { it.streamId != stream.streamId },
+                    remembered   = true,
+                    guideChannel = null
+                )
             }
             state.copy(
                 matches           = updated,

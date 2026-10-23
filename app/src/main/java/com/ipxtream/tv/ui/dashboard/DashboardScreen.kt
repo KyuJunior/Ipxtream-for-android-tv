@@ -868,6 +868,7 @@ fun DashboardScreen(
                             firstItemFocusRequester = firstItemFocusRequester,
                             sideNavFocusRequester   = sideNavFocusRequester,
                             headerFocusRequester    = searchBarFocusRequester,
+                            onNewDay                = onRefresh,
                             modifier                = Modifier.fillMaxSize()
                         )
                     }

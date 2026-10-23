@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -58,6 +59,7 @@ import com.ipxtream.tv.R
 import com.ipxtream.tv.data.match.Competition
 import com.ipxtream.tv.data.match.FollowedCompetitions
 import com.ipxtream.tv.data.match.Match
+import com.ipxtream.tv.data.match.MatchDays
 import com.ipxtream.tv.data.match.MatchState
 import com.ipxtream.tv.data.match.MatchTeam
 import com.ipxtream.tv.data.model.StreamItem
@@ -107,10 +109,25 @@ fun MatchesScreen(
     firstItemFocusRequester: FocusRequester,
     sideNavFocusRequester:   FocusRequester,
     headerFocusRequester:    FocusRequester,
+    onNewDay:                () -> Unit,
     modifier:                Modifier = Modifier
 ) {
     val timeFormat = remember(use24Hour) {
         SimpleDateFormat(if (use24Hour) "HH:mm" else "h:mm a", Locale.getDefault())
+    }
+    // A clock for "in 25 min" and the day chips; nothing else recomposes the list while no match is live.
+    var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(30_000)
+            nowMs = System.currentTimeMillis()
+        }
+    }
+    val todayKey = MatchDays.dayKey(nowMs, java.util.TimeZone.getDefault())
+    var shownDayKey by remember { mutableStateOf(todayKey) }
+    LaunchedEffect(todayKey) {
+        // Past midnight "Today" is a new day: reload instead of showing yesterday's list under it.
+        if (todayKey != shownDayKey) { shownDayKey = todayKey; onNewDay() }
     }
     var pickerFor by remember { mutableStateOf<MatchListing?>(null) }
     val groups = remember(matches, dayOffset) { groupMatches(matches, pinLive = dayOffset == 0) }
@@ -131,7 +148,7 @@ fun MatchesScreen(
                 Text(
                     stringResource(R.string.matches_title),
                     style    = IpxTypography.DisplayLarge.copy(fontSize = 40.sp, letterSpacing = 0.sp),
-                    color    = Color.White,
+                    color    = TextPrimary,
                     maxLines = 1
                 )
                 Spacer(Modifier.width(16.dp))
@@ -161,7 +178,7 @@ fun MatchesScreen(
         ) {
             items(MATCH_DAYS.toList(), key = { "day_$it" }) { offset ->
                 PillChip(
-                    label    = dayLabel(offset),
+                    label    = dayLabel(offset, todayKey),
                     selected = offset == dayOffset,
                     onClick  = { onDaySelected(offset) },
                     modifier = Modifier
@@ -213,6 +230,7 @@ fun MatchesScreen(
                                 MatchRow(
                                     listing    = listing,
                                     timeFormat = timeFormat,
+                                    nowMs      = nowMs,
                                     onClick    = {
                                         val best = listing.channels.firstOrNull()
                                         if (listing.match.state == MatchState.LIVE && best != null) onPlay(listing, best)
@@ -273,11 +291,11 @@ private fun competitionName(c: Competition): String = when (c.slug) {
 }
 
 @Composable
-private fun dayLabel(offset: Int): String = when (offset) {
+private fun dayLabel(offset: Int, todayKey: Int): String = when (offset) {
     -1   -> stringResource(R.string.matches_day_yesterday)
     0    -> stringResource(R.string.matches_day_today)
     1    -> stringResource(R.string.matches_day_tomorrow)
-    else -> remember(offset) {
+    else -> remember(offset, todayKey) {
         val day = Calendar.getInstance().apply { add(Calendar.DAY_OF_MONTH, offset) }
         SimpleDateFormat("EEE d", Locale.getDefault()).format(day.time)
     }
@@ -309,6 +327,7 @@ private fun GroupHeader(group: MatchGroup) {
 private fun MatchRow(
     listing:     MatchListing,
     timeFormat:  SimpleDateFormat,
+    nowMs:       Long,
     onClick:     () -> Unit,
     onLongClick: () -> Unit,
     modifier:    Modifier = Modifier
@@ -349,7 +368,7 @@ private fun MatchRow(
                 Crest(url = match.home.crestUrl, fallback = match.home.name, size = if (compact) 32 else 40)
                 Spacer(Modifier.width(if (compact) 10.dp else 14.dp))
                 TeamName(match.home, TextAlign.Start, dim = finished, compact = compact, modifier = Modifier.weight(1f))
-                CentreBlock(match, timeFormat, modifier = Modifier.width(if (compact) 104.dp else 150.dp))
+                CentreBlock(match, timeFormat, nowMs, modifier = Modifier.width(if (compact) 104.dp else 150.dp))
                 TeamName(match.away, TextAlign.End, dim = finished, compact = compact, modifier = Modifier.weight(1f))
                 Spacer(Modifier.width(if (compact) 10.dp else 14.dp))
                 Crest(url = match.away.crestUrl, fallback = match.away.name, size = if (compact) 32 else 40)
@@ -380,7 +399,7 @@ private fun TeamName(team: MatchTeam, align: TextAlign, dim: Boolean, compact: B
 
 /** Score (live / finished) or kick-off time, with the match state under it. */
 @Composable
-private fun CentreBlock(match: Match, timeFormat: SimpleDateFormat, modifier: Modifier) {
+private fun CentreBlock(match: Match, timeFormat: SimpleDateFormat, nowMs: Long, modifier: Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         when (match.state) {
             MatchState.LIVE, MatchState.FINISHED -> {
@@ -400,7 +419,7 @@ private fun CentreBlock(match: Match, timeFormat: SimpleDateFormat, modifier: Mo
                     style = IpxTypography.TitleLarge.copy(fontSize = 24.sp, fontFeatureSettings = "tnum"),
                     color = TextPrimary
                 )
-                val minutes = ((match.kickoffMs - System.currentTimeMillis()) / 60_000L).toInt()
+                val minutes = ((match.kickoffMs - nowMs) / 60_000L).toInt()
                 if (minutes in 1..59) {
                     Text(stringResource(R.string.matches_starts_in, minutes), style = IpxTypography.LabelSmall, color = Accent)
                 }

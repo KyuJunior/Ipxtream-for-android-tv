@@ -1,7 +1,6 @@
 package com.ipxtream.tv.data.match
 
 import com.google.gson.annotations.SerializedName
-import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -34,8 +33,7 @@ interface EspnSoccerService {
             val logging = HttpLoggingInterceptor { android.util.Log.d("OkHttp", it) }.apply {
                 level = if (debug) HttpLoggingInterceptor.Level.BASIC else HttpLoggingInterceptor.Level.NONE
             }
-            val client = OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
+            val client = com.ipxtream.tv.data.api.ApiClient.sharedHttp.newBuilder()
                 .readTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(logging)
                 .build()

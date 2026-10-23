@@ -167,8 +167,17 @@ object ChannelMatcher {
         val versus:  Boolean
     )
 
-    /** A broadcaster's sports channel or a channel named "sport…" (not beIN DRAMA, not MBC 1). */
-    fun isSportsChannel(stream: StreamItem): Boolean = entry(stream).let { it.family != null || it.sport }
+    /**
+     * One of a broadcaster's non-sports channels ("AR_beIN_DRAMA_1", "Bein Movies-1") or a channel named
+     * drama/movies/kids. Event channels ("PL: Arsenal vs Chelsea") and unknown names are not.
+     */
+    fun isEntertainmentChannel(stream: StreamItem): Boolean {
+        val words = normalize(stream.name).text.split(' ').toSet()
+        if (words.any { it in ENTERTAINMENT }) return true
+        val padded = " ${words.joinToString(" ")} "
+        val mixed = MIXED_FAMILIES.any { id -> FAMILIES[id].orEmpty().any { padded.contains(" $it ") } }
+        return mixed && words.none { it in SPORT_WORDS }
+    }
 
     /** Every live channel, normalised once per channel list. */
     class ChannelIndex(channels: List<StreamItem>) {

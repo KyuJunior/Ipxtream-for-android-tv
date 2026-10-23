@@ -205,11 +205,12 @@ class MatchesTest {
         assertTrue(best.indexOfFirst { it.streamId == 61 } > 2)
     }
 
-    @Test fun tellsSportsChannelsFromOthers() {
-        assertTrue(ChannelMatcher.isSportsChannel(live(1, "ⒶⓂ BeIN SPORTS FHD 3 (SS)")))
-        assertTrue(ChannelMatcher.isSportsChannel(live(2, "ⒶⓂ AR: DUBAI SPORTS 1 4K")))
-        assertTrue(!ChannelMatcher.isSportsChannel(live(3, "ⒶⓂ AR_beIN_DRAMA_1_FHD")))
-        assertTrue(!ChannelMatcher.isSportsChannel(live(4, "AR| MBC 1")))
+    @Test fun recognisesEntertainmentChannels() {
+        assertTrue(ChannelMatcher.isEntertainmentChannel(live(1, "ⒶⓂ AR_beIN_DRAMA_1_FHD")))
+        assertTrue(ChannelMatcher.isEntertainmentChannel(live(2, "ⒶⓂ AR_BEIN_Animal_Planet_FHD")))
+        assertTrue(!ChannelMatcher.isEntertainmentChannel(live(3, "ⒶⓂ BeIN SPORTS FHD 3 (SS)")))
+        assertTrue("an event channel is a valid pick", !ChannelMatcher.isEntertainmentChannel(live(4, "|EN| PL: Ipswich vs Forest 20:00")))
+        assertTrue("unknown channels are the user's call", !ChannelMatcher.isEntertainmentChannel(live(5, "AR| MBC 1")))
     }
 
     @Test fun rightsTableCoversDefaultCompetitions() {

@@ -10,7 +10,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.text.Normalizer
@@ -51,33 +50,47 @@ class BeinGuideSource(context: Context) {
     private val cache = CacheManager(File(context.cacheDir, "bein_guide").apply { mkdirs() })
     private val listType = object : TypeToken<List<GuideProgramme>>() {}.type
     private val gson = Gson()
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
+    private val client = com.ipxtream.tv.data.api.ApiClient.sharedHttp.newBuilder()
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
     /** Live broadcasts listed in the guide files for [day] (local calendar day). Empty when unreachable. */
     suspend fun liveProgrammes(day: Calendar): List<GuideProgramme> = withContext(Dispatchers.IO) {
-        val folder = SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = day.timeZone }.format(day.time)
-        val key = "bein_$folder"
-        cache.load<List<GuideProgramme>>(key, listType, CACHE_MS)?.let { return@withContext it }
+        // A day's folder also lists the day before and after, so a fresh neighbouring folder will do.
+        for (delta in listOf(0, -1, 1)) {
+            cache.load<List<GuideProgramme>>(keyFor(folderName(day, delta)), listType, CACHE_MS)
+                ?.let { return@withContext it }
+        }
+        val folder = folderName(day, 0)
+        val key = keyFor(folder)
         val parts = coroutineScope {
             CHANNEL_FILES.map { file -> async { runCatching { fetch(folder, file) }.getOrNull() } }.awaitAll()
         }
-        if (parts.all { it == null }) {
-            // Offline or the guide moved: an old copy is still better than nothing.
-            return@withContext cache.load<List<GuideProgramme>>(key, listType, Long.MAX_VALUE).orEmpty()
+        val fetched = parts.filterNotNull().flatten()
+        if (parts.any { it == null }) {
+            // Some files failed (offline, flaky): use what came, topped up from an old copy, and don't cache
+            // it, so the next refresh tries the missing channels again.
+            val old = cache.load<List<GuideProgramme>>(key, listType, Long.MAX_VALUE).orEmpty()
+            return@withContext (fetched + old).distinct()
         }
-        val programmes = parts.filterNotNull().flatten()
-        cache.save(key, programmes)
-        programmes
+        cache.save(key, fetched)
+        fetched
     }
 
-    private fun fetch(folder: String, file: String): List<GuideProgramme> {
+    private fun folderName(day: Calendar, delta: Int): String {
+        val d = (day.clone() as Calendar).apply { add(Calendar.DAY_OF_MONTH, delta) }
+        return SimpleDateFormat("yyyy-MM-dd", Locale.US).apply { timeZone = d.timeZone }.format(d.time)
+    }
+
+    private fun keyFor(folder: String) = "bein_$folder"
+
+    /** One channel's file. Null when it couldn't be read; empty when beIN has no such file (404). */
+    private fun fetch(folder: String, file: String): List<GuideProgramme>? {
         val request = Request.Builder().url("$BASE_URL$folder/$file").build()
         client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) return emptyList()
-            val body = response.body?.charStream() ?: return emptyList()
+            if (response.code == 404) return emptyList()
+            if (!response.isSuccessful) return null
+            val body = response.body?.charStream() ?: return null
             return BeinGuide.parse(gson.fromJson(body, BeinGuideFile::class.java))
         }
     }
