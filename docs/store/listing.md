@@ -1,8 +1,7 @@
 # Google Play listing (Play version, `com.xtream.kyu`)
 
-Draft for the Play Console, written 2026-10-24 (Phase 5 of `docs/play-store-plan.md`). The app name is still to be
-decided (D2: a neutral name); every place that says **IPXtream TV** below changes with it, as do the TV banner and
-the feature graphic.
+Draft for the Play Console, written 2026-10-24 (Phase 5 of `docs/play-store-plan.md`). App name **Xtream TV**
+(owner decision D2, 2026-10-24); the TV banner and feature graphic use the "Xtream" wordmark.
 
 Rules this text follows: no channel, film, sports league or broadcaster names; no promises of content; nothing that
 suggests where to get a subscription.
@@ -11,7 +10,7 @@ suggests where to get a subscription.
 
 ## Store listing → Main store listing
 
-**App name** (30 characters max): IPXtream TV
+**App name** (30 characters max): Xtream TV
 
 **Short description** (80 max)
 
@@ -23,7 +22,7 @@ suggests where to get a subscription.
 English:
 
 ```
-IPXtream TV is a video player for Android TV. Sign in with the Xtream Codes details from the IPTV service you already
+Xtream TV is a video player for Android TV. Sign in with the Xtream Codes details from the IPTV service you already
 subscribe to, and watch its live channels, films and series with a remote-friendly interface.
 
 The app does not include, sell or recommend any channels, films or subscriptions. You need your own service and the
@@ -48,7 +47,7 @@ is the case and uses HTTPS when your service offers it.
 Arabic:
 
 ```
-IPXtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول ببيانات Xtream Codes من خدمة IPTV المشترك فيها،
+Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول ببيانات Xtream Codes من خدمة IPTV المشترك فيها،
 وشاهد قنواتها المباشرة وأفلامها ومسلسلاتها بواجهة مصمّمة لجهاز التحكم.
 
 لا يتضمن التطبيق أي قنوات أو أفلام أو اشتراكات، ولا يبيعها ولا يرشّحها. تحتاج إلى خدمتك الخاصة وإلى حق مشاهدة ما تقدّمه.

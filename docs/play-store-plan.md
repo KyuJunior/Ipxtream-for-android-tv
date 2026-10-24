@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **Phases 1–5 built (2026-10-24); waiting on the owner: upload key + secrets (§4), GitHub Pages, demo-stream approval and the app name. Owner answered D1–D7 (§9); open: the app name and the final package check
+Status: **Phases 1–5 built (2026-10-24); owner's upload key, GitHub Pages, demo streams and the name are done; next is the owner's Play Console setup. Owner answered D1–D7 (§9); open: nothing
 (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
@@ -232,7 +232,7 @@ Phases 1–3 are independent of the owner's Play Console work, so they can start
 | # | Answer | Date |
 |---|---|---|
 | D1 | `com.xtream.kyu` (owner). Note: it contains "xtream", which D2 warns about, and it is permanent after the first upload; confirm before Phase 4 | 2026-10-24 |
-| D2 | OK: use a neutral app name on Play; name still to choose | 2026-10-24 |
+| D2 | **Xtream TV** (owner, 2026-10-24, after the risk of "Xtream" in the name was explained). Play build label, wordmark, TV banner, store graphics and texts use it; the GitHub build stays IPXtream TV | 2026-10-24 |
 | D3 | Provider-neutral suggestions: search the user's own channel names (and the provider's EPG later) for both team names; no beIN guide, no rights table, no auto-play; the user confirms with OK; picks remembered (see §3) | 2026-10-24 |
 | D4 | OK: built-in demo with legal streams. Stream list (Big Buck Bunny, Tears of Steel, Unified Streaming and Akamai test streams) approved by the owner | 2026-10-24 |
 | D5 | contact@dryaser.me | 2026-10-24 |

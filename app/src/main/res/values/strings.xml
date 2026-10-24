@@ -41,6 +41,7 @@
     <string name="aspect_fit">Fit to Screen (Original)</string>
     <string name="aspect_zoom">Zoom 16:9 (Crop)</string>
     <string name="badge_live">LIVE</string>
+    <string name="app_name">IPXtream TV</string>
     <string name="brand_name">IPXtream</string>
     <string name="buffer_balanced">Balanced (Recommended)</string>
     <string name="buffer_fast_start">Fast Start (Low Latency)</string>

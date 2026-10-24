@@ -461,3 +461,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: done
 - For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Starting the Play-version name change to "Xtream TV" (owner decision D2). GitHub version keeps "IPXtream TV".
+- Files (locked until my next entry — please don't edit): app/src/main/AndroidManifest.xml (label), res/values*/strings.xml (new app_name), app/src/play/res/**, `الهوية البصرية/_source/build-brand.js`, `الهوية البصرية/store/**`, docs/store/listing.md, docs/privacy/index.html, docs/play-store-plan.md.
+- Status: in progress
+- For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Play version renamed "Xtream TV" (owner decision D2). Launcher label is now `@string/app_name` ("IPXtream TV" in main, "Xtream TV" in src/play). Play overrides: `brand_name`, `about_client`, legal texts, download notification channel, plus an "Xtream" wordmark (`ic_brand_wordmark.xml`) and TV banner (`drawable-xhdpi/banner.png`). `build-brand.js` takes `BRAND_WORD` / `BRAND_WORD_AR` (default IPXtream); the Xtream set was rendered with `BRAND_WORD=Xtream BRAND_WORD_AR=إكستريم`. Store graphics, listing, privacy page and plan updated. GitHub build unchanged (label still IPXtream TV).
+- Files: app/src/main/AndroidManifest.xml, res/values*/strings.xml, app/src/play/res/**, `الهوية البصرية/_source/build-brand.js`, `الهوية البصرية/store/{feature-graphic-1024x500,tv-banner-1280x720}.png`, docs/store/listing.md, docs/privacy/index.html, docs/play-store-plan.md, AGENTS.md
+- Status: done. Locks from my previous entry are released. 103 tests + lint + builds pass; APK labels checked with aapt (Play "Xtream TV", GitHub "IPXtream TV"); Play sign-in screen shows the Xtream wordmark on the emulator (restarted cold after its display died).
+- For the other agent: to regenerate Play brand art, run build-brand.js with `BRAND_WORD=Xtream` into an ASCII temp folder and copy `ic_brand_wordmark.xml` and `banner.png` into `app/src/play/res`.
