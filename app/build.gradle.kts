@@ -47,6 +47,7 @@ android {
             applicationId = "com.ipxtream.tv"
             buildConfigField("boolean", "SELF_UPDATE", "true")
             buildConfigField("boolean", "MATCH_AUTO_PLAY", "true")
+            buildConfigField("boolean", "DOWNLOADS", "true")
         }
         create("play") {
             dimension = "store"
@@ -57,6 +58,8 @@ android {
             buildConfigField("boolean", "SELF_UPDATE", "false")
             // Matches never starts a channel the user hasn't confirmed (decision D3).
             buildConfigField("boolean", "MATCH_AUTO_PLAY", "false")
+            // No downloads: Play requires a video declaration for the background download service.
+            buildConfigField("boolean", "DOWNLOADS", "false")
         }
     }
 

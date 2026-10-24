@@ -80,6 +80,9 @@ class DownloadService : Service() {
     //  Service lifecycle
     // =========================================================================
 
+    // The Play build removes this service from its manifest (no downloads there, BuildConfig.DOWNLOADS),
+    // so lint can't see its dataSync type in that variant; the GitHub manifest declares it.
+    @android.annotation.SuppressLint("ForegroundServiceType")
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()

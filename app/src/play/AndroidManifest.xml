@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Play build: Google Play also offers the app to phones and tablets, which only show apps with a
+<!-- Play build. Google Play also offers the app to phones and tablets, which only show apps with a
      LAUNCHER entry. Without it the app installs there but has no icon and can't be opened. -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- No downloads in the Play build (BuildConfig.DOWNLOADS): drop the background download service
+         and its foreground-service permissions, which Play would require a video declaration for. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" tools:node="remove" />
 
     <application>
+        <service android:name=".data.download.DownloadService" tools:node="remove" />
+
         <activity
             android:name=".ui.login.LoginActivity"
             android:exported="true">

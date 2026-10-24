@@ -316,12 +316,14 @@ fun VodDetailScreen(
                         modifier        = Modifier.focusRequester(playButtonFocus)
                     )
 
-                    VodActionButton(
-                        onClick   = onDownload,
-                        icon      = Icons.Filled.ArrowDownward,
-                        label     = stringResource(R.string.action_download),
-                        isPrimary = false
-                    )
+                    if (com.ipxtream.tv.BuildConfig.DOWNLOADS) {
+                        VodActionButton(
+                            onClick   = onDownload,
+                            icon      = Icons.Filled.ArrowDownward,
+                            label     = stringResource(R.string.action_download),
+                            isPrimary = false
+                        )
+                    }
 
                     VodActionButton(
                         onClick         = onToggleFavorite,

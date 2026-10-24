@@ -31,6 +31,14 @@ class PlayBuildTest {
     @Test fun selfUpdateAndAutoPlayAreOff() {
         assertFalse(BuildConfig.SELF_UPDATE)
         assertFalse(BuildConfig.MATCH_AUTO_PLAY)
+        assertFalse(BuildConfig.DOWNLOADS)
+    }
+
+    @Test fun downloadServiceIsRemoved() {
+        // Play asks for a video declaration for a dataSync foreground service; the Play build has none.
+        val text = File("src/play/AndroidManifest.xml").readText()
+        assertTrue(text.contains("FOREGROUND_SERVICE_DATA_SYNC\" tools:node=\"remove\""))
+        assertTrue(text.contains("DownloadService\" tools:node=\"remove\""))
     }
 
     @Test fun noInstallPermissionOrFileProvider() {

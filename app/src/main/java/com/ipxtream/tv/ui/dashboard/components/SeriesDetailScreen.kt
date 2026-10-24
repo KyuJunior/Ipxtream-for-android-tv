@@ -334,7 +334,7 @@ private fun EpisodeCard(
 ) {
     Card(
         onClick = onPlay,
-        onLongClick = onDownload,
+        onLongClick = if (com.ipxtream.tv.BuildConfig.DOWNLOADS) onDownload else null,
         modifier = modifier.fillMaxWidth().height(130.dp),
         colors = CardDefaults.colors(
             containerColor = com.ipxtream.tv.ui.theme.SlateCard,
@@ -371,7 +371,9 @@ private fun EpisodeCard(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("▶  " + stringResource(R.string.action_play), style = IpxTypography.LabelSmall, color = TextPrimary)
-                Text(stringResource(R.string.long_press_download), style = IpxTypography.LabelSmall, color = TextMuted)
+                if (com.ipxtream.tv.BuildConfig.DOWNLOADS) {
+                    Text(stringResource(R.string.long_press_download), style = IpxTypography.LabelSmall, color = TextMuted)
+                }
             }
         }
     }

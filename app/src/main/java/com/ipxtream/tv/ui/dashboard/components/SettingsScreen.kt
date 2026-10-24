@@ -504,13 +504,15 @@ private fun GeneralSettingsContent(
         modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 
-    SettingToggleItem(
-        title = stringResource(R.string.settings_show_downloads),
-        subtitle = stringResource(R.string.settings_show_downloads_sub),
-        isChecked = settings.showDownloadsSection,
-        onCheckedChange = onToggleDownloads,
-        modifier = Modifier.focusProperties { start = leftNavFocus }
-    )
+    if (com.ipxtream.tv.BuildConfig.DOWNLOADS) {
+        SettingToggleItem(
+            title = stringResource(R.string.settings_show_downloads),
+            subtitle = stringResource(R.string.settings_show_downloads_sub),
+            isChecked = settings.showDownloadsSection,
+            onCheckedChange = onToggleDownloads,
+            modifier = Modifier.focusProperties { start = leftNavFocus }
+        )
+    }
 
     SettingToggleItem(
         title = stringResource(R.string.settings_show_library),

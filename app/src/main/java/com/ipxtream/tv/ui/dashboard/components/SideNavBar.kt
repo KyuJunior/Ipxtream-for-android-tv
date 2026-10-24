@@ -200,7 +200,8 @@ fun SideNavBar(
                 NAV_SECTIONS.filter { item ->
                     when (item.section) {
                         ContentSection.WHATS_NEW  -> settings?.showWhatsNewSection ?: true
-                        ContentSection.DOWNLOADS  -> settings?.showDownloadsSection ?: true
+                        ContentSection.DOWNLOADS  -> com.ipxtream.tv.BuildConfig.DOWNLOADS &&
+                                                     (settings?.showDownloadsSection ?: true)
                         ContentSection.MY_LIBRARY -> settings?.showLibrarySection ?: true
                         else                      -> true
                     }
