@@ -82,7 +82,7 @@ after the rename if that should go.
 
 **Category:** Video Players & Editors · **Tags:** video player, Android TV
 **Contact e-mail:** contact@dryaser.me · **Website:** (optional) the GitHub repository
-**Privacy policy URL:** `https://kyujunior.github.io/Ipxtream-for-android-tv/privacy/` (after GitHub Pages is on)
+**Privacy policy URL:** `https://kyujunior.github.io/Ipxtream-for-android-tv/privacy/` (live since 2026-10-24)
 
 ---
 

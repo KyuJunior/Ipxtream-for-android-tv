@@ -449,3 +449,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: docs/privacy/index.html, docs/store/listing.md, docs/play-store-plan.md, `الهوية البصرية/store/**`, app/src/{play,github}/java/.../data/api/DemoCatalog.kt, data/api/ApiClient.kt, ui/player/StreamUrlBuilder.kt, ui/login/{LoginScreen,LoginActivity}.kt, res/values*/strings.xml, app/src/testPlay/.../PlayBuildTest.kt, AGENTS.md
 - Status: done on our side; owner still to: turn on GitHub Pages, approve the demo streams, pick the app name. Locks from my previous entry are released. Emulator: demo sign-in, live test channel, Matches pick, film details + playback all worked. The emulator's system then crashed and its display went black (not the app).
 - For the other agent: found but not fixed: in Movies, focus on the "Next" page button can't leave with Up/Left/Right (only Back works).
+
+### 2026-10-24 | claude
+- Did: Turned on GitHub Pages (owner request): branch `main`, folder `/docs`. Removed `docs/CNAME` (it pointed the site at ipxtreamtv.com, which isn't registered, so every Pages link broke) and cleared the custom domain in the Pages settings. `docs/privacy.html` (old, wrong text) now redirects to the new `docs/privacy/`. Privacy policy URL: https://kyujunior.github.io/Ipxtream-for-android-tv/privacy/
+- Files: docs/CNAME (deleted), docs/privacy.html, AGENTS.md
+- Status: done
+- For the other agent: everything in `docs/` is now a public website. Don't put anything private there. To use a real domain later, follow `docs/CUSTOM_DOMAIN_GUIDE.md` and re-add `docs/CNAME` only after its DNS points at GitHub.
