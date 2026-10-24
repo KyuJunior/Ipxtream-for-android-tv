@@ -455,3 +455,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: docs/CNAME (deleted), docs/privacy.html, AGENTS.md
 - Status: done
 - For the other agent: everything in `docs/` is now a public website. Don't put anything private there. To use a real domain later, follow `docs/CUSTOM_DOMAIN_GUIDE.md` and re-add `docs/CNAME` only after its DNS points at GitHub.
+
+### 2026-10-24 | claude
+- Did: Owner created the Play upload key and the four `PLAY_UPLOAD_*` secrets. Ran "Play Store bundle" (`play.yml`) once: all steps green, AAB artifact `play-bundle` (7.3 MB) signed by the owner's upload key (cert SHA-256 C9:4A:B9:90:…:72:16:D8:B1). Phase 4 is complete; next is the owner's Play Console setup (plan §4 step 5, `docs/store/listing.md`).
+- Files: AGENTS.md
+- Status: done
+- For the other agent: none
