@@ -115,6 +115,12 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
+    // Phones and tablets (Play build): taps reach the TV controls, which only react to keys.
+    private val touchBridge by lazy { com.ipxtream.tv.ui.theme.TouchBridge(this) }
+
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean =
+        touchBridge.dispatch(event) { super.dispatchTouchEvent(it) }
+
     // ─── Navigation ───────────────────────────────────────────────────────────
 
     private fun openDashboard(success: LoginUiState.Success) {

@@ -35,6 +35,8 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -299,6 +301,18 @@ fun PlayerPanel(
                 down = FocusRequester.Cancel
                 left = FocusRequester.Cancel
                 right = FocusRequester.Cancel
+            }
+            // Touch devices (Play build on phones): a tap on the video shows or hides the controls.
+            .pointerInput(uiState.isHudVisible) {
+                detectTapGestures(onTap = {
+                    if (uiState.isHudVisible) {
+                        viewModel.hideHud()
+                        runCatching { focusRequester.requestFocus() }
+                    } else {
+                        viewModel.onHudInteraction()
+                        runCatching { playButtonFocus.requestFocus() }
+                    }
+                })
             }
             .focusable()
             .onPreviewKeyEvent { event ->

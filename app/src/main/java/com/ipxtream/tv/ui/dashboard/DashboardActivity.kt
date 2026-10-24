@@ -256,6 +256,12 @@ class DashboardActivity : ComponentActivity() {
         return false
     }
 
+    // Phones and tablets (Play build): taps reach the TV controls, which only react to keys.
+    private val touchBridge by lazy { com.ipxtream.tv.ui.theme.TouchBridge(this) }
+
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean =
+        touchBridge.dispatch(event) { super.dispatchTouchEvent(it) }
+
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (isExcessRepeat(event)) return true
         if (event.keyCode == android.view.KeyEvent.KEYCODE_BACK && event.action == android.view.KeyEvent.ACTION_DOWN) {

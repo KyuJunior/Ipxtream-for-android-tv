@@ -64,7 +64,9 @@ fun Modifier.screenReaderOnlySemantics(): Modifier {
         am?.addAccessibilityStateChangeListener(listener)
         onDispose { am?.removeAccessibilityStateChangeListener(listener) }
     }
-    return if (screenReader) this else this.clearAndSetSemantics { }
+    // Touch devices keep the tree: TouchBridge finds the tapped control through it.
+    val touch = remember { context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN) }
+    return if (screenReader || touch) this else this.clearAndSetSemantics { }
 }
 
 private fun isScreenReaderOn(context: Context): Boolean {

@@ -263,7 +263,11 @@ private fun NavItem(
     val keys = directionalKeys()
 
     Surface(
-        onClick  = onSelected,
+        onClick  = {
+            onSelected()
+            // A tap has no "Right" key to leave the menu: go into the section, which closes it.
+            if (com.ipxtream.tv.ui.theme.TouchBridge.tapping) onNavigateToContent()
+        },
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
