@@ -479,3 +479,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: docs/store/listing.md (short description shortened to 69 characters), AGENTS.md
 - Status: in progress on the owner's side: graphics, screenshots and the AAB must be uploaded by the owner (the built-in browser can't pick local files); Android TV form factor appears after the first release to a track.
 - For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Play version now needs Android 7.0+ (`minSdk = 24` on the `play` flavor only; Play's automatic protection requires it; GitHub build stays 23). Built bundle 2.0.17 (code 91); owner uploaded it; Internal testing release 2.0.17 published to the owner's existing "TESTERS" email list (4 people, incl. the owner). Added the Android TV form factor; its opt-in unlocks after TV screenshots are uploaded.
+- Files: app/build.gradle.kts (already pushed), AGENTS.md
+- Status: waiting on the owner to upload store graphics/screenshots, then opt in to Android TV; then closed test (12 testers × 14 days).
+- For the other agent: none
