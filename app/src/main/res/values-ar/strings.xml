@@ -126,6 +126,7 @@
     <string name="login_server_error">خطأ في الخادم %1$d: %2$s</string>
     <string name="login_server_offline">خادم مزوّد IPTV غير متاح حاليًا.</string>
     <string name="login_server_url">رابط الخادم</string>
+    <string name="login_unencrypted_note">هذا العنوان يستخدم HTTP غير المشفّر: بيانات الدخول وما تشاهده غير مشفّرة على شبكتك. إذا وفّر مزوّدك HTTPS ينتقل التطبيق إليه بعد تسجيل الدخول.</string>
     <string name="login_show_password">إظهار كلمة المرور</string>
     <string name="login_sign_in">تسجيل الدخول</string>
     <string name="login_too_many">طلبات كثيرة جدًا. انتظر قليلًا ثم حاول مجددًا.</string>

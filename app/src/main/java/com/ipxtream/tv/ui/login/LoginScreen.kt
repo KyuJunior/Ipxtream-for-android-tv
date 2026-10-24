@@ -264,6 +264,16 @@ fun LoginScreen(
                 )
             }
 
+            // Most providers only offer plain HTTP; say what that means instead of hiding it.
+            if (server.isNotBlank() && !server.trim().startsWith("https://", ignoreCase = true)) {
+                Text(
+                    text     = stringResource(R.string.login_unencrypted_note),
+                    style    = IpxTypography.BodySmall,
+                    color    = TextMuted,
+                    modifier = Modifier.padding(start = 8.dp, top = 6.dp)
+                )
+            }
+
             Spacer(Modifier.height(16.dp))
 
             // ── Username field ────────────────────────────────────────────────

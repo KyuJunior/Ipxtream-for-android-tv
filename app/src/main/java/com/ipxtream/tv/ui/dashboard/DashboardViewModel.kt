@@ -973,10 +973,9 @@ class DashboardViewModel(
 
     fun loadHomeData() {
         viewModelScope.launch(kotlinx.coroutines.Dispatchers.Default) {
-            // Load Live Highlights (Alwan channels, fallback to first 15 channels)
+            // Live row: the user's favourite and recently watched channels (any provider), else the first 15
             repository.getLiveStreams(categoryId = null, forceRefresh = false).onSuccess { channels ->
-                val alwan = channels.filter { it.name.contains("Alwan", ignoreCase = true) }
-                val highlights = if (alwan.isNotEmpty()) alwan else channels.take(15)
+                val highlights = HomeLive.highlights(channels, libraryStore.favorites.value, libraryStore.history.value)
                 _uiState.update { it.copy(homeLiveHighlights = highlights) }
             }
 

@@ -302,7 +302,7 @@ class DownloadService : Service() {
                     DownloadRepository.update(item.id) {
                         it.copy(
                             status           = DownloadStatus.FAILED,
-                            errorMessage     = result.message,
+                            errorMessage     = com.ipxtream.tv.data.api.ApiClient.redactCredentials(result.message),
                             speedBytesPerSec = 0L
                         )
                     }

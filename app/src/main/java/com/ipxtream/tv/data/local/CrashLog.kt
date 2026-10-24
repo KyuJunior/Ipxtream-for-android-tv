@@ -28,7 +28,8 @@ object CrashLog {
     fun latest(context: Context): Entry? {
         val file = File(context.filesDir, DIR).listFiles()?.maxByOrNull { it.name } ?: return null
         val time = file.name.removePrefix("crash_").removeSuffix(".txt").toLongOrNull() ?: file.lastModified()
-        return runCatching { Entry(time, file.readText()) }.getOrNull()
+        // Masked again on read: crash files written before 2.0.13 only had `password=` masked.
+        return runCatching { Entry(time, ApiClient.redactCredentials(file.readText())) }.getOrNull()
     }
 
     fun clear(context: Context) {

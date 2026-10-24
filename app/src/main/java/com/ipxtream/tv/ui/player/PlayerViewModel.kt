@@ -788,7 +788,9 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             text(R.string.player_err_format)
         PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ->
             text(R.string.player_err_behind_live)
-        else -> error.localizedMessage ?: text(R.string.player_err_code, error.errorCode)
+        // The exception text can carry the stream URL, which holds the login.
+        else -> error.localizedMessage?.let { com.ipxtream.tv.data.api.ApiClient.redactCredentials(it) }
+            ?: text(R.string.player_err_code, error.errorCode)
     }
 
     // =========================================================================

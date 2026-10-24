@@ -64,7 +64,7 @@ class LoginViewModel(
      * @param username Portal username.
      * @param password Portal password.
      */
-    fun login(server: String, username: String, password: String) {
+    fun login(server: String, username: String, password: String, autoLogin: Boolean = false) {
         // Guard: don't launch a second request while one is in-flight.
         if (_uiState.value is LoginUiState.Loading) return
 
@@ -72,13 +72,14 @@ class LoginViewModel(
             _uiState.value = LoginUiState.Loading
 
             val normalizedServer = ApiClient.normalizeUrl(server)
-            val credentials      = AuthCredentials(normalizedServer, username, password)
+            var credentials      = AuthCredentials(normalizedServer, username, password)
 
             try {
                 val apiService = ApiClient.create(normalizedServer, debug = com.ipxtream.tv.BuildConfig.DEBUG)
                 val response   = apiService.authenticate(username, password)
 
                 if (response.userInfo.auth == 1) {
+                    if (!autoLogin) credentials = httpsUpgrade(credentials, response.serverInfo.httpsPort) ?: credentials
                     // Save ONLY after a confirmed successful authentication.
                     credentialStore.saveAccount(credentials)
                     credentialStore.saveCredentials(credentials)
@@ -105,10 +106,39 @@ class LoginViewModel(
                 )
             } catch (e: Exception) {
                 _uiState.value = LoginUiState.Error(
-                    e.localizedMessage ?: text(R.string.login_unexpected)
+                    e.localizedMessage?.let(ApiClient::redactCredentials) ?: text(R.string.login_unexpected)
                 )
             }
         }
+    }
+
+    /**
+     * For a new HTTP account whose provider also offers HTTPS (`server_info.https_port`): the same
+     * login over HTTPS, if that works within a few seconds. Null keeps the HTTP address.
+     *
+     * Existing accounts are never moved: favourites, history and caches are keyed on the server
+     * address, so changing its scheme would hide them.
+     */
+    private suspend fun httpsUpgrade(credentials: AuthCredentials, httpsPort: String?): AuthCredentials? {
+        val https = ApiClient.httpsVariant(credentials.server, httpsPort) ?: return null
+        val known = credentialStore.getAccounts().any {
+            it.username.equals(credentials.username, ignoreCase = true) &&
+                ApiClient.normalizeUrl(it.server).equals(credentials.server, ignoreCase = true)
+        }
+        if (known) return null
+        return runCatching {
+            kotlinx.coroutines.withTimeoutOrNull(HTTPS_PROBE_MS) {
+                ApiClient.create(https, debug = com.ipxtream.tv.BuildConfig.DEBUG)
+                    .authenticate(credentials.username, credentials.password)
+            }
+        }.getOrNull()
+            ?.takeIf { it.userInfo.auth == 1 }
+            ?.let { credentials.copy(server = https) }
+    }
+
+    private companion object {
+        /** Panels with a broken certificate or a closed HTTPS port must not hold up sign-in. */
+        const val HTTPS_PROBE_MS = 4_000L
     }
 
     /**
@@ -121,7 +151,7 @@ class LoginViewModel(
     fun tryAutoLogin() {
         val saved = credentialStore.getDefaultAccount() ?: credentialStore.loadCredentials() ?: return
         credentialStore.saveCredentials(saved)
-        login(saved.server, saved.username, saved.password)
+        login(saved.server, saved.username, saved.password, autoLogin = true)
     }
 
     /**

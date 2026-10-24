@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **Phases 1–2 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
+Status: **Phases 1–3 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
 (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
@@ -197,18 +197,25 @@ catalogue of legal streams (owner-approved list); the reviewer instructions in A
 
 ---
 
-## 7. Hardening that ships in both flavors
+## 7. Hardening that ships in both flavors (built in Phase 3, 2026-10-24)
 
-These are fixes, not features, and they come before the first Play upload:
-
-1. `ApiClient.redactCredentials` masks `/(live|movie|series|timeshift)/<user>/<pass>/` path segments and
-   `username=` as well as `password=`; `CrashLog`, error messages and download records use it. Unit-tested in
-   `app/src/test`.
-2. Saved downloads stop storing the full credentialed URL; rebuild it from `CredentialStore` when needed.
-3. Login: try `https` first when the provider's auth response offers `https_port`; show a one-line "this provider
-   uses an unencrypted connection" note when it doesn't. Cleartext stays allowed for provider hosts; fixed hosts
-   (GitHub, ESPN, beIN) get `cleartextTrafficPermitted="false"` entries.
-4. Home's "Alwan" highlight becomes generic (e.g. favourites or most-watched live channels), in both flavors.
+1. `ApiClient.redactCredentials` masks `username=` / `password=` query parameters, the `<user>/<pass>` segments of
+   `/live|movie|series|timeshift/` paths, and the type-less live form `http://host/<user>/<pass>/<id>.m3u8`. Used by
+   network logging (debug only), `CrashLog` (on write and again on read, so older crash files are masked too),
+   player error texts, download error texts and the login screen's unexpected-error text
+   (`RedactCredentialsTest`).
+2. Downloads: checked that `DownloadRepository` is in memory only; the credentialed URL never reaches disk (it lives
+   in the running service and its start intent). Error texts are masked. No further change needed.
+3. Login: after a successful sign-in of a **new** HTTP account whose provider sends `server_info.https_port`, the
+   same login is tried over `https://<host>:<https_port>/` for up to 4 s; if it works, the account is saved with the
+   HTTPS address. Existing accounts are never moved, because favourites, history, 4K results, match picks and caches
+   are keyed on the server address. The login form shows a short note under the server address whenever it is not
+   `https://`. Fixed third-party hosts (GitHub, ESPN, the beIN guide CDN) refuse cleartext in
+   `network_security_config.xml`; provider hosts stay allowed.
+   Checked on the emulator: a new account on a test server advertising a dead HTTPS port signed in over HTTP after
+   the timeout. Not checked: a provider with working HTTPS (no such test server here).
+4. Home's live row (`HomeLive.highlights`): the user's favourite live channels, then recently watched ones, else the
+   provider's first 15 (was: channels named "Alwan").
 
 ---
 
@@ -219,7 +226,7 @@ These are fixes, not features, and they come before the first Play upload:
 | 0 | Decisions D1–D7; Play Console account and identity check; upload key + secrets; support e-mail; list of legal demo streams | Owner | Answers recorded in §9 of this file |
 | 1 | **Done 2026-10-24.** Flavors and source-set split (§3); `release.yml` moved to the github flavor | Claude | GitHub APK behaves exactly as v2.0.x on the owner's TV (updater, Matches with beIN guide); a self-update from the previous release installs over it; Play debug build runs with no updater UI and per-D3 Matches; the Play flavor contains no `UpdateManager`/`BeinGuide` classes |
 | 2 | **Done 2026-10-24** (owner TV not checked). Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
-| 3 | Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
+| 3 | **Done 2026-10-24.** Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
 | 4 | Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |
 | 5 | Privacy page, corrected in-app texts, demo sign-in, listing text and assets (§6) | Claude drafts, owner approves | Privacy URL live; listing assets in `الهوية البصرية/store/` (or similar) |
 | 6 | Internal test track → closed test (12+ testers, 14 days if required) → production review | Owner in Play Console, Claude fixes findings | App live on Play |

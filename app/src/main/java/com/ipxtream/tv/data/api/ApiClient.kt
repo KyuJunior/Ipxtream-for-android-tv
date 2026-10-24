@@ -63,10 +63,32 @@ object ApiClient {
             .create(XtreamApiService::class.java)
     }
 
-    private val PASSWORD_PARAM = Regex("""(?i)(password=)[^&\s]*""")
+    private val CREDENTIAL_PARAM = Regex("""(?i)((?:password|username)=)[^&\s]*""")
+    /** `/movie/<user>/<pass>/…`, `/series/…`, `/live/…`, `/timeshift/…` stream paths. */
+    private val TYPED_PATH = Regex("""(?i)(/(?:live|movie|series|timeshift)/)[^/\s]+/[^/\s]+/""")
+    /** Live streams have no type segment: `http://host:port/<user>/<pass>/<id>.m3u8`. */
+    private val LIVE_PATH = Regex("""(?i)(https?://[^/\s]+/)[^/\s]+/[^/\s]+/(\d+\.(?:m3u8|ts)\b)""")
 
-    /** Masks the `password` query parameter in any logged URL. */
-    fun redactCredentials(text: String): String = text.replace(PASSWORD_PARAM, "$1***")
+    /**
+     * Masks the login in any text that may hold a provider URL (logs, crash log, error messages):
+     * `username=` / `password=` query parameters and the `<user>/<pass>` segments of stream paths.
+     */
+    fun redactCredentials(text: String): String = text
+        .replace(CREDENTIAL_PARAM, "$1***")
+        .replace(TYPED_PATH, "$1***/***/")
+        .replace(LIVE_PATH, "$1***/***/$2")
+
+    /**
+     * The HTTPS address of [server] on [httpsPort], or null when the provider offers none
+     * ("", "0", not a number) or [server] already uses HTTPS. Keeps the host, drops any path.
+     */
+    fun httpsVariant(server: String, httpsPort: String?): String? {
+        val port = httpsPort?.trim()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: return null
+        val normalized = normalizeUrl(server)
+        if (!normalized.startsWith("http://")) return null
+        val host = runCatching { java.net.URI(normalized).host }.getOrNull()?.takeIf { it.isNotBlank() } ?: return null
+        return "https://$host:$port/"
+    }
 
     /**
      * Ensures the URL is properly formatted for Retrofit's [Retrofit.Builder.baseUrl]:

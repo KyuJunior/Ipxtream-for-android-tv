@@ -44,10 +44,10 @@ class StreamUrlBuilderTest {
         assertEquals("http://portal.example:8080/series/user/secret/9001.mp4", StreamUrlBuilder.buildForEpisode(creds, episode))
     }
 
-    @Test fun loggedUrlsHideThePassword() {
+    @Test fun loggedUrlsHideTheLogin() {
         val line = "--> GET http://portal.example/player_api.php?username=user&password=secret&action=get_vod_streams"
         val redacted = ApiClient.redactCredentials(line)
         assertFalse(redacted.contains("secret"))
-        assertEquals("--> GET http://portal.example/player_api.php?username=user&password=***&action=get_vod_streams", redacted)
+        assertEquals("--> GET http://portal.example/player_api.php?username=***&password=***&action=get_vod_streams", redacted)
     }
 }
