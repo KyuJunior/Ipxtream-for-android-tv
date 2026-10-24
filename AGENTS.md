@@ -485,3 +485,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/build.gradle.kts (already pushed), AGENTS.md
 - Status: waiting on the owner to upload store graphics/screenshots, then opt in to Android TV; then closed test (12 testers × 14 days).
 - For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Uploaded the Play store graphics in the owner's Play Console from the public repo (`الهوية البصرية/store/`: icon, feature graphic, 3 phone + 3 Android TV screenshots, TV banner), AI-asset label "don't label" (programmatic vector art + real app screenshots), saved the listing, opted in to Android TV. All "set up your app" tasks are done; next is the closed test (countries, ≥12 testers, release, send for review).
+- Files: AGENTS.md
+- Status: waiting on the owner for tester emails and countries.
+- For the other agent: none
