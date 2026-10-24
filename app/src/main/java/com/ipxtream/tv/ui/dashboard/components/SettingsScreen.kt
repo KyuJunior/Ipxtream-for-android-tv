@@ -82,6 +82,7 @@ fun SettingsScreen(
     onToggleShowSpotlight: (Boolean) -> Unit = {},
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit = {},
     onToggleShowChannelNumbers: (Boolean) -> Unit = {},
+    onToggleMatchReminders: (Boolean) -> Unit = {},
     onToggle24HourClock: (Boolean) -> Unit = {},
     onBufferProfileChange: (BufferProfile) -> Unit = {},
     onToggleAutoPlayNextEpisode: (Boolean) -> Unit = {},
@@ -309,6 +310,7 @@ fun SettingsScreen(
                                     onToggleSpotlight = onToggleShowSpotlight,
                                     onPerformanceModeChange = onPerformanceModeChange,
                                     onToggleChannelNumbers = onToggleShowChannelNumbers,
+                                    onToggleMatchReminders = onToggleMatchReminders,
                                     onToggle24HourClock = onToggle24HourClock,
                                     onToggleWhatsNew = onToggleShowWhatsNew,
                                     onToggleDownloads = onToggleShowDownloads,
@@ -414,6 +416,7 @@ private fun GeneralSettingsContent(
     onToggleSpotlight: (Boolean) -> Unit,
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit,
     onToggleChannelNumbers: (Boolean) -> Unit,
+    onToggleMatchReminders: (Boolean) -> Unit,
     onToggle24HourClock: (Boolean) -> Unit,
     onToggleWhatsNew: (Boolean) -> Unit,
     onToggleDownloads: (Boolean) -> Unit,
@@ -469,6 +472,15 @@ private fun GeneralSettingsContent(
         subtitle = stringResource(R.string.settings_channel_numbers_sub),
         isChecked = settings.showChannelNumbers,
         onCheckedChange = onToggleChannelNumbers,
+        modifier = Modifier.focusProperties { start = leftNavFocus }
+    )
+
+    // Match-start reminders
+    SettingToggleItem(
+        title = stringResource(R.string.settings_match_reminders),
+        subtitle = stringResource(R.string.settings_match_reminders_sub),
+        isChecked = settings.matchReminders,
+        onCheckedChange = onToggleMatchReminders,
         modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 

@@ -491,3 +491,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: waiting on the owner for tester emails and countries.
 - For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Starting match-start reminders (owner request): notification 15 min before kick-off for followed leagues, grouped per kick-off time, max 4 a day, tap opens Matches, Settings switch, Android 13+ permission asked when Matches is first opened. Adds WorkManager.
+- Files (locked until my next entry — please don't edit): app/build.gradle.kts, new data/match/MatchReminders*.kt, data/local/AppSettingsStore.kt, IpxApplication.kt, ui/login/LoginActivity.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/SettingsScreen.kt, res/values*/strings.xml, app/src/test/**.
+- Status: in progress
+- For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Match-start reminders (owner request, both flavors). `data/match/MatchReminders.kt`: an hourly WorkManager scan (network required) loads today's (and near midnight tomorrow's) fixtures for the followed leagues and schedules one job per kick-off time, 15 min before (`MatchReminderPlan`, pure + tested). The job reloads the fixtures and posts one notification per kick-off time ("Lazio – Parma · Kick-off at 9:45 PM · Italian Serie A"; several matches share one), max 4 a day, each match once (`match_reminders` prefs). Text names the kick-off time, not "in 15 minutes", because WorkManager may run late. Tapping opens Matches (`LoginActivity`/`DashboardActivity.EXTRA_OPEN_MATCHES`). Settings → General → "Match Reminders" (on by default; off cancels all work). Android 13+: notification permission asked once, the first time Matches opens while reminders are on. New dependency `androidx.work:work-runtime-ktx:2.9.1`.
+- Files: app/build.gradle.kts, data/match/MatchReminders.kt, data/local/AppSettingsStore.kt, IpxApplication.kt, ui/login/LoginActivity.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/SettingsScreen.kt, res/values*/strings.xml, app/src/test/.../MatchReminderPlanTest.kt, AGENTS.md
+- Status: done. Locks from my previous entry are released. Tests + lint (both flavors) + assembleGithubRelease pass. Emulator (preview, real ESPN data): scan scheduled jobs; forcing one posted "Lazio – Parma" on channel `match_reminders`; launching with the extra opened Matches. Not checked: a reminder firing on its own at the real time, the Settings switch on screen, and how Google TV's launcher shows the notification.
+- For the other agent: if a Gradle build fails with hundreds of "Unresolved reference" errors only in files you just edited, it's stale incremental state; compiling once more fixed it.

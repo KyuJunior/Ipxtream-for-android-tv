@@ -59,6 +59,8 @@ data class AppSettings(
     val performanceMode: PerformanceMode = PerformanceMode.AUTO,
     /** ESPN league slugs shown in Matches, in the order chosen (see FollowedCompetitions.CATALOG). */
     val followedLeagues: List<String> = com.ipxtream.tv.data.match.FollowedCompetitions.DEFAULT,
+    /** Notify shortly before matches of the followed leagues kick off (data/match/MatchReminders.kt). */
+    val matchReminders: Boolean = true,
 
     // Playback & Video Player
     val bufferProfile: BufferProfile = BufferProfile.BALANCED,
@@ -119,6 +121,7 @@ class AppSettingsStore(private val context: Context) {
             followedLeagues = prefs.getString(KEY_FOLLOWED_LEAGUES, null)
                 ?.split(',')?.filter { it.isNotBlank() }
                 ?: com.ipxtream.tv.data.match.FollowedCompetitions.DEFAULT,
+            matchReminders = prefs.getBoolean(KEY_MATCH_REMINDERS, true),
 
             bufferProfile = buffer,
             autoPlayNextEpisode = prefs.getBoolean(KEY_AUTOPLAY_NEXT_EPISODE, true),
@@ -138,6 +141,11 @@ class AppSettingsStore(private val context: Context) {
     fun setFollowedLeagues(slugs: List<String>) {
         prefs.edit().putString(KEY_FOLLOWED_LEAGUES, slugs.joinToString(",")).apply()
         _settings.update { it.copy(followedLeagues = slugs) }
+    }
+
+    fun setMatchReminders(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_MATCH_REMINDERS, enabled).apply()
+        _settings.update { it.copy(matchReminders = enabled) }
     }
 
     fun setAppLanguage(language: AppLanguage) {
@@ -264,6 +272,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_SHOW_SPOTLIGHT = "key_show_spotlight"
         private const val KEY_SHOW_CHANNEL_NUMBERS = "key_show_channel_numbers"
         private const val KEY_FOLLOWED_LEAGUES = "key_followed_leagues"
+        private const val KEY_MATCH_REMINDERS = "key_match_reminders"
         private const val KEY_IS_24_HOUR_CLOCK = "key_is_24_hour_clock"
         private const val KEY_BUFFER_PROFILE = "key_buffer_profile"
         private const val KEY_AUTOPLAY_NEXT_EPISODE = "key_autoplay_next_episode"

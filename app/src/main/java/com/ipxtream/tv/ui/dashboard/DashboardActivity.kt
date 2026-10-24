@@ -73,6 +73,20 @@ class DashboardActivity : ComponentActivity() {
             return
         }
         dashboardViewModel.scheduleStartupUpdateCheck()
+        if (savedInstanceState == null && intent.getBooleanExtra(EXTRA_OPEN_MATCHES, false)) {
+            dashboardViewModel.selectSection(com.ipxtream.tv.ui.dashboard.ContentSection.MATCHES)
+        }
+
+        // Android 13+: ask for the notification permission the first time Matches opens while
+        // reminders are on, so the question comes with context instead of at launch.
+        if (android.os.Build.VERSION.SDK_INT >= 33) {
+            lifecycleScope.launch {
+                dashboardViewModel.uiState
+                    .map { it.activeSection == com.ipxtream.tv.ui.dashboard.ContentSection.MATCHES && it.settings.matchReminders }
+                    .distinctUntilChanged()
+                    .collect { if (it) maybeAskNotificationPermission() }
+            }
+        }
 
         // Feed the real decoded resolution back into the 4K measurements. Collected here, not in
         // composition, so the player's per-second ticks never recompose the dashboard.
@@ -192,6 +206,7 @@ class DashboardActivity : ComponentActivity() {
                     onToggleShowLibrary = dashboardViewModel::setShowLibrarySection,
                     onToggleShowSpotlight = dashboardViewModel::setShowSpotlightBackdrop,
                     onToggleShowChannelNumbers = dashboardViewModel::setShowChannelNumbers,
+                    onToggleMatchReminders = dashboardViewModel::setMatchReminders,
                     onToggle24HourClock = dashboardViewModel::setIs24HourClockFormat,
                     onBufferProfileChange = dashboardViewModel::setBufferProfile,
                     onPerformanceModeChange = dashboardViewModel::setPerformanceMode,
@@ -287,6 +302,17 @@ class DashboardActivity : ComponentActivity() {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
+    /** Asks once; after a refusal the reminders simply stay silent (Settings can't re-ask). */
+    private fun maybeAskNotificationPermission() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        val permission = android.Manifest.permission.POST_NOTIFICATIONS
+        if (checkSelfPermission(permission) == android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("match_reminders", MODE_PRIVATE)
+        if (prefs.getBoolean("asked_permission", false)) return
+        prefs.edit().putBoolean("asked_permission", true).apply()
+        requestPermissions(arrayOf(permission), 0)
+    }
+
     private fun resolveCredentials(): AuthCredentials? {
         val server   = intent.getStringExtra(EXTRA_SERVER)
         val username = intent.getStringExtra(EXTRA_USERNAME)
@@ -301,6 +327,7 @@ class DashboardActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_SERVER   = "extra_server"
+        const val EXTRA_OPEN_MATCHES = "extra_open_matches"
         const val EXTRA_USERNAME = "extra_username"
         const val EXTRA_PASSWORD = "extra_password"
 

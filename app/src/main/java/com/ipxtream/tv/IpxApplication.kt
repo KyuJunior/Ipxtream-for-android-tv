@@ -25,6 +25,10 @@ class IpxApplication : Application(), ImageLoaderFactory {
         }
         // Opening encrypted storage takes a while on slow boxes; do it before the UI needs it.
         Thread({ runCatching { container.credentialStore } }, "credential-warmup").start()
+        // Match-start reminders run in WorkManager; keep its schedule in step with the setting.
+        com.ipxtream.tv.data.match.MatchReminders.sync(
+            this, com.ipxtream.tv.data.local.AppSettingsStore.getInstance(this).settings.value.matchReminders
+        )
     }
 
     override fun newImageLoader(): ImageLoader {

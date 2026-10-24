@@ -217,6 +217,9 @@ dependencies {
     // Required for NotificationCompat (used in DownloadService)
     implementation("androidx.core:core-ktx:1.13.1")
 
+    // ─── Background work (match-start reminders) ───────────────────────────────
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+
     // ─── Debug tooling ────────────────────────────────────────────────────────
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)

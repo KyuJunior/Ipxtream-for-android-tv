@@ -124,6 +124,8 @@ class LoginActivity : ComponentActivity() {
             putExtra(DashboardActivity.EXTRA_SERVER,   creds.server)
             putExtra(DashboardActivity.EXTRA_USERNAME, creds.username)
             putExtra(DashboardActivity.EXTRA_PASSWORD, creds.password)
+            // A tapped match reminder opens straight on Matches.
+            putExtra(DashboardActivity.EXTRA_OPEN_MATCHES, this@LoginActivity.intent.getBooleanExtra(EXTRA_OPEN_MATCHES, false))
             // Don't allow back-navigation to this Activity after login.
             // The user logs out via the Dashboard menu instead.
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -143,5 +145,6 @@ class LoginActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_ADD_ACCOUNT = "extra_add_account"
+        const val EXTRA_OPEN_MATCHES = "extra_open_matches"
     }
 }

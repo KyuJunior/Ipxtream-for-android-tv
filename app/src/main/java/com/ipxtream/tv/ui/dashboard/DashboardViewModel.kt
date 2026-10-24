@@ -1293,6 +1293,11 @@ class DashboardViewModel(
         appSettingsStore.setShowChannelNumbers(show)
     }
 
+    fun setMatchReminders(enabled: Boolean) {
+        appSettingsStore.setMatchReminders(enabled)
+        com.ipxtream.tv.data.match.MatchReminders.sync(context, enabled)
+    }
+
     fun setIs24HourClockFormat(is24: Boolean) {
         appSettingsStore.setIs24HourClockFormat(is24)
     }
