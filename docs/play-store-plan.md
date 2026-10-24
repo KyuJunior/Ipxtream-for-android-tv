@@ -234,7 +234,7 @@ Phases 1–3 are independent of the owner's Play Console work, so they can start
 | D1 | `com.xtream.kyu` (owner). Note: it contains "xtream", which D2 warns about, and it is permanent after the first upload; confirm before Phase 4 | 2026-10-24 |
 | D2 | OK: use a neutral app name on Play; name still to choose | 2026-10-24 |
 | D3 | Provider-neutral suggestions: search the user's own channel names (and the provider's EPG later) for both team names; no beIN guide, no rights table, no auto-play; the user confirms with OK; picks remembered (see §3) | 2026-10-24 |
-| D4 | OK: built-in demo with legal streams; stream list to be chosen and checked | 2026-10-24 |
+| D4 | OK: built-in demo with legal streams. Stream list (Big Buck Bunny, Tears of Steel, Unified Streaming and Akamai test streams) approved by the owner | 2026-10-24 |
 | D5 | contact@dryaser.me | 2026-10-24 |
 | D6 | Owner has an active Play Console account; check in the Console whether the 12-tester / 14-day closed test applies to it | 2026-10-24 |
 | D7 | OK: GitHub keeps releasing on every push; Play builds only when the owner starts one | 2026-10-24 |
