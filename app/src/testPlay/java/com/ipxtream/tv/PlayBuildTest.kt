@@ -66,4 +66,41 @@ class PlayBuildTest {
         assertEquals(listOf(1), TeamNames.channelsNaming(match("FC Barcelona", "Real Madrid", "Barça", "R. Madrid"), names).map { it.streamId })
         assertTrue(TeamNames.forms(MatchTeam("FC", "FC", null, null)).isEmpty())
     }
+
+    @Test fun demoServerPlaysOpenStreams() {
+        val demo = com.ipxtream.tv.data.model.AuthCredentials(com.ipxtream.tv.data.api.DemoCatalog.SERVER, "demo", "demo")
+        val url = com.ipxtream.tv.ui.player.StreamUrlBuilder.buildForStream(demo, ch(101, "Big Buck Bunny (2008)").copy(streamType = "movie"))
+        assertTrue(url.startsWith("https://") && !url.contains("demo.invalid"))
+        val other = com.ipxtream.tv.data.model.AuthCredentials("http://p.tv:8080/", "u", "p")
+        assertEquals("http://p.tv:8080/u/p/101.m3u8", com.ipxtream.tv.ui.player.StreamUrlBuilder.buildForStream(other, ch(101, "x")))
+    }
+
+    @Test fun demoCatalogParses() {
+        val chain = { action: String? ->
+            val url = "http://demo.invalid/player_api.php?username=demo&password=demo" + (action?.let { "&action=$it" } ?: "")
+            val request = okhttp3.Request.Builder().url(url).build()
+            val response = com.ipxtream.tv.data.api.DemoCatalog.interceptor!!.intercept(object : okhttp3.Interceptor.Chain {
+                override fun request() = request
+                override fun proceed(request: okhttp3.Request) = error("demo must not reach the network")
+                override fun connection() = null
+                override fun call() = error("unused")
+                override fun connectTimeoutMillis() = 0
+                override fun withConnectTimeout(timeout: Int, unit: java.util.concurrent.TimeUnit) = this
+                override fun readTimeoutMillis() = 0
+                override fun withReadTimeout(timeout: Int, unit: java.util.concurrent.TimeUnit) = this
+                override fun writeTimeoutMillis() = 0
+                override fun withWriteTimeout(timeout: Int, unit: java.util.concurrent.TimeUnit) = this
+            })
+            response.body!!.string()
+        }
+        val gson = com.google.gson.Gson()
+        val auth = gson.fromJson(chain(null), com.ipxtream.tv.data.model.XtreamAuthResponse::class.java)
+        assertEquals(1, auth.userInfo.auth)
+        val live = gson.fromJson(chain("get_live_streams"), Array<StreamItem>::class.java)
+        val movies = gson.fromJson(chain("get_vod_streams"), Array<StreamItem>::class.java)
+        assertEquals(2, live.size)
+        assertEquals(listOf(101, 102), movies.map { it.streamId })
+        val info = gson.fromJson(chain("get_vod_info"), com.ipxtream.tv.data.model.VodInfoResponse::class.java)
+        assertNull(info.info)
+    }
 }

@@ -101,6 +101,11 @@ class LoginActivity : ComponentActivity() {
                         savedUsername = saved?.username ?: "",
                         onLogin       = { server, username, password ->
                             viewModel.login(server, username, password)
+                        },
+                        onDemo        = com.ipxtream.tv.data.api.DemoCatalog.SERVER.takeIf { it.isNotEmpty() }?.let { demo ->
+                            {
+                                viewModel.login(demo, com.ipxtream.tv.data.api.DemoCatalog.USERNAME, com.ipxtream.tv.data.api.DemoCatalog.PASSWORD)
+                            }
                         }
                     )
                 } else {

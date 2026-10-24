@@ -437,3 +437,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/build.gradle.kts, .github/workflows/{play,release}.yml, docs/play-store-plan.md, AGENTS.md
 - Status: done on our side; owner still has to create the upload key and the four GitHub secrets (steps in plan §4). Locks from my previous entry are released. Checked locally: no key → clear failure; throwaway test key → signed AAB with no install permission (key deleted afterwards). `play.yml` itself not run yet (needs the secrets).
 - For the other agent: don't run `assemblePlayRelease`/`bundlePlayRelease` in routine checks; CI uses `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubRelease`.
+
+### 2026-10-24 | claude
+- Did: Starting Phase 5 of `docs/play-store-plan.md` (owner request): privacy policy page (`docs/privacy/`), corrected in-app privacy/terms texts, a demo sign-in for Google's reviewers (Play build), store listing text and images.
+- Files (locked until my next entry — please don't edit): res/values*/strings.xml (legal texts, login), ui/login/**, data/api/ApiClient.kt, ui/player/StreamUrlBuilder.kt, new app/src/play/**, new docs/privacy/**, new docs/store/**, `الهوية البصرية/store/**`.
+- Status: in progress
+- For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Phase 5 of `docs/play-store-plan.md`. Privacy policy page `docs/privacy/index.html` (EN + AR; needs GitHub Pages on to get its public URL). In-app `legal_privacy_body` rewritten (old text wrongly said only provider + GitHub are contacted); terms got a contact line. Demo sign-in (Play only): `data/api/DemoCatalog.kt` per flavor (play: answers `http://demo.invalid/` in-app via an OkHttp interceptor on `ApiClient.sharedHttp`, streams = Blender CC-BY films + public test streams; github: empty stand-in), `StreamUrlBuilder` maps demo streams, "Try the demo" button on the sign-in card, which now scrolls. Store listing draft `docs/store/listing.md`; graphics in `الهوية البصرية/store/`.
+- Files: docs/privacy/index.html, docs/store/listing.md, docs/play-store-plan.md, `الهوية البصرية/store/**`, app/src/{play,github}/java/.../data/api/DemoCatalog.kt, data/api/ApiClient.kt, ui/player/StreamUrlBuilder.kt, ui/login/{LoginScreen,LoginActivity}.kt, res/values*/strings.xml, app/src/testPlay/.../PlayBuildTest.kt, AGENTS.md
+- Status: done on our side; owner still to: turn on GitHub Pages, approve the demo streams, pick the app name. Locks from my previous entry are released. Emulator: demo sign-in, live test channel, Matches pick, film details + playback all worked. The emulator's system then crashed and its display went black (not the app).
+- For the other agent: found but not fixed: in Movies, focus on the "Next" page button can't leave with Up/Left/Right (only Back works).

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -73,12 +74,14 @@ import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentGlow
 import com.ipxtream.tv.ui.theme.AccentAmber
 import com.ipxtream.tv.ui.theme.BorderSubtle
+import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlateGlass
 import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextOnAccent
+import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.AccentRed
@@ -131,7 +134,9 @@ fun LoginScreen(
     uiState:       LoginUiState,
     onLogin:       (server: String, username: String, password: String) -> Unit,
     savedServer:   String = "",
-    savedUsername: String = ""
+    savedUsername: String = "",
+    /** Signs in to the built-in demo; null hides the button (GitHub build). */
+    onDemo:        (() -> Unit)? = null
 ) {
     var server   by remember { mutableStateOf(savedServer) }
     var username by remember { mutableStateOf(savedUsername) }
@@ -215,6 +220,8 @@ fun LoginScreen(
                 .clip(RoundedCornerShape(28.dp))
                 .background(SlateCard.copy(alpha = 0.85f))
                 .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(28.dp))
+                // Taller than a 1080p screen with the HTTP note, an error and the demo button: D-Pad focus scrolls it.
+                .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(horizontal = 36.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -384,6 +391,31 @@ fun LoginScreen(
                             modifier   = Modifier.fillMaxWidth()
                         )
                     }
+                }
+            }
+
+            // ── Demo (Play build only): lets anyone without an IPTV account try the app ──
+            if (onDemo != null) {
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick  = { if (!isLoading) onDemo() },
+                    enabled  = !isLoading,
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    shape    = ButtonDefaults.shape(RoundedCornerShape(50)),
+                    colors   = ButtonDefaults.colors(
+                        containerColor        = SlateGlass,
+                        contentColor          = TextPrimary,
+                        focusedContainerColor = ChipFocused,
+                        focusedContentColor   = TextOnFocus
+                    ),
+                    scale = ButtonDefaults.scale(focusedScale = 1.03f)
+                ) {
+                    Text(
+                        stringResource(R.string.login_try_demo),
+                        fontWeight = FontWeight.Medium,
+                        textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier   = Modifier.fillMaxWidth()
+                    )
                 }
             }
         }

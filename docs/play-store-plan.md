@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **Phases 1–4 built (2026-10-24); Phase 4 waits for the owner's upload key and secrets. Owner answered D1–D7 (§9); open: the app name and the final package check
+Status: **Phases 1–5 built (2026-10-24); waiting on the owner: upload key + secrets (§4), GitHub Pages, demo-stream approval and the app name. Owner answered D1–D7 (§9); open: the app name and the final package check
 (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
@@ -165,51 +165,27 @@ Shared files touched (post a lock in AGENTS.md first): `app/build.gradle.kts`, `
    - Edge-to-edge was already forced since target 35; no change seen.
 4. Lint: no new errors on either flavor (the baseline only shows entries that no longer occur).
 
-## 6. Privacy policy, Data safety, content rating, listing
+## 6. Privacy policy, Data safety, content rating, listing (built in Phase 5, 2026-10-24)
 
-**Privacy policy (hosted):** a page in the repo, e.g. `docs/privacy/index.html` (English + Arabic), served by GitHub
-Pages (the repo is public). Its URL goes into the Play Console and the in-app About → Privacy screen. It must say,
-accurately for the Play build:
-
-- What is stored, only on the device: provider login (encrypted), favourites, watch history, settings, cached
-  catalogues, crash log (on device only).
-- What leaves the device and to whom: the provider the user enters (all catalogue and stream traffic, often
-  unencrypted HTTP; the user's IP and login are visible to that provider); ESPN's public site API and image CDN
-  (fixtures and crests: IP address only); image hosts named by the provider's catalogue (posters, logos); Google Play
-  (installs, updates). No analytics, ads or tracking SDKs; nothing sold or shared.
-- No developer account and no data held by the developer, so nothing to delete server-side; uninstalling or
-  "Clear data" removes everything.
-- Contact (D5), effective date.
-
-The GitHub flavor's in-app text is corrected the same way, plus GitHub (update checks) and beIN's guide.
-
-**Data safety form (Play build), expected answers** (re-check against the final code):
-
-- Data collected: **none** sent to the developer. Data shared: none.
-- Data encrypted in transit: **No** (provider traffic is often HTTP).
-- Users can request deletion: not applicable (no account with the developer).
-- Credentials entered by the user go only to their own provider: disclose as described in Google's guidance for
-  "data sent to a server the user chooses" (**verify** the current wording).
-
-**Content rating (IARC questionnaire):** the app plays whatever the user's provider sends, which can include adult
-content → answer as a media player with unrestricted user-chosen content; expect an 18+/Mature rating. Target
-audience: adults only, not designed for children. A parental PIN (later feature) helps, but isn't required for this.
-
-**Store listing:**
-
-- Text in English and Arabic: "A player for your own IPTV service. No channels, films or subscriptions are included or
-  sold." No mention of beIN, football leagues, "22,000 channels", "4K films" or any provider.
-- Screenshots and TV banner (1280×720), feature graphic (1024×500), icon (512×512): from the brand folder and from a
-  **mock catalogue** (the local mock Xtream server used in earlier testing, with made-up names and plain artwork). No
-  real channel logos, posters or sports branding.
-- Category: Video Players & Editors. Form factor: **Android TV** opted in (Release → Advanced settings → Form factors),
-  which adds Google's TV quality review: leanback launcher, banner, no touch required, full D-pad navigation
-  (all present today).
-
-**Demo sign-in (D4):** a "Try the demo" button on the login screen of the Play build only, loading a small built-in
-catalogue of legal streams (owner-approved list); the reviewer instructions in App access say to press it.
-
----
+- **Privacy policy page:** `docs/privacy/index.html` (English + Arabic, light/dark), accurate for both versions:
+  what stays on the TV, what goes to the provider, image hosts, ESPN, Google Play / GitHub and the beIN guide
+  (GitHub version only), contact `contact@dryaser.me`. Its public URL needs **GitHub Pages** turned on for the repo
+  (Settings → Pages → Deploy from branch `main`, folder `/docs`); then it is
+  `https://kyujunior.github.io/Ipxtream-for-android-tv/privacy/`. Owner decision: turning Pages on publishes the
+  `docs/` folder as a website (the repo is already public).
+- **In-app texts:** `legal_privacy_body` (English + Arabic) replaced with the same facts and the page's address;
+  `legal_terms_body` gained a contact line. The old text wrongly said the app contacts only the provider and GitHub.
+- **Demo sign-in (D4):** Play build only. "Try the demo (no account needed)" on the sign-in screen signs in to
+  `http://demo.invalid/`, which `DemoCatalog` (src/play) answers inside the app; `StreamUrlBuilder` maps its
+  streams to two Blender open movies (Big Buck Bunny, Tears of Steel, CC BY 3.0, credited in the film's description)
+  and two public test-pattern live streams (Unified Streaming and Akamai test hosts). GitHub build: empty stand-in,
+  no button. The sign-in card now scrolls, so the button (and the HTTP note) fit on a 1080p screen. Checked on
+  the emulator: sign-in, Live, Matches channel pick, film details with credit, film playback.
+  **Owner to approve** the stream list; the hosts are third-party test servers that can change.
+- **Store listing:** `docs/store/listing.md` (short and full description in English and Arabic, App access text,
+  content rating, Data safety answers, release track). Graphics in `الهوية البصرية/store/`: icon 512, feature graphic
+  1024×500 and TV banner 1280×720 (from the brand banner; redo after the rename), three 1920×1080 screenshots from the
+  local test server (made-up titles and art).
 
 ## 7. Hardening that ships in both flavors (built in Phase 3, 2026-10-24)
 
@@ -242,7 +218,7 @@ catalogue of legal streams (owner-approved list); the reviewer instructions in A
 | 2 | **Done 2026-10-24** (owner TV not checked). Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
 | 3 | **Done 2026-10-24.** Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
 | 4 | **Built 2026-10-24; owner key + secrets pending.** Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |
-| 5 | Privacy page, corrected in-app texts, demo sign-in, listing text and assets (§6) | Claude drafts, owner approves | Privacy URL live; listing assets in `الهوية البصرية/store/` (or similar) |
+| 5 | **Built 2026-10-24; owner: turn on GitHub Pages, approve demo streams and texts, pick the name.** Privacy page, corrected in-app texts, demo sign-in, listing text and assets (§6) | Claude drafts, owner approves | Privacy URL live; listing assets in `الهوية البصرية/store/` (or similar) |
 | 6 | Internal test track → closed test (12+ testers, 14 days if required) → production review | Owner in Play Console, Claude fixes findings | App live on Play |
 
 Phases 1–3 are independent of the owner's Play Console work, so they can start as soon as D1 and D3 are answered.

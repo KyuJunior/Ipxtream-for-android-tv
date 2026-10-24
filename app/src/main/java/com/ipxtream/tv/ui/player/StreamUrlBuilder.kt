@@ -29,6 +29,7 @@ object StreamUrlBuilder {
      * Builds the correct playback URL for a [StreamItem] (Live or VOD).
      */
     fun buildForStream(credentials: AuthCredentials, stream: StreamItem): String {
+        com.ipxtream.tv.data.api.DemoCatalog.streamUrl(credentials.server, stream.streamId)?.let { return it }
         val base = credentials.server.trimEnd('/')
         val u    = credentials.username
         val p    = credentials.password

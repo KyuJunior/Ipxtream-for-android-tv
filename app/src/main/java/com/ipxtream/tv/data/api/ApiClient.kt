@@ -36,6 +36,8 @@ object ApiClient {
             .connectTimeout(CONNECT_TIMEOUT_SEC, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SEC, TimeUnit.SECONDS)
             .writeTimeout(WRITE_TIMEOUT_SEC, TimeUnit.SECONDS)
+            // Play build only: answers the demo sign-in's address inside the app.
+            .apply { DemoCatalog.interceptor?.let { addInterceptor(it) } }
             .build()
     }
 
