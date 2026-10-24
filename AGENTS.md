@@ -63,7 +63,10 @@ Both agents MUST read this whole file at the start of every task and append to t
   temp file + rename. Network logging is `BuildConfig.DEBUG`-only, request lines only, password redacted.
 - **Signing (owner decision 2026-10-22):** releases stay signed with the `debugCI` key (`app/debug.keystore`), which
   is public. Don't change the signing config, add a release key or make builds fail without secrets unless the
-  owner asks: a different key would force every TV to uninstall and reinstall.
+  owner asks: a different key would force every TV to uninstall and reinstall. This applies to the `github` flavor.
+  The `play` flavor (owner request 2026-10-24) signs releases only with the Play upload key from the
+  `PLAY_UPLOAD_*` environment variables / GitHub secrets (manual `play.yml`); without them a Play release build stops
+  on purpose. Use `assemblePlayDebug` to test the Play build locally.
 - **Languages / RTL:** all UI text lives in `res/values/strings.xml` with Arabic in `res/values-ar/strings.xml`
   (`StringResourcesTest` fails CI if a key or `%1$s` placeholder is missing from either). In Compose use
   `stringResource(R.string.x)`; outside Compose (ViewModels, services) use `LocaleHelper.localized(context)`,
@@ -422,3 +425,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/api/ApiClient.kt, data/local/CrashLog.kt, data/download/DownloadService.kt, ui/player/PlayerViewModel.kt, ui/login/{LoginViewModel,LoginScreen}.kt, ui/dashboard/{DashboardViewModel,HomeLive}.kt, res/values*/strings.xml, res/xml/network_security_config.xml, app/src/test/.../{RedactCredentialsTest,HomeLiveTest,StreamUrlBuilderTest}.kt, docs/play-store-plan.md, AGENTS.md
 - Status: done. Locks from my previous entry are released. Tests, lint and release builds pass. Emulator (Play preview, mock server advertising a dead HTTPS port): note shown, new account signed in over HTTP after the HTTPS attempt timed out, logs show `username=***&password=***`. Not checked: a provider with working HTTPS.
 - For the other agent: never key new per-account data on anything but the existing server+username; if you log or display anything that may contain a stream URL, pass it through `ApiClient.redactCredentials`.
+
+### 2026-10-24 | claude
+- Did: Starting Phase 4 of `docs/play-store-plan.md` (owner request): Play upload-key signing for the `play` flavor and a manual `play.yml` workflow that builds the AAB. The GitHub flavor's signing stays exactly as it is.
+- Files (locked until my next entry — please don't edit): app/build.gradle.kts, new .github/workflows/play.yml, .github/workflows/release.yml (paths only), docs/play-store-plan.md.
+- Status: in progress
+- For the other agent: none
+
+### 2026-10-24 | claude
+- Did: Phase 4 of `docs/play-store-plan.md`. `app/build.gradle.kts`: release signing is now set per flavor; `github` is unchanged (`release` if its secrets exist, else `debugCI`; APK cert still `4ffd4088…`), `play` uses only a `playUpload` config built from `PLAY_UPLOAD_STORE_FILE/_STORE_PASSWORD/_KEY_ALIAS/_KEY_PASSWORD`, and any Play release task fails without them. New manual workflow `.github/workflows/play.yml` ("Play Store bundle"): restores the keystore from `PLAY_UPLOAD_KEYSTORE_B64`, tests + lints the play flavor, `bundlePlayRelease`, checks the bundle has no install permission/FileProvider and is `com.xtream.kyu`, prints the upload cert SHA-256, uploads the AAB as an artifact. `release.yml` ignores pushes that only touch `play.yml`.
+- Files: app/build.gradle.kts, .github/workflows/{play,release}.yml, docs/play-store-plan.md, AGENTS.md
+- Status: done on our side; owner still has to create the upload key and the four GitHub secrets (steps in plan §4). Locks from my previous entry are released. Checked locally: no key → clear failure; throwaway test key → signed AAB with no install permission (key deleted afterwards). `play.yml` itself not run yet (needs the secrets).
+- For the other agent: don't run `assemblePlayRelease`/`bundlePlayRelease` in routine checks; CI uses `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubRelease`.

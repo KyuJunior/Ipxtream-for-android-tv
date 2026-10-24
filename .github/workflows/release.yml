@@ -11,6 +11,7 @@ on:
       - 'reviews/**'
       - 'الهوية البصرية/**'
       - '.gitignore'
+      - '.github/workflows/play.yml'
 
 permissions:
   contents: write

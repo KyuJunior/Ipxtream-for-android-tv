@@ -1,6 +1,6 @@
 # Google Play build: plan for owner approval
 
-Status: **Phases 1–3 built (2026-10-24). Owner answered D1–D7 (§9); open: the app name and the final package check
+Status: **Phases 1–4 built (2026-10-24); Phase 4 waits for the owner's upload key and secrets. Owner answered D1–D7 (§9); open: the app name and the final package check
 (before Phase 4).** Written 2026-10-24 after the local council review
 (`.claude/council-cache/local-council-1792789843.md`). Owner goal: publish on Google Play with a separate Play
 build that has no self-updater, no beIN mapping, its own signing key, targetSdk 36, an AAB and a real privacy policy.
@@ -94,7 +94,7 @@ How the split is done (**built in Phase 1, 2026-10-24**), so that the Play build
    and signing key as before, so installed apps keep updating). The Play AAB pipeline is Phase 4.
 6. **AGENTS.md "Current state"** has a "Build flavors" bullet.
 
-Until Phase 4, a local `assemblePlayRelease` is signed with `debugCI` like the GitHub build; it is for testing only.
+Since Phase 4, Play release builds need the upload key (§4); without it they stop. Test the Play build with `assemblePlayDebug`.
 
 Shared files touched (post a lock in AGENTS.md first): `app/build.gradle.kts`, `AndroidManifest.xml`,
 `DashboardViewModel.kt`, `DashboardScreen.kt`, `DashboardActivity.kt`, `SettingsScreen.kt`, `data/match/**`,
@@ -102,36 +102,50 @@ Shared files touched (post a lock in AGENTS.md first): `app/build.gradle.kts`, `
 
 ---
 
-## 4. Signing, AAB and CI
+## 4. Signing, AAB and CI (built in Phase 4, 2026-10-24)
 
-**Upload key (owner does this, on their own PC; never in the repo):**
+**What is built:**
 
-1. `keytool -genkeypair -v -keystore ipxtream-play-upload.jks -alias upload -keyalg RSA -keysize 4096 -validity 10000`
-2. Keep two backups off this PC (e.g. a password manager + USB drive). Losing it is recoverable through Play support,
-   but slow.
-3. Add GitHub repository secrets: `PLAY_UPLOAD_KEYSTORE_B64` (base64 of the .jks), `PLAY_UPLOAD_STORE_PASSWORD`,
-   `PLAY_UPLOAD_KEY_ALIAS`, `PLAY_UPLOAD_KEY_PASSWORD`. Names go in `SECRETS.local.md`, values never in tracked files.
-4. In Play Console, enrol in **Play App Signing** with a Google-generated app signing key (the default).
+- `app/build.gradle.kts`: a `playUpload` signing config made only when all four environment variables are set
+  (`PLAY_UPLOAD_STORE_FILE`, `PLAY_UPLOAD_STORE_PASSWORD`, `PLAY_UPLOAD_KEY_ALIAS`, `PLAY_UPLOAD_KEY_PASSWORD`) and
+  the keystore file exists. Release signing is per flavor: `github` keeps `release`-if-set-else-`debugCI` exactly as
+  before; `play` uses only `playUpload`. Any `bundle/assemble/packagePlayRelease` task fails with a clear message when
+  the key is missing, so a Play build can't come out signed with the public debug key. Debug builds of both flavors
+  still use `debugCI`.
+- `.github/workflows/play.yml`, **manual only** (Actions → "Play Store bundle" → Run workflow): restores the keystore
+  from `PLAY_UPLOAD_KEYSTORE_B64` into the runner's temp folder, runs `testPlayDebugUnitTest lintPlayDebug
+  bundlePlayRelease`, fails if the bundle's manifest has `REQUEST_INSTALL_PACKAGES` or a FileProvider or isn't
+  `com.xtream.kyu`, prints the upload certificate's SHA-256, deletes the keystore, and attaches
+  `app-play-release.aab` as the `play-bundle` artifact (kept 14 days). It publishes nothing.
+  Editing `play.yml` alone doesn't start a GitHub release (`release.yml` ignores it).
+- Checked locally: without the key `bundlePlayRelease` stops with the message; with a throwaway test key it builds
+  a 7.4 MB AAB with no install permission or FileProvider; the GitHub APK still has certificate
+  `4ffd4088…f8e4e172`.
+- Version: the bundle uses `version.properties` of the commit it is run on. Run it after a GitHub release so the
+  `versionCode` is new; Play refuses a code it has seen before.
+- Later (optional): upload straight to the Play **internal** track with a service account
+  (`PLAY_SERVICE_ACCOUNT_JSON`), never auto-promoting to production.
 
-**Gradle:** a `playUpload` signing config that reads those four values from env vars (decoded keystore written to
-the runner's temp dir). The `play` flavor uses it for release; if the secrets are missing, `bundlePlayRelease` fails
-with a clear message (Play builds must never fall back to `debugCI`). The `github` flavor keeps `debugCI` exactly as
-today; the unused `release` config reading `ipxtream_keystore.jks` can be removed.
+**Owner steps (once):**
 
-**CI:**
-
-- `release.yml` (GitHub channel): `assembleRelease` → `assembleGithubRelease`; the APK path becomes
-  `app/build/outputs/apk/github/release/app-github-release.apk`. The cert-pin step and the published asset names
-  (`app-release.apk`, `app-debug.apk`) stay the same, so installed apps keep updating. Lint/tests run for both
-  flavors (`testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug`); the lint baseline may need
-  one regeneration for the new variant names only (no new errors hidden; review the diff).
-- New `play.yml`, **manual trigger only** (`workflow_dispatch`): tests + lint, `bundlePlayRelease`, a check that the
-  merged Play manifest has no `REQUEST_INSTALL_PACKAGES`, then upload the AAB as a workflow artifact. Phase 2 of this
-  file: upload straight to the Play **internal** track with a Play service account key (secret
-  `PLAY_SERVICE_ACCOUNT_JSON`) via Gradle Play Publisher or a well-known upload action. Never auto-promote to
-  production.
-- Version: both flavors read `version.properties`. Play only needs `versionCode` to go up between Play uploads,
-  which the GitHub bumps guarantee.
+1. Create the upload key on your own PC, in a folder outside the repo (for example `C:\Keys`). In PowerShell:
+   `& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkeypair -v -keystore C:\Keys\xtream-kyu-upload.jks -alias upload -keyalg RSA -keysize 4096 -validity 10000`
+   It asks for a keystore password (use a long random one; if it asks for a separate key password, press Enter to
+   reuse it) and for your name/organisation (shown in the certificate).
+2. Back up `xtream-kyu-upload.jks` and its password in two places off this PC (password manager + USB drive).
+3. Add four repository secrets (GitHub → repo → Settings → Secrets and variables → Actions → New repository secret),
+   or with the GitHub CLI from PowerShell in the repo folder:
+   - `[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\Keys\xtream-kyu-upload.jks")) | gh secret set PLAY_UPLOAD_KEYSTORE_B64`
+   - `gh secret set PLAY_UPLOAD_STORE_PASSWORD` (it prompts; paste the password)
+   - `gh secret set PLAY_UPLOAD_KEY_PASSWORD` (the same password)
+   - `gh secret set PLAY_UPLOAD_KEY_ALIAS --body upload`
+4. In `SECRETS.local.md` (local only), note where the keystore and its backups are. Never put the password in any
+   tracked file or in chat.
+5. In the Play Console: create the app with package `com.xtream.kyu` (D1; check it first, it is permanent), keep
+   **Play App Signing** on with a Google-generated app signing key (the default). Run the "Play Store bundle"
+   workflow, download the `play-bundle` artifact, and upload the AAB to the **internal testing** track. That first
+   upload registers your upload key; compare the SHA-256 the workflow printed with Play Console → Test and release →
+   App integrity → Upload key certificate.
 
 ---
 
@@ -227,7 +241,7 @@ catalogue of legal streams (owner-approved list); the reviewer instructions in A
 | 1 | **Done 2026-10-24.** Flavors and source-set split (§3); `release.yml` moved to the github flavor | Claude | GitHub APK behaves exactly as v2.0.x on the owner's TV (updater, Matches with beIN guide); a self-update from the previous release installs over it; Play debug build runs with no updater UI and per-D3 Matches; the Play flavor contains no `UpdateManager`/`BeinGuide` classes |
 | 2 | **Done 2026-10-24** (owner TV not checked). Target/compile 36 + AGP upgrade (§5) | Claude | All Back paths and playback checked on the emulator and the owner's TV; tests + lint pass |
 | 3 | **Done 2026-10-24.** Hardening (§7) | Claude | Redaction tests pass; crash log shows no password for a forced playback error |
-| 4 | Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |
+| 4 | **Built 2026-10-24; owner key + secrets pending.** Play signing, `play.yml`, AAB artifact (§4) | Claude + owner (secrets) | A signed AAB from CI; `bundletool` shows the expected package, target 36, no install permission |
 | 5 | Privacy page, corrected in-app texts, demo sign-in, listing text and assets (§6) | Claude drafts, owner approves | Privacy URL live; listing assets in `الهوية البصرية/store/` (or similar) |
 | 6 | Internal test track → closed test (12+ testers, 14 days if required) → production review | Owner in Play Console, Claude fixes findings | App live on Play |
 

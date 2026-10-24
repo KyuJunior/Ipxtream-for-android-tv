@@ -1,0 +1,72 @@
+name: Play Store bundle
+
+# Builds the Google Play AAB (play flavor) signed with the upload key. Run it by hand from the
+# Actions tab after the GitHub release you want to ship (it uses version.properties as it is on
+# that commit). It never publishes anything: download the AAB artifact and upload it in the
+# Play Console. See docs/play-store-plan.md §4.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      # The keystore only ever exists on the runner, in its temp folder.
+      - name: Restore upload key
+        env:
+          PLAY_UPLOAD_KEYSTORE_B64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$PLAY_UPLOAD_KEYSTORE_B64" ]; then
+            echo "::error::Secret PLAY_UPLOAD_KEYSTORE_B64 is not set (docs/play-store-plan.md §4)."
+            exit 1
+          fi
+          echo "$PLAY_UPLOAD_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "PLAY_UPLOAD_STORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Test, lint and build the Play bundle
+        run: ./gradlew testPlayDebugUnitTest lintPlayDebug bundlePlayRelease
+        env:
+          PLAY_UPLOAD_STORE_PASSWORD: ${{ secrets.PLAY_UPLOAD_STORE_PASSWORD }}
+          PLAY_UPLOAD_KEY_ALIAS: ${{ secrets.PLAY_UPLOAD_KEY_ALIAS }}
+          PLAY_UPLOAD_KEY_PASSWORD: ${{ secrets.PLAY_UPLOAD_KEY_PASSWORD }}
+
+      # Play forbids self-updating apps: fail if the install permission ever reaches this build.
+      - name: Check the bundle
+        run: |
+          aab=app/build/outputs/bundle/playRelease/app-play-release.aab
+          manifest=$(unzip -p "$aab" base/manifest/AndroidManifest.xml | tr -d '\0')
+          for bad in REQUEST_INSTALL_PACKAGES FileProvider; do
+            if echo "$manifest" | grep -q "$bad"; then
+              echo "::error::The Play bundle contains $bad."
+              exit 1
+            fi
+          done
+          echo "$manifest" | grep -q "com.xtream.kyu" || { echo "::error::Unexpected package in the Play bundle."; exit 1; }
+          echo "Upload certificate (compare with Play Console → Setup → App signing → Upload key):"
+          keytool -printcert -jarfile "$aab" | grep -E "Owner|SHA256"
+
+      - name: Remove the keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"
+
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-bundle
+          path: app/build/outputs/bundle/playRelease/app-play-release.aab
+          retention-days: 14

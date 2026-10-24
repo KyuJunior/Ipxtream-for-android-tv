@@ -16,6 +16,16 @@ val versionProps = Properties().apply {
     rootProject.file("version.properties").inputStream().use { load(it) }
 }
 
+/** The Play upload key from the environment, or null when any part is missing. */
+class PlayUploadKey(val storeFile: String, val storePassword: String, val keyAlias: String, val keyPassword: String)
+
+val playUpload: PlayUploadKey? = run {
+    val values = listOf("PLAY_UPLOAD_STORE_FILE", "PLAY_UPLOAD_STORE_PASSWORD", "PLAY_UPLOAD_KEY_ALIAS", "PLAY_UPLOAD_KEY_PASSWORD")
+        .map { System.getenv(it)?.takeIf(String::isNotBlank) }
+    if (values.any { it == null } || !File(values[0]!!).isFile) null
+    else PlayUploadKey(values[0]!!, values[1]!!, values[2]!!, values[3]!!)
+}
+
 android {
     namespace  = "com.ipxtream.tv"
     compileSdk = 36
@@ -102,6 +112,17 @@ android {
                 keyPassword = keyPass
             }
         }
+
+        // Google Play upload key (docs/play-store-plan.md §4). Never stored in the repo: the keystore
+        // path and passwords come from the environment (GitHub secrets in play.yml, or set by hand locally).
+        if (playUpload != null) {
+            create("playUpload") {
+                storeFile = file(playUpload.storeFile)
+                storePassword = playUpload.storePassword
+                keyAlias = playUpload.keyAlias
+                keyPassword = playUpload.keyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -110,17 +131,34 @@ android {
             // alone is tens of MB). Saved data stays readable via app/proguard-rules.pro.
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            if (signingConfigs.findByName("release") != null) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                // Fallback to custom consistent debug keys if production secrets are not available
-                signingConfig = signingConfigs.getByName("debugCI")
-            }
+            // Release signing is set per flavor below (a build type's signingConfig would override it).
         }
         debug {
             // Force debug builds to also use the consistent debugCI keystore so they match
             signingConfig = signingConfigs.getByName("debugCI")
         }
+    }
+
+    productFlavors {
+        getByName("github") {
+            // Unchanged since 2026-10-22 (owner decision): every sideloaded install updates in place.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debugCI")
+        }
+        getByName("play") {
+            // Only ever the Play upload key; without it a Play release build stops (see the check below).
+            signingConfig = signingConfigs.findByName("playUpload")
+        }
+    }
+}
+
+// A Play release must never come out signed with the public debug key or unsigned by accident.
+gradle.taskGraph.whenReady {
+    val playRelease = allTasks.any { it.project == project && Regex("""(bundle|assemble|package)PlayRelease""").matches(it.name) }
+    if (playRelease && playUpload == null) {
+        throw GradleException(
+            "Play release builds need the upload key: set PLAY_UPLOAD_STORE_FILE, PLAY_UPLOAD_STORE_PASSWORD, " +
+                "PLAY_UPLOAD_KEY_ALIAS and PLAY_UPLOAD_KEY_PASSWORD (see docs/play-store-plan.md §4)."
+        )
     }
 }
 
