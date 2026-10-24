@@ -52,6 +52,8 @@ android {
             dimension = "store"
             // Google Play build (owner decision D1): its own package, updated only by Play.
             applicationId = "com.xtream.kyu"
+            // Play's automatic protection (installer check) needs Android 7.0+; the GitHub build keeps 23.
+            minSdk = 24
             buildConfigField("boolean", "SELF_UPDATE", "false")
             // Matches never starts a channel the user hasn't confirmed (decision D3).
             buildConfigField("boolean", "MATCH_AUTO_PLAY", "false")
