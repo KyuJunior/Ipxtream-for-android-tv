@@ -473,3 +473,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/src/main/AndroidManifest.xml, res/values*/strings.xml, app/src/play/res/**, `الهوية البصرية/_source/build-brand.js`, `الهوية البصرية/store/{feature-graphic-1024x500,tv-banner-1280x720}.png`, docs/store/listing.md, docs/privacy/index.html, docs/play-store-plan.md, AGENTS.md
 - Status: done. Locks from my previous entry are released. 103 tests + lint + builds pass; APK labels checked with aapt (Play "Xtream TV", GitHub "IPXtream TV"); Play sign-in screen shows the Xtream wordmark on the emulator (restarted cold after its display died).
 - For the other agent: to regenerate Play brand art, run build-brand.js with `BRAND_WORD=Xtream` into an ASCII temp folder and copy `ic_brand_wordmark.xml` and `banner.png` into `app/src/play/res`.
+
+### 2026-10-24 | claude
+- Did: Set up the Play Console app with the owner (owner signed in, in the built-in browser; owner approved each agreement): created **Xtream TV** (`com.xtream.kyu`, app, free, default language en-GB) under the owner's personal developer account. App content done: privacy policy URL, no ads, sign-in details (demo instructions), advertising ID: no, government/financial/health: none, target audience 18+, content rating (contact@dryaser.me, IARC; streamed content can contain violence/language/drugs, no sexual content → Google Play 12+), Data safety: no data collected or shared. Store listing text (en) and store settings (Video players & editors, contact email) saved as draft. The Console confirms the closed test rule (12 testers, 14 days) for this account.
+- Files: docs/store/listing.md (short description shortened to 69 characters), AGENTS.md
+- Status: in progress on the owner's side: graphics, screenshots and the AAB must be uploaded by the owner (the built-in browser can't pick local files); Android TV form factor appears after the first release to a track.
+- For the other agent: none

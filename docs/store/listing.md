@@ -14,7 +14,7 @@ suggests where to get a subscription.
 
 **Short description** (80 max)
 
-- English: `A fast, simple player for the IPTV service you already have. Made for Android TV.`
+- English: `A fast, simple player for your own IPTV service, made for Android TV.` (69 characters; the first draft was 81, over the limit)
 - Arabic: `مشغّل سريع وبسيط لخدمة IPTV التي لديك بالفعل، مصمّم لأجهزة Android TV.`
 
 **Full description** (4000 max)
