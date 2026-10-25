@@ -790,7 +790,8 @@ fun DashboardScreen(
                                 onSeriesSelected = onSeriesSelected,
                                 onEpisodePlay = onEpisodePlay,
                                 firstItemFocusRequester = firstItemFocusRequester,
-                                sideNavFocusRequester = sideNavFocusRequester
+                                sideNavFocusRequester = sideNavFocusRequester,
+                                upFocusRequester = searchBarFocusRequester
                             )
                         }
                     }
@@ -887,6 +888,7 @@ fun DashboardScreen(
                             onSeriesSelected        = onSeriesSelected,
                             firstItemFocusRequester = firstItemFocusRequester,
                             sideNavFocusRequester   = sideNavFocusRequester,
+                            headerFocusRequester    = searchBarFocusRequester,
                             watchProgress           = { uiState.getWatchProgress(it) },
                             resolutions             = uiState.uhdResolutions,
                             scan                    = uiState.uhdScan,
@@ -1308,12 +1310,13 @@ private fun StreamGrid(
         }
 
         PaginationBar(
-            hasPrevPage = hasPrevPage,
-            hasNextPage = hasNextPage,
-            currentPage = currentPage,
-            totalPages  = totalPages,
-            onPrevPage  = onPrevPage,
-            onNextPage  = onNextPage
+            hasPrevPage      = hasPrevPage,
+            hasNextPage      = hasNextPage,
+            currentPage      = currentPage,
+            totalPages       = totalPages,
+            onPrevPage       = onPrevPage,
+            onNextPage       = onNextPage,
+            upFocusRequester = firstItemFocusRequester
         )
     }
 }
@@ -1355,12 +1358,13 @@ private fun SeriesGrid(
         }
 
         PaginationBar(
-            hasPrevPage = hasPrevPage,
-            hasNextPage = hasNextPage,
-            currentPage = currentPage,
-            totalPages  = totalPages,
-            onPrevPage  = onPrevPage,
-            onNextPage  = onNextPage
+            hasPrevPage      = hasPrevPage,
+            hasNextPage      = hasNextPage,
+            currentPage      = currentPage,
+            totalPages       = totalPages,
+            onPrevPage       = onPrevPage,
+            onNextPage       = onNextPage,
+            upFocusRequester = firstItemFocusRequester
         )
     }
 }
@@ -1722,6 +1726,7 @@ private fun WhatsNewGrid(
     onEpisodePlay: (SeriesItem, EpisodeItem) -> Unit,
     firstItemFocusRequester: FocusRequester,
     sideNavFocusRequester: FocusRequester?,
+    upFocusRequester: FocusRequester? = null,
     modifier: Modifier = Modifier
 ) {
     PosterGrid(
@@ -1730,6 +1735,7 @@ private fun WhatsNewGrid(
         columns                 = GridCells.Adaptive(minSize = 140.dp),
         firstItemFocusRequester = firstItemFocusRequester,
         sideNavFocusRequester   = sideNavFocusRequester,
+        upFocusRequester        = upFocusRequester,
         contentPadding          = PaddingValues(bottom = 120.dp, start = 16.dp, top = 16.dp, end = 16.dp),
         spacingH                = 16.dp,
         spacingV                = 16.dp,

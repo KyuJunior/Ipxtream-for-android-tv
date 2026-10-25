@@ -314,12 +314,12 @@ class DashboardViewModel(
     fun refresh() {
         val section = _uiState.value.activeSection
         _uiState.update { it.copy(selectedCategoryId = null, searchQuery = "", error = null) }
-        if (section == ContentSection.MY_LIBRARY) {
-            refreshLibraryLists()
-        } else if (section == ContentSection.MATCHES) {
-            loadMatches(force = true)
-        } else {
-            loadSectionData(section, forceRefresh = true)
+        when (section) {
+            ContentSection.MY_LIBRARY -> refreshLibraryLists()
+            ContentSection.MATCHES    -> loadMatches(force = true)
+            ContentSection.UHD        -> loadUhdCatalog()
+            ContentSection.WHATS_NEW  -> loadWhatsNew()
+            else                      -> loadSectionData(section, forceRefresh = true)
         }
     }
 
@@ -336,6 +336,11 @@ class DashboardViewModel(
     /** The leagues Matches shows (from the gear screen); reloads the list. */
     fun setFollowedLeagues(slugs: Collection<String>) {
         appSettingsStore.setFollowedLeagues(com.ipxtream.tv.data.match.FollowedCompetitions.ordered(slugs))
+        com.ipxtream.tv.data.match.MatchReminders.sync(
+            context,
+            enabled = appSettingsStore.settings.value.matchReminders,
+            rescan = true
+        )
         _uiState.update { it.copy(matches = emptyList()) }
         loadMatches()
     }

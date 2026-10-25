@@ -51,4 +51,10 @@ class MatchReminderPlanTest {
         assertEquals(listOf("1"), due.map { it.id })
         assertTrue(MatchReminderPlan.due(matches, now - min, now, emptySet()).isEmpty())
     }
+
+    @Test fun dueAllowsWorkerRunningUpToTenMinutesAfterKickoff() {
+        val matches = listOf(match("withinGrace", -10), match("pastGrace", -11))
+        assertEquals(listOf("withinGrace"), MatchReminderPlan.due(matches, now - 10 * min, now, emptySet()).map { it.id })
+        assertTrue(MatchReminderPlan.due(matches, now - 11 * min, now, emptySet()).isEmpty())
+    }
 }

@@ -7,8 +7,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Button
 import androidx.tv.material3.ExperimentalTvMaterial3Api
@@ -26,18 +36,32 @@ import com.ipxtream.tv.ui.theme.TextSecondary
  * Only renders when [totalPages] > 1 to avoid unnecessary UI clutter.
  * Fully D-pad navigable - each button is individually focusable.
  */
-@OptIn(ExperimentalTvMaterial3Api::class)
+@OptIn(ExperimentalTvMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun PaginationBar(
-    hasPrevPage: Boolean,
-    hasNextPage: Boolean,
-    currentPage: Int,
-    totalPages:  Int,
-    onPrevPage:  () -> Unit,
-    onNextPage:  () -> Unit,
-    modifier:    Modifier = Modifier
+    hasPrevPage:      Boolean,
+    hasNextPage:      Boolean,
+    currentPage:      Int,
+    totalPages:       Int,
+    onPrevPage:       () -> Unit,
+    onNextPage:       () -> Unit,
+    modifier:         Modifier = Modifier,
+    upFocusRequester: FocusRequester? = null
 ) {
     if (totalPages <= 1) return
+
+    val prevRequester = remember { FocusRequester() }
+    val nextRequester = remember { FocusRequester() }
+    var prevFocused by remember { mutableStateOf(false) }
+    var nextFocused by remember { mutableStateOf(false) }
+
+    LaunchedEffect(hasPrevPage, hasNextPage) {
+        if (!hasPrevPage && prevFocused && hasNextPage) {
+            runCatching { nextRequester.requestFocus() }
+        } else if (!hasNextPage && nextFocused && hasPrevPage) {
+            runCatching { prevRequester.requestFocus() }
+        }
+    }
 
     Row(
         modifier = modifier
@@ -50,7 +74,17 @@ fun PaginationBar(
         Button(
             onClick  = onPrevPage,
             enabled  = hasPrevPage,
-            modifier = Modifier.padding(end = 12.dp)
+            modifier = Modifier
+                .padding(end = 12.dp)
+                .focusRequester(prevRequester)
+                .onFocusChanged { prevFocused = it.isFocused }
+                .focusProperties {
+                    canFocus = hasPrevPage
+                    if (upFocusRequester != null) up = upFocusRequester
+                    down = FocusRequester.Cancel
+                    start = FocusRequester.Cancel
+                    end = if (hasNextPage) nextRequester else FocusRequester.Cancel
+                }
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -72,7 +106,17 @@ fun PaginationBar(
         Button(
             onClick  = onNextPage,
             enabled  = hasNextPage,
-            modifier = Modifier.padding(start = 12.dp)
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .focusRequester(nextRequester)
+                .onFocusChanged { nextFocused = it.isFocused }
+                .focusProperties {
+                    canFocus = hasNextPage
+                    if (upFocusRequester != null) up = upFocusRequester
+                    down = FocusRequester.Cancel
+                    start = if (hasPrevPage) prevRequester else FocusRequester.Cancel
+                    end = FocusRequester.Cancel
+                }
         ) {
             Text(stringResource(R.string.page_next))
             Icon(

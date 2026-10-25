@@ -36,6 +36,8 @@ object MatchReminderPlan {
     const val LEAD_MS = 15 * 60_000L
     /** How far ahead the hourly scan schedules reminders. */
     const val LOOKAHEAD_MS = 3 * 60 * 60_000L
+    /** How late after kick-off a delayed worker may still post the reminder. */
+    const val GRACE_MS = 10 * 60_000L
     const val MAX_PER_DAY = 4
 
     data class Slot(val kickoffMs: Long, val notifyAtMs: Long)
@@ -51,9 +53,9 @@ object MatchReminderPlan {
             .map { Slot(it, maxOf(nowMs, it - LEAD_MS)) }
             .toList()
 
-    /** The matches to name when the reminder for [kickoffMs] fires. */
+    /** The matches to name when the reminder for [kickoffMs] fires (up to [GRACE_MS] after kick-off if the worker ran late). */
     fun due(matches: List<Match>, kickoffMs: Long, nowMs: Long, notified: Set<String>): List<Match> =
-        if (kickoffMs <= nowMs) emptyList()
+        if (kickoffMs + GRACE_MS < nowMs) emptyList()
         else matches.filter { it.kickoffMs == kickoffMs && it.state == MatchState.UPCOMING && it.id !in notified }
 }
 
@@ -66,13 +68,14 @@ object MatchReminders {
     private const val KEY_KICKOFF = "kickoff"
 
     /** Starts (or stops) the hourly scan to match the setting. Safe to call on every app start. */
-    fun sync(context: Context, enabled: Boolean) {
+    fun sync(context: Context, enabled: Boolean, rescan: Boolean = false) {
         val wm = WorkManager.getInstance(context)
         if (enabled) {
+            val policy = if (rescan) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE else ExistingPeriodicWorkPolicy.KEEP
             val scan = PeriodicWorkRequestBuilder<MatchReminderScanWorker>(1, TimeUnit.HOURS)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
                 .build()
-            wm.enqueueUniquePeriodicWork(SCAN_WORK, ExistingPeriodicWorkPolicy.KEEP, scan)
+            wm.enqueueUniquePeriodicWork(SCAN_WORK, policy, scan)
         } else {
             wm.cancelUniqueWork(SCAN_WORK)
             wm.cancelAllWorkByTag(TAG)

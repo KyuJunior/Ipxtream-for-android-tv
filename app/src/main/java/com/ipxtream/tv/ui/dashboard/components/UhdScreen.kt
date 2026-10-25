@@ -95,7 +95,8 @@ fun UhdScreen(
     scan:                    UhdScanState,
     onScanLibrary:           () -> Unit,
     onStopScan:              () -> Unit,
-    modifier:                Modifier = Modifier
+    modifier:                Modifier = Modifier,
+    headerFocusRequester:    FocusRequester = FocusRequester.Default
 ) {
     var kindName by rememberSaveable { mutableStateOf(UhdKind.MOVIES.name) }
     var sortName by rememberSaveable { mutableStateOf(UhdSort.RECENT.name) }
@@ -157,11 +158,15 @@ fun UhdScreen(
     // focused, then on the grid's last focused poster (PosterGrid keeps it on a composed one),
     // so the side menu, details and the player all come back to where the user was.
     val gridFocus = remember { FocusRequester() }
+    val moviesChipFocus = remember { FocusRequester() }
     var gridVisited by remember { mutableStateOf(false) }
     val gridOwnsReturn = gridVisited && count > 0 && !isLoading
     val gridRequester = if (gridOwnsReturn) firstItemFocusRequester else gridFocus
-    // D-Pad Down from any control goes straight to the grid.
-    val toGrid = Modifier.focusProperties { if (count > 0 && !isLoading) down = gridRequester }
+    // D-Pad Up from any control goes to the top bar; Down goes straight to the grid.
+    val toGrid = Modifier.focusProperties {
+        up = headerFocusRequester
+        if (count > 0 && !isLoading) down = gridRequester
+    }
     val total = if (kind == UhdKind.MOVIES) movies.size else series.size
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -184,7 +189,14 @@ fun UhdScreen(
                 )
             }
             Spacer(Modifier.height(6.dp))
-            ScanStatus(scan = scan, onScanLibrary = onScanLibrary, onStopScan = onStopScan)
+            ScanStatus(
+                scan = scan,
+                onScanLibrary = onScanLibrary,
+                onStopScan = onStopScan,
+                upFocusRequester = headerFocusRequester,
+                startFocusRequester = sideNavFocusRequester,
+                downFocusRequester = moviesChipFocus
+            )
         }
 
         Spacer(Modifier.height(16.dp))
@@ -193,7 +205,8 @@ fun UhdScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = IpxSpacing.Gutter),
+                .padding(horizontal = IpxSpacing.Gutter)
+                .onFocusChanged { if (it.hasFocus) gridVisited = false },
             verticalAlignment = Alignment.CenterVertically
         ) {
             PillChip(
@@ -201,6 +214,7 @@ fun UhdScreen(
                 selected = kind == UhdKind.MOVIES,
                 onClick  = { kindName = UhdKind.MOVIES.name },
                 modifier = Modifier
+                    .focusRequester(moviesChipFocus)
                     .then(if (!gridOwnsReturn) Modifier.focusRequester(firstItemFocusRequester) else Modifier)
                     .focusProperties { start = sideNavFocusRequester }
                     .then(toGrid)
@@ -260,6 +274,7 @@ fun UhdScreen(
                     columns                 = UHD_COLUMNS,
                     firstItemFocusRequester = gridRequester,
                     sideNavFocusRequester   = sideNavFocusRequester,
+                    upFocusRequester        = moviesChipFocus,
                     onItemFocused           = { gridVisited = true },
                     contentPadding          = UHD_GRID_PADDING,
                     spacingH                = 20.dp,
@@ -281,6 +296,7 @@ fun UhdScreen(
                     columns                 = UHD_COLUMNS,
                     firstItemFocusRequester = gridRequester,
                     sideNavFocusRequester   = sideNavFocusRequester,
+                    upFocusRequester        = moviesChipFocus,
                     onItemFocused           = { gridVisited = true },
                     contentPadding          = UHD_GRID_PADDING,
                     spacingH                = 20.dp,
@@ -376,12 +392,24 @@ private fun uhdBadge(res: VideoRes?): String? =
 
 /** One-line status of the measurement pass, with a control for the full-library check. */
 @Composable
-private fun ScanStatus(scan: UhdScanState, onScanLibrary: () -> Unit, onStopScan: () -> Unit) {
+private fun ScanStatus(
+    scan: UhdScanState,
+    onScanLibrary: () -> Unit,
+    onStopScan: () -> Unit,
+    upFocusRequester: FocusRequester = FocusRequester.Default,
+    startFocusRequester: FocusRequester = FocusRequester.Default,
+    downFocusRequester: FocusRequester = FocusRequester.Default
+) {
+    val chipModifier = Modifier.focusProperties {
+        up = upFocusRequester
+        start = startFocusRequester
+        down = downFocusRequester
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         // Control first, so D-Pad Up from the chips below lands on it.
         when {
-            scan.phase == UhdScanPhase.LIBRARY -> PillChip(label = stringResource(R.string.uhd_pause_check), selected = false, onClick = onStopScan)
-            !scan.isRunning && scan.unchecked > 0 -> PillChip(label = stringResource(R.string.uhd_check_library), selected = false, onClick = onScanLibrary)
+            scan.phase == UhdScanPhase.LIBRARY -> PillChip(label = stringResource(R.string.uhd_pause_check), selected = false, onClick = onStopScan, modifier = chipModifier)
+            !scan.isRunning && scan.unchecked > 0 -> PillChip(label = stringResource(R.string.uhd_check_library), selected = false, onClick = onScanLibrary, modifier = chipModifier)
         }
         if (scan.phase == UhdScanPhase.LIBRARY || (!scan.isRunning && scan.unchecked > 0)) Spacer(Modifier.width(16.dp))
         val text = when (scan.phase) {
