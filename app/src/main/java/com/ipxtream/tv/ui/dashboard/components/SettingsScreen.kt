@@ -11,6 +11,9 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -192,20 +195,13 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 // ── Left Pane: Settings Categories Rail ────────────────────────
-                Card(
-                    onClick = { /* No-op container */ },
+                Box(
                     modifier = Modifier
                         .width(260.dp)
-                        .fillMaxHeight(),
-                    shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.colors(
-                        containerColor = SlatePrimary,
-                        focusedContainerColor = SlatePrimary
-                    ),
-                    border = CardDefaults.border(
-                        border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp)),
-                        focusedBorder = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp))
-                    )
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SlatePrimary)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
                 ) {
                     Column(
                         modifier = Modifier
@@ -278,20 +274,13 @@ fun SettingsScreen(
                 }
 
                 // ── Right Pane: Category Content ───────────────────────────────
-                Card(
-                    onClick = { /* No-op container */ },
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight(),
-                    shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
-                    colors = CardDefaults.colors(
-                        containerColor = SlatePrimary,
-                        focusedContainerColor = SlatePrimary
-                    ),
-                    border = CardDefaults.border(
-                        border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp)),
-                        focusedBorder = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp))
-                    )
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(SlatePrimary)
+                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
                 ) {
                     Column(
                         modifier = Modifier
@@ -1232,12 +1221,11 @@ private fun LegalInfoDialog(
 ) {
     val closeFocusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        runCatching { closeFocusRequester.requestFocus() }
-    }
-
-    BackHandler { onDismiss() }
-
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+    TouchBridgeDialogHost {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1245,20 +1233,13 @@ private fun LegalInfoDialog(
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
-        Card(
-            onClick = { /* No-op */ },
+        Box(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
-                .fillMaxHeight(0.9f),
-            shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
-            colors = CardDefaults.colors(
-                containerColor = SlatePrimary,
-                focusedContainerColor = SlatePrimary
-            ),
-            border = CardDefaults.border(
-                border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp)),
-                focusedBorder = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(12.dp))
-            )
+                .fillMaxHeight(0.9f)
+                .clip(RoundedCornerShape(12.dp))
+                .background(SlatePrimary)
+                .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
         ) {
             Column(
                 modifier = Modifier
@@ -1319,5 +1300,11 @@ private fun LegalInfoDialog(
                 }
             }
         }
+    }
+    }
+    }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(60)
+        runCatching { closeFocusRequester.requestFocus() }
     }
 }

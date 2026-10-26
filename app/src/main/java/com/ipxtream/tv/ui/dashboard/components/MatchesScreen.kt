@@ -351,47 +351,49 @@ private fun LeaguesDialog(selected: Set<String>, onDismiss: (Set<String>?) -> Un
     val firstFocus = remember { FocusRequester() }
     val close = { onDismiss(chosen.takeIf { it != selected }) }
     Dialog(onDismissRequest = close, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                Modifier
-                    .fillMaxWidth(0.62f)
-                    .fillMaxHeight(0.86f)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(SlateCard)
-                    .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
-                    .padding(28.dp)
+        com.ipxtream.tv.ui.theme.TouchBridgeDialogHost {
+            Box(
+                Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
+                contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.matches_leagues_title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    stringResource(R.string.matches_leagues_hint, chosen.size),
-                    style = IpxTypography.BodyMedium,
-                    color = TextSecondary
-                )
-                Spacer(Modifier.height(16.dp))
-                LazyColumn(
-                    // Same as the match list: if the list itself takes focus, hand it to the first league.
-                    modifier            = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .focusProperties { canFocus = false }
-                        .onFocusChanged { if (it.isFocused) runCatching { firstFocus.requestFocus() } },
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                Column(
+                    Modifier
+                        .fillMaxWidth(0.62f)
+                        .fillMaxHeight(0.86f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(SlateCard)
+                        .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
+                        .padding(28.dp)
                 ) {
-                    items(FollowedCompetitions.CATALOG, key = { it }) { slug ->
-                        LeagueToggleRow(
-                            name     = LEAGUE_NAMES[slug]?.let { stringResource(it) } ?: slug,
-                            on       = slug in chosen,
-                            onToggle = { chosen = if (slug in chosen) chosen - slug else chosen + slug },
-                            modifier = if (slug == FollowedCompetitions.CATALOG.first()) Modifier.focusRequester(firstFocus) else Modifier
-                        )
+                    Text(stringResource(R.string.matches_leagues_title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        stringResource(R.string.matches_leagues_hint, chosen.size),
+                        style = IpxTypography.BodyMedium,
+                        color = TextSecondary
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    LazyColumn(
+                        // Same as the match list: if the list itself takes focus, hand it to the first league.
+                        modifier            = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .focusProperties { canFocus = false }
+                            .onFocusChanged { if (it.isFocused) runCatching { firstFocus.requestFocus() } },
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        items(FollowedCompetitions.CATALOG, key = { it }) { slug ->
+                            LeagueToggleRow(
+                                name     = LEAGUE_NAMES[slug]?.let { stringResource(it) } ?: slug,
+                                on       = slug in chosen,
+                                onToggle = { chosen = if (slug in chosen) chosen - slug else chosen + slug },
+                                modifier = if (slug == FollowedCompetitions.CATALOG.first()) Modifier.focusRequester(firstFocus) else Modifier
+                            )
+                        }
                     }
+                    Spacer(Modifier.height(16.dp))
+                    PillChip(label = stringResource(R.string.matches_leagues_done), selected = true, onClick = close)
                 }
-                Spacer(Modifier.height(16.dp))
-                PillChip(label = stringResource(R.string.matches_leagues_done), selected = true, onClick = close)
             }
         }
     }
@@ -709,64 +711,66 @@ private fun ChannelPicker(
     val competition = competitionName(listing.match.competition)
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(
-            Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                Modifier
-                    .fillMaxWidth(0.62f)
-                    .fillMaxHeight(0.86f)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(SlateCard)
-                    .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
-                    .padding(28.dp)
+        com.ipxtream.tv.ui.theme.TouchBridgeDialogHost {
+            Box(
+                Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
+                contentAlignment = Alignment.Center
             ) {
-                Text(stringResource(R.string.picker_title), style = IpxTypography.Eyebrow, color = TextSecondary)
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    bidi("${listing.match.home.name}  –  ${listing.match.away.name}"),
-                    style = IpxTypography.HeadlineMedium, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PillChip(
-                        label    = stringResource(R.string.picker_remember_competition, competition),
-                        selected = forCompetition,
-                        onClick  = { forCompetition = !forCompetition }
+                Column(
+                    Modifier
+                        .fillMaxWidth(0.62f)
+                        .fillMaxHeight(0.86f)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(SlateCard)
+                        .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
+                        .padding(28.dp)
+                ) {
+                    Text(stringResource(R.string.picker_title), style = IpxTypography.Eyebrow, color = TextSecondary)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        bidi("${listing.match.home.name}  –  ${listing.match.away.name}"),
+                        style = IpxTypography.HeadlineMedium, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(Modifier.width(16.dp))
-                    Box(Modifier.weight(1f)) {
-                        SearchBar(
-                            query         = query,
-                            onQueryChange = { query = it },
-                            placeholder   = stringResource(R.string.picker_search_hint),
-                            modifier      = Modifier.focusRequester(searchFocus)
+                    Spacer(Modifier.height(16.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        PillChip(
+                            label    = stringResource(R.string.picker_remember_competition, competition),
+                            selected = forCompetition,
+                            onClick  = { forCompetition = !forCompetition }
                         )
-                    }
-                }
-                Spacer(Modifier.height(14.dp))
-                if (shown.isEmpty()) {
-                    CenterNote(stringResource(R.string.picker_none), null)
-                } else {
-                    LazyColumn(
-                        modifier            = Modifier
-                            .fillMaxSize()
-                            .focusProperties { canFocus = false }
-                            .onFocusChanged { if (it.isFocused) runCatching { firstFocus.requestFocus() } },
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        contentPadding      = PaddingValues(vertical = 4.dp)
-                    ) {
-                        items(shown.size, key = { i -> "pick_${shown[i].streamId}_$i" }) { i ->
-                            val stream = shown[i]
-                            if (i == 0 && query.isBlank() && suggestedIds.isNotEmpty()) PickerHeader(stringResource(R.string.picker_suggested))
-                            if (query.isBlank() && i == listing.channels.size) PickerHeader(stringResource(R.string.picker_all))
-                            PickerRow(
-                                stream   = stream,
-                                onClick  = { onPick(stream, forCompetition) },
-                                // Up from the first channel goes to the search, not back into the list.
-                                modifier = if (i == 0) Modifier.focusRequester(firstFocus).focusProperties { up = searchFocus } else Modifier
+                        Spacer(Modifier.width(16.dp))
+                        Box(Modifier.weight(1f)) {
+                            SearchBar(
+                                query         = query,
+                                onQueryChange = { query = it },
+                                placeholder   = stringResource(R.string.picker_search_hint),
+                                modifier      = Modifier.focusRequester(searchFocus)
                             )
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    if (shown.isEmpty()) {
+                        CenterNote(stringResource(R.string.picker_none), null)
+                    } else {
+                        LazyColumn(
+                            modifier            = Modifier
+                                .fillMaxSize()
+                                .focusProperties { canFocus = false }
+                                .onFocusChanged { if (it.isFocused) runCatching { firstFocus.requestFocus() } },
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            contentPadding      = PaddingValues(vertical = 4.dp)
+                        ) {
+                            items(shown.size, key = { i -> "pick_${shown[i].streamId}_$i" }) { i ->
+                                val stream = shown[i]
+                                if (i == 0 && query.isBlank() && suggestedIds.isNotEmpty()) PickerHeader(stringResource(R.string.picker_suggested))
+                                if (query.isBlank() && i == listing.channels.size) PickerHeader(stringResource(R.string.picker_all))
+                                PickerRow(
+                                    stream   = stream,
+                                    onClick  = { onPick(stream, forCompetition) },
+                                    // Up from the first channel goes to the search, not back into the list.
+                                    modifier = if (i == 0) Modifier.focusRequester(firstFocus).focusProperties { up = searchFocus } else Modifier
+                                )
+                            }
                         }
                     }
                 }

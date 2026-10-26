@@ -1,30 +1,44 @@
 package com.ipxtream.tv.ui.theme
 
 import android.app.Activity
+import android.content.Context
+import android.os.Build
 import android.os.SystemClock
+import android.view.KeyboardShortcutGroup
+import android.view.Menu
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.view.Window
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewRootForTest
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.window.DialogWindowProvider
 
 /**
  * Lets phones and tablets use the TV interface by touch.
  *
  * androidx.tv.material3 buttons, cards and surfaces react only to the remote's OK key, so a tap on
- * them did nothing. Each Activity passes its touch events through [dispatch]: a still, short tap on a
- * clickable focuses it and runs its click, a long press runs its long click. Drags (list scrolling)
- * and text fields go to Compose untouched. TVs send no touch events, so
- * this never runs there.
+ * them did nothing. Each Activity (or Dialog window via [TouchBridgeDialogHost]) passes its touch events
+ * through [dispatch]: a still, short tap on a clickable focuses it and runs its click, a long press runs
+ * its long click. Drags (list scrolling) and text fields go to Compose untouched. TVs send no touch events,
+ * so this never runs there.
  */
-class TouchBridge(private val activity: Activity) {
+class TouchBridge(
+    context: Context,
+    private val rootProvider: () -> View?
+) {
+    constructor(activity: Activity) : this(activity, { activity.window?.decorView })
 
-    private val slop = ViewConfiguration.get(activity).scaledTouchSlop
+    private val slop = ViewConfiguration.get(context).scaledTouchSlop
     private var downX = 0f
     private var downY = 0f
     private var downAt = 0L
@@ -39,7 +53,7 @@ class TouchBridge(private val activity: Activity) {
         action.invoke()
     }
 
-    /** Returns true when the bridge handled the event; otherwise pass it on to the Activity. */
+    /** Returns true when the bridge handled the event; otherwise pass it on to the Activity/Dialog. */
     fun dispatch(event: MotionEvent, superDispatch: (MotionEvent) -> Boolean): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -85,7 +99,7 @@ class TouchBridge(private val activity: Activity) {
         target = null
     }
 
-    private fun root(): View? = activity.window?.decorView
+    private fun root(): View? = rootProvider()
 
     companion object {
         /** True while a click runs because of a tap, for controls whose remote and touch behaviour differ. */
@@ -115,5 +129,55 @@ class TouchBridge(private val activity: Activity) {
         if (view is ViewRootForTest) return view
         if (view is ViewGroup) for (i in 0 until view.childCount) findCompose(view.getChildAt(i))?.let { return it }
         return null
+    }
+}
+
+/**
+ * Attaches a [TouchBridge] to the enclosing Compose [androidx.compose.ui.window.Dialog]'s window,
+ * since Dialog windows receive touch events directly rather than through [Activity.dispatchTouchEvent].
+ */
+@Composable
+fun TouchBridgeDialogHost(content: @Composable () -> Unit) {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        val window = generateSequence(view.parent) { it.parent }
+            .filterIsInstance<DialogWindowProvider>()
+            .firstOrNull()
+            ?.window
+        val original = window?.callback
+        if (window != null && original != null) {
+            val bridge = TouchBridge(view.context) { window.decorView }
+            window.callback = TouchBridgeWindowCallback(original, bridge)
+        }
+        onDispose {
+            if (window != null && original != null) {
+                window.callback = original
+            }
+        }
+    }
+    content()
+}
+
+private class TouchBridgeWindowCallback(
+    private val delegate: Window.Callback,
+    private val bridge: TouchBridge
+) : Window.Callback by delegate {
+    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+        if (event == null) return delegate.dispatchTouchEvent(null)
+        return bridge.dispatch(event) { delegate.dispatchTouchEvent(it) }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    override fun onProvideKeyboardShortcuts(
+        data: MutableList<KeyboardShortcutGroup>?,
+        menu: Menu?,
+        deviceId: Int
+    ) {
+        delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    override fun onPointerCaptureChanged(hasCapture: Boolean) {
+        delegate.onPointerCaptureChanged(hasCapture)
     }
 }
