@@ -284,7 +284,7 @@ class DashboardViewModel(
     fun startPlayback(stream: StreamItem) {
         // Automatically close details if starting playback directly from them
         closeDetails()
-        _uiState.update { it.copy(selectedStream = stream, selectedEpisode = null) }
+        _uiState.update { it.copy(selectedStream = stream, selectedEpisode = null, playFullScreen = true) }
     }
 
     /**

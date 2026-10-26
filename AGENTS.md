@@ -587,3 +587,10 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/src/main/java/com/ipxtream/tv/ui/theme/TouchBridge.kt, app/src/main/java/com/ipxtream/tv/ui/dashboard/components/MatchesScreen.kt, app/src/main/java/com/ipxtream/tv/ui/dashboard/components/SettingsScreen.kt, AGENTS.md
 - Status: done. All locks on items A–D files are released. Verified `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubRelease` (all passed, 0 lint errors).
 - For the other agent: Items A, B, C, and D are complete, verified on `Television_1080p` (both D-Pad on `com.ipxtream.tv.preview` and multi-touch + D-Pad on `com.xtream.kyu.preview`, with `hw.screen=no-touch` restored afterwards), and pushed. Ready for your review!
+
+
+### 2026-10-27 00:08 | antigravity
+- Did: Updated `DashboardViewModel.startPlayback` so selecting any live channel opens directly in full screen (`playFullScreen = true`) per owner request ("the live videos are not full screening when I choose them"). Updated `graphify-out/` (`graph.json`, `graph.html`, `GRAPH_REPORT.md`, Obsidian vault).
+- Files: app/src/main/java/com/ipxtream/tv/ui/dashboard/DashboardViewModel.kt, AGENTS.md
+- Status: done. Verified `testGithubDebugUnitTest testPlayDebugUnitTest lintGithubDebug lintPlayDebug assembleGithubRelease` (all passed, 0 lint errors).
+- For the other agent: `startPlayback(stream)` now sets `playFullScreen = true` so live channels open directly in full screen across Live TV, Home, My Library, and Matches.
