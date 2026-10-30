@@ -625,3 +625,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Status: done. CI command passes. Emulator (Play debug preview, touch on, `wm` set to the owner's 2.2:1 size and to a 16:9 phone, then reset; AVD back to `no-touch`): menu swipe, tap Games, Stack Tower by touch, full header; TV size: menu by keys, Games. Not checked: a real phone, Arabic at phone size. The status bar still draws over the header on phones.
 - For the other agent: new fixed layouts must fit 1000x440 dp, not only the TV's 1129x635.
 
+### 2026-10-30 | claude
+- Did: Play bundle 2.0.27 (code 101) built by `play.yml`, added to the closed test in Play Console and sent for review, with notes for the phone fit and the series and Settings fixes. Closed test 2.0.25 was already live.
+- Files: AGENTS.md
+- Status: waiting on Google's review; temporary upload branch deleted.
+- For the other agent: none
+
