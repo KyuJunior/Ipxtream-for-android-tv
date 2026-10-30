@@ -204,6 +204,8 @@ fun DashboardScreen(
     onCheckForUpdates:  () -> Unit,
     onDownloadUpdate:   () -> Unit,
     onDismissUpdate:    () -> Unit,
+    onOpenStorePage:    () -> Unit,
+    onDismissStoreUpdate: () -> Unit,
     onNextPage:         () -> Unit,
     onPrevPage:         () -> Unit,
     onSwitchAccount:    (String, String) -> Unit = { _, _ -> },
@@ -1171,6 +1173,44 @@ fun DashboardScreen(
                     text  = stringResource(R.string.update_banner, uiState.updateRelease?.tagName ?: ""),
                     style = IpxTypography.BodyMedium,
                     color = Color.White
+                )
+            }
+        }
+
+        // ─── Play update banner: stays until dismissed ───────────────────────
+        androidx.compose.animation.AnimatedVisibility(
+            visible  = uiState.storeUpdateAvailable && !showFullScreenPlayer,
+            enter    = androidx.compose.animation.fadeIn(tween(IpxMotion.Standard)),
+            exit     = androidx.compose.animation.fadeOut(tween(IpxMotion.Standard)),
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 24.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(SurfaceElevated.copy(alpha = 0xF2 / 255f))
+                    .padding(horizontal = 20.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                androidx.compose.material3.Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Rounded.SystemUpdate,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(stringResource(R.string.update_store_banner), style = IpxTypography.BodyMedium, color = Color.White)
+                com.ipxtream.tv.ui.dashboard.components.PillChip(
+                    label = stringResource(R.string.update_open_play),
+                    selected = true,
+                    onClick = {
+                        onOpenStorePage()
+                        onDismissStoreUpdate()
+                    }
+                )
+                com.ipxtream.tv.ui.dashboard.components.PillChip(
+                    label = stringResource(R.string.action_later),
+                    selected = false,
+                    onClick = onDismissStoreUpdate
                 )
             }
         }

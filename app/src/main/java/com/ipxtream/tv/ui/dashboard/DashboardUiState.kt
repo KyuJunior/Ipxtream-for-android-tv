@@ -116,6 +116,7 @@ data class DashboardUiState(
     // ─── App Update State ───
     val isCheckingForUpdate: Boolean = false,
     val updateRelease:       com.ipxtream.tv.data.model.GitHubRelease? = null,
+    val storeUpdateAvailable: Boolean = false,
     /** True only for a check the user started; the automatic startup check shows a banner instead. */
     val showUpdateDialog:    Boolean = false,
     val updateDownloadProgress: Float? = null, // null means not downloading, 0.0-1.0 progress

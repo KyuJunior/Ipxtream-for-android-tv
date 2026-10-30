@@ -322,6 +322,7 @@ contact@dryaser.me</string>
     <string name="update_running_latest">Running the latest version (v%1$s).</string>
     <string name="update_via_play">Version %1$s · updates come from Google Play</string>
     <string name="update_open_play">Open in Google Play</string>
+    <string name="update_store_banner">A new version is available on Google Play.</string>
     <string name="update_store_unavailable">Google Play isn\'t available on this TV.</string>
     <string name="update_up_to_date">Up to date</string>
     <string name="update_verify_failed">The downloaded update isn\'t signed by IPXtream, so it was deleted and not installed.</string>

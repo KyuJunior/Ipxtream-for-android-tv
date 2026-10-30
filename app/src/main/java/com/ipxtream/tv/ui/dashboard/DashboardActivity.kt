@@ -186,6 +186,8 @@ class DashboardActivity : ComponentActivity() {
                     },
                     onDownloadUpdate   = dashboardViewModel::downloadAndInstallUpdate,
                     onDismissUpdate    = dashboardViewModel::dismissUpdate,
+                    onOpenStorePage    = dashboardViewModel::openStorePage,
+                    onDismissStoreUpdate = dashboardViewModel::dismissStoreUpdate,
                     onNextPage         = dashboardViewModel::nextPage,
                     onPrevPage         = dashboardViewModel::prevPage,
                     onSwitchAccount    = dashboardViewModel::switchAccount,

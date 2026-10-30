@@ -636,9 +636,13 @@ class DashboardViewModel(
      * steals focus; a found update shows a banner, not a dialog. Survives Activity recreation.
      */
     fun scheduleStartupUpdateCheck() {
-        if (startupCheckScheduled || !com.ipxtream.tv.BuildConfig.SELF_UPDATE) return
+        if (startupCheckScheduled) return
         startupCheckScheduled = true
         viewModelScope.launch {
+            if (!com.ipxtream.tv.BuildConfig.SELF_UPDATE) {
+                if (updateManager.storeUpdateAvailable()) _uiState.update { it.copy(storeUpdateAvailable = true) }
+                return@launch
+            }
             kotlinx.coroutines.delay(30_000)
             checkForUpdates(manual = false)
         }
@@ -704,6 +708,10 @@ class DashboardViewModel(
 
     fun dismissUpdate() {
         _uiState.update { it.copy(updateRelease = null, showUpdateDialog = false, updateErrorMessage = null) }
+    }
+
+    fun dismissStoreUpdate() {
+        _uiState.update { it.copy(storeUpdateAvailable = false) }
     }
 
     /** Play build: updates come from Google Play, so "App updates" opens this app's store page. */

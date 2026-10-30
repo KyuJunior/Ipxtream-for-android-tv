@@ -322,6 +322,7 @@ contact@dryaser.me</string>
     <string name="update_running_latest">أنت تستخدم أحدث إصدار (v%1$s).</string>
     <string name="update_via_play">الإصدار %1$s · تصل التحديثات من Google Play</string>
     <string name="update_open_play">فتح في Google Play</string>
+    <string name="update_store_banner">يتوفر إصدار جديد على Google Play.</string>
     <string name="update_store_unavailable">متجر Google Play غير متاح على هذا التلفاز.</string>
     <string name="update_up_to_date">محدّث</string>
     <string name="update_verify_failed">التحديث الذي تم تنزيله غير موقّع من IPXtream، لذلك تم حذفه ولم يُثبَّت.</string>

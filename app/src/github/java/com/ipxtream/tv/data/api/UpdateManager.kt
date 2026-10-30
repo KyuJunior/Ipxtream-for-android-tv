@@ -22,6 +22,9 @@ class UpdateManager(private val context: Context) {
     private val gson = Gson()
     private val tag = "UpdateManager"
 
+    /** Only the Play build asks a store. */
+    suspend fun storeUpdateAvailable(): Boolean = false
+
     suspend fun checkForUpdates(): GitHubRelease? = withContext(Dispatchers.IO) {
         val noRedirectsClient = client.newBuilder()
             .followRedirects(false)

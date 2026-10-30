@@ -226,6 +226,9 @@ dependencies {
     // ─── Background work (match-start reminders) ───────────────────────────────
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
+    // ─── Play build: asks Google Play whether a newer version exists ──────────
+    "playImplementation"("com.google.android.play:app-update:2.1.0")
+
     // ─── Debug tooling ────────────────────────────────────────────────────────
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
