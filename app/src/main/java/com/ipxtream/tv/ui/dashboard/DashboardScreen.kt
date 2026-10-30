@@ -857,7 +857,7 @@ fun DashboardScreen(
                             onRefresh = onRefresh
                         )
                     }
-                    ContentSection.GAME -> com.ipxtream.tv.ui.dashboard.components.PenaltyGameScreen(
+                    ContentSection.GAME -> com.ipxtream.tv.ui.dashboard.components.GamesScreen(
                         firstItemFocusRequester = firstItemFocusRequester,
                         sideNavFocusRequester   = sideNavFocusRequester,
                         headerFocusRequester    = searchBarFocusRequester,

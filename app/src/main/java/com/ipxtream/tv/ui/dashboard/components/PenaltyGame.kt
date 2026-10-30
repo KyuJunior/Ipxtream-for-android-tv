@@ -94,9 +94,9 @@ private class Shot(val aim: Float, val keeper: Float, val result: ShotResult)
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun PenaltyGameScreen(
-    firstItemFocusRequester: FocusRequester,
+    gameFocusRequester: FocusRequester,
     sideNavFocusRequester: FocusRequester,
-    headerFocusRequester: FocusRequester,
+    upFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     val prefs = LocalContext.current.getSharedPreferences("penalty_game", Context.MODE_PRIVATE)
@@ -150,11 +150,11 @@ fun PenaltyGameScreen(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .focusRequester(firstItemFocusRequester)
+                .focusRequester(gameFocusRequester)
                 .onFocusChanged { focused = it.isFocused }
                 .focusProperties {
                     start = sideNavFocusRequester
-                    up = headerFocusRequester
+                    up = upFocusRequester
                     end = FocusRequester.Cancel
                     down = FocusRequester.Cancel
                 }

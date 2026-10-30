@@ -385,7 +385,7 @@ contact@dryaser.me</string>
     <string name="picker_remember_competition">استخدمها لكل مباريات %1$s</string>
     <string name="picker_none">لا توجد قنوات مطابقة</string>
 
-    <string name="section_game">لعبة ضربات الجزاء</string>
+    <string name="section_game">ألعاب</string>
     <string name="game_title">ركلات الترجيح</string>
     <string name="game_hint">اضغط OK أو المس الشاشة للتسديد. الزوايا أصعب على الحارس، لكن الابتعاد كثيرًا يخرج الكرة.</string>
     <string name="game_goal">هدف!</string>
@@ -393,4 +393,9 @@ contact@dryaser.me</string>
     <string name="game_wide">خارج المرمى!</string>
     <string name="game_result">سجّلت %1$d من %2$d. اضغط OK أو المس الشاشة للعب مجددًا.</string>
     <string name="game_best">أفضل نتيجة: %1$d</string>
+    <string name="game_stack_title">برج التكديس</string>
+    <string name="game_stack_hint">اضغط OK أو المس الشاشة للإسقاط. يبقى الجزء المتطابق فقط. التكديس المثالي يعيد العرض.</string>
+    <string name="game_stack_perfect">مثالي ×%1$d</string>
+    <string name="game_stack_over">سقط البرج عند %1$d. اضغط OK أو المس الشاشة لتحاول مجددًا.</string>
+    <string name="game_stack_new_best">رقم جديد: %1$d! اضغط OK أو المس الشاشة لتتجاوزه.</string>
 </resources>

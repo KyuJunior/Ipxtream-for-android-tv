@@ -385,7 +385,7 @@ contact@dryaser.me</string>
     <string name="picker_remember_competition">Use for all %1$s matches</string>
     <string name="picker_none">No channels match</string>
 
-    <string name="section_game">Penalty Game</string>
+    <string name="section_game">Games</string>
     <string name="game_title">Penalty Shootout</string>
     <string name="game_hint">Press OK or tap to shoot. Corners are harder to save, but too far is wide.</string>
     <string name="game_goal">Goal!</string>
@@ -393,4 +393,9 @@ contact@dryaser.me</string>
     <string name="game_wide">Wide!</string>
     <string name="game_result">You scored %1$d of %2$d. Press OK or tap to play again.</string>
     <string name="game_best">Best: %1$d</string>
+    <string name="game_stack_title">Stack Tower</string>
+    <string name="game_stack_hint">Press OK or tap to drop. Only the overlap stays. Stack perfectly to grow back.</string>
+    <string name="game_stack_perfect">Perfect ×%1$d</string>
+    <string name="game_stack_over">Tower down at %1$d. Press OK or tap to try again.</string>
+    <string name="game_stack_new_best">New best: %1$d! Press OK or tap to beat it.</string>
 </resources>
