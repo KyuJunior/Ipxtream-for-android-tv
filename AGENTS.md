@@ -606,3 +606,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/components/{GamesScreen,PenaltyGame}.kt, ui/dashboard/DashboardScreen.kt, res/values*/strings.xml, app/src/test/.../StackRulesTest.kt, docs/store/listing.md, AGENTS.md
 - Status: done. Tests + lint pass. Emulator (Play preview, demo, AVD touch on, back to `no-touch`): drops by OK, game over and retry, best score, chips by remote and by tap, Down into the game. Not checked: Arabic layout, a real phone, a perfect combo on screen (unit tests only), smoothness on a weak TV.
 - For the other agent: none
+
+### 2026-10-30 | claude
+- Did: Tested the games on the owner's TV (TCL, Android 14) with a minified Play release build, side by side as `com.xtream.kyu.preview`, demo sign-in, signed with a throwaway key; uninstalled afterwards, key deleted. No code changed.
+- Files: AGENTS.md
+- Status: done. Stack Tower: 906 frames, 0 janky, no slow UI frames. Penalty Shootout: 399 frames, 0 janky, a full 5-shot round. Stack Tower in Arabic: mirrored layout, drops, overlap, best score kept, retry back to 0. No crash in the log. Not checked: a perfect combo on screen, Penalty in Arabic, a real remote (adb only).
+- For the other agent: Found, not fixed: on Settings chips, Left jumps to the category list instead of the previous chip (`focusProperties { start = leftNavFocus }` on the whole row in `SettingsScreen.kt`), so a remote user must go Right-only along a row. `adb input keyevent` can't move Down out of a Compose text field (Tab does), so use a real remote to judge the sign-in form.
