@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
@@ -79,13 +79,31 @@ fun SeriesDetailScreen(
 
     val episodesFocusRequester = remember { FocusRequester() }
     val likeButtonFocusRequester = remember { FocusRequester() }
+    val seasonFocusRequester = remember { FocusRequester() }
+    val playedEpisodeFocusRequester = remember { FocusRequester() }
+    var playedEpisodeId by remember { mutableStateOf<String?>(null) }
+
+    // The selected season's chip, or the first visible one when it is scrolled out of the row:
+    // a requester on an item that left composition would swallow the key press.
+    val seasonsRowState = rememberLazyListState()
+    val seasonAnchor by remember(seasons) {
+        derivedStateOf {
+            val visible = seasonsRowState.layoutInfo.visibleItemsInfo.map { it.index }
+            val selected = seasons.indexOf(selectedSeason)
+            if (selected in visible) selected else visible.firstOrNull() ?: 0
+        }
+    }
+    val seasonsShown = !isLoadingSeriesInfo && seasons.isNotEmpty()
 
     LaunchedEffect(isPlayerOpen) {
         if (!isPlayerOpen) {
             delay(100)
             runCatching {
-                if (seasons.isNotEmpty()) episodesFocusRequester.requestFocus()
-                else likeButtonFocusRequester.requestFocus()
+                when {
+                    seasons.isEmpty() -> likeButtonFocusRequester.requestFocus()
+                    playedEpisodeId != null && runCatching { playedEpisodeFocusRequester.requestFocus() }.isSuccess -> Unit
+                    else -> episodesFocusRequester.requestFocus()
+                }
             }
         }
     }
@@ -135,7 +153,8 @@ fun SeriesDetailScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 80.dp, end = 80.dp),
+                .padding(start = 80.dp, end = 80.dp)
+                .focusProperties { canFocus = false },
             contentPadding = PaddingValues(top = 80.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
@@ -171,7 +190,9 @@ fun SeriesDetailScreen(
                         Spacer(Modifier.width(8.dp))
                         Button(
                             onClick = onToggleFavorite,
-                            modifier = Modifier.focusRequester(likeButtonFocusRequester),
+                            modifier = Modifier
+                                .focusRequester(likeButtonFocusRequester)
+                                .focusProperties { if (seasonsShown) down = seasonFocusRequester },
                             colors = ButtonDefaults.colors(
                                 containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
@@ -208,6 +229,7 @@ fun SeriesDetailScreen(
                         }
                         Button(
                             onClick = onClose,
+                            modifier = Modifier.focusProperties { if (seasonsShown) down = seasonFocusRequester },
                             colors = ButtonDefaults.colors(
                                 containerColor = Color(0x2EFFFFFF),
                                 contentColor = Color.White,
@@ -270,16 +292,24 @@ fun SeriesDetailScreen(
             } else if (seasons.isNotEmpty()) {
                 // Seasons Row
                 item {
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        items(seasons, key = { it.seasonNumber }) { season ->
+                    LazyRow(
+                        state = seasonsRowState,
+                        modifier = Modifier.focusProperties { canFocus = false },
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        itemsIndexed(seasons, key = { _, it -> it.seasonNumber }) { index, season ->
                             val isSelected = selectedSeason == season
                             
+                            // Focus stays here: the new season's cards don't exist until the next frame.
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { 
-                                    selectedSeason = season 
-                                    runCatching { episodesFocusRequester.requestFocus() }
-                                }
+                                onClick = {
+                                    selectedSeason = season
+                                    playedEpisodeId = null
+                                },
+                                modifier = Modifier
+                                    .then(if (index == seasonAnchor) Modifier.focusRequester(seasonFocusRequester) else Modifier)
+                                    .focusProperties { down = episodesFocusRequester }
                             ) {
                                 Text(stringResource(R.string.season_n, season.seasonNumber))
                             }
@@ -300,11 +330,16 @@ fun SeriesDetailScreen(
                             val isFirst = rowIndex == 0 && colIndex == 0
                             EpisodeCard(
                                 episode = episode,
-                                onPlay = { onEpisodePlay(episode) },
+                                onPlay = {
+                                    playedEpisodeId = episode.id
+                                    onEpisodePlay(episode)
+                                },
                                 onDownload = { onEpisodeDownload(episode) },
                                 modifier = Modifier
                                     .weight(1f)
                                     .then(if (isFirst) Modifier.focusRequester(episodesFocusRequester) else Modifier)
+                                    .then(if (episode.id == playedEpisodeId) Modifier.focusRequester(playedEpisodeFocusRequester) else Modifier)
+                                    .focusProperties { if (rowIndex == 0) up = seasonFocusRequester }
                             )
                         }
                         // Fill row space if not full

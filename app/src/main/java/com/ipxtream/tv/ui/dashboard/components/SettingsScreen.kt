@@ -421,7 +421,8 @@ private fun GeneralSettingsContent(
         selected = settings.appLanguage,
         onSelect = onLanguageChange,
         labelProvider = { it.displayName },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus),
+        startFocus = leftNavFocus
     )
 
     // Performance mode
@@ -443,7 +444,7 @@ private fun GeneralSettingsContent(
         selected = settings.performanceMode,
         onSelect = onPerformanceModeChange,
         labelProvider = { stringResource(it.labelRes) },
-        modifier = Modifier.focusProperties { start = leftNavFocus }
+        startFocus = leftNavFocus
     )
 
     // Dynamic Spotlight
@@ -533,7 +534,8 @@ private fun PlaybackSettingsContent(
         selected = settings.bufferProfile,
         onSelect = onBufferChange,
         labelProvider = { stringResource(it.labelRes) },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus),
+        startFocus = leftNavFocus
     )
 
     // Auto Play Next Episode
@@ -553,7 +555,7 @@ private fun PlaybackSettingsContent(
         selected = settings.defaultAspectRatio,
         onSelect = onAspectRatioChange,
         labelProvider = { stringResource(it.labelRes) },
-        modifier = Modifier.focusProperties { start = leftNavFocus }
+        startFocus = leftNavFocus
     )
 
     // Decoder Mode
@@ -564,7 +566,7 @@ private fun PlaybackSettingsContent(
         selected = settings.decoderMode,
         onSelect = onDecoderChange,
         labelProvider = { stringResource(it.labelRes) },
-        modifier = Modifier.focusProperties { start = leftNavFocus }
+        startFocus = leftNavFocus
     )
 
     // Keep Screen Awake
@@ -606,7 +608,8 @@ private fun AudioSubsSettingsContent(
         selected = settings.preferredAudioLanguage,
         onSelect = onAudioLangChange,
         labelProvider = { code -> audioOptions.firstOrNull { it.first == code }?.second ?: code },
-        modifier = Modifier.focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+        modifier = Modifier.focusRequester(initialFocus),
+        startFocus = leftNavFocus
     )
 
     // Default Subtitles Toggle
@@ -634,7 +637,7 @@ private fun AudioSubsSettingsContent(
         selected = settings.preferredSubtitleLanguage,
         onSelect = onSubLangChange,
         labelProvider = { code -> subOptions.firstOrNull { it.first == code }?.second ?: code },
-        modifier = Modifier.focusProperties { start = leftNavFocus }
+        startFocus = leftNavFocus
     )
 
     // Subtitle Text Size
@@ -645,7 +648,7 @@ private fun AudioSubsSettingsContent(
         selected = settings.subtitleTextSize,
         onSelect = onSubSizeChange,
         labelProvider = { stringResource(it.labelRes) },
-        modifier = Modifier.focusProperties { start = leftNavFocus }
+        startFocus = leftNavFocus
     )
 }
 
@@ -747,7 +750,7 @@ private fun AccountsSettingsContent(
                             if (!isDefault) {
                                 Button(
                                     onClick = { onSetDefaultAccount(account.server, account.username) },
-                                    modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus },
+                                    modifier = Modifier.height(30.dp).focusProperties { if (isActive) start = leftNavFocus },
                                     colors = ButtonDefaults.colors(
                                         containerColor = Color.Transparent,
                                         focusedContainerColor = SlateCard
@@ -758,7 +761,7 @@ private fun AccountsSettingsContent(
                             }
                             Button(
                                 onClick = { onRemoveAccount(account.server, account.username) },
-                                modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus },
+                                modifier = Modifier.height(30.dp).focusProperties { if (isActive && isDefault) start = leftNavFocus },
                                 colors = ButtonDefaults.colors(
                                     containerColor = Color.Red.copy(alpha = 0.75f),
                                     focusedContainerColor = Color.Red
@@ -920,7 +923,7 @@ private fun AboutSettingsContent(
                     }
                     Button(
                         onClick = onDismissUpdate,
-                        modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus }
+                        modifier = Modifier.height(34.dp)
                     ) {
                         Text(stringResource(R.string.action_later))
                     }
@@ -990,7 +993,7 @@ private fun AboutSettingsContent(
 
         Button(
             onClick = onOpenPrivacy,
-            modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
+            modifier = Modifier.height(34.dp),
             colors = ButtonDefaults.colors(
                 containerColor = SlateCard,
                 focusedContainerColor = Accent
@@ -1087,6 +1090,7 @@ private fun <T> SettingSelectorItem(
     selected: T,
     onSelect: (T) -> Unit,
     labelProvider: @Composable (T) -> String,
+    startFocus: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -1106,7 +1110,7 @@ private fun <T> SettingSelectorItem(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            options.forEach { option ->
+            options.forEachIndexed { index, option ->
                 val isOptionSelected = option == selected
                 var isOptionFocused by remember { mutableStateOf(false) }
 
@@ -1114,6 +1118,8 @@ private fun <T> SettingSelectorItem(
                     onClick = { onSelect(option) },
                     modifier = Modifier
                         .height(34.dp)
+                        // Only the first option leaves the row; the others move to their neighbour.
+                        .focusProperties { if (index == 0) start = startFocus }
                         .onFocusChanged { isOptionFocused = it.isFocused },
                     shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(6.dp)),
                     colors = ClickableSurfaceDefaults.colors(
