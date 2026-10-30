@@ -32,6 +32,7 @@ class PlayBuildTest {
         assertFalse(BuildConfig.SELF_UPDATE)
         assertFalse(BuildConfig.MATCH_AUTO_PLAY)
         assertFalse(BuildConfig.DOWNLOADS)
+        assertTrue(BuildConfig.MINIGAME)
     }
 
     @Test fun downloadServiceIsRemoved() {

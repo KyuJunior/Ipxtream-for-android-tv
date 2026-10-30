@@ -35,6 +35,7 @@ right to watch what it offers.
 • English and Arabic, with a full right-to-left layout
 • Smooth mode for less powerful TVs
 • Several accounts on one TV
+• A small penalty shootout game, for when there is nothing on
 • No ads, no tracking, no account with us
 
 Try it first: "Try the demo" on the sign-in screen plays a few openly licensed films and test channels, no account
@@ -59,6 +60,7 @@ Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول �
 • العربية والإنجليزية مع واجهة كاملة من اليمين إلى اليسار
 • وضع سلس للأجهزة الأقل قوة
 • عدة حسابات على تلفاز واحد
+• لعبة صغيرة لركلات الترجيح، لأوقات الفراغ
 • بلا إعلانات ولا تتبّع ولا حساب لدينا
 
 جرّبه أولًا: زر "جرّب العرض التوضيحي" في شاشة تسجيل الدخول يعرض أفلامًا مفتوحة الترخيص وقنوات تجريبية دون حساب.

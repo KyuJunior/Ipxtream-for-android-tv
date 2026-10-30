@@ -174,8 +174,8 @@ class DashboardViewModel(
             loadUhdCatalog()
         } else if (section == ContentSection.MATCHES) {
             loadMatches()
-        } else if (section == ContentSection.SETTINGS || section == ContentSection.DOWNLOADS) {
-            // No data loading needed for Settings or Downloads
+        } else if (section == ContentSection.SETTINGS || section == ContentSection.DOWNLOADS || section == ContentSection.GAME) {
+            // No data loading needed for Settings, Downloads or the game
         } else {
             loadSectionData(section)
         }
@@ -1136,6 +1136,7 @@ class DashboardViewModel(
                 ContentSection.WHATS_NEW -> return@launch
                 ContentSection.UHD -> return@launch
                 ContentSection.MATCHES -> return@launch
+                ContentSection.GAME -> return@launch
             }
 
             result
@@ -1211,6 +1212,7 @@ class DashboardViewModel(
                 ContentSection.WHATS_NEW -> { /* no-op */ }
                 ContentSection.UHD -> { /* loaded by loadUhdCatalog() */ }
                 ContentSection.MATCHES -> { /* loaded by loadMatches() */ }
+                ContentSection.GAME -> { /* no-op */ }
             }
         }
     }

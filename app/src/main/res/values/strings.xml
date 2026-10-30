@@ -384,4 +384,13 @@ contact@dryaser.me</string>
     <string name="picker_search_hint">Search channels</string>
     <string name="picker_remember_competition">Use for all %1$s matches</string>
     <string name="picker_none">No channels match</string>
+
+    <string name="section_game">Penalty Game</string>
+    <string name="game_title">Penalty Shootout</string>
+    <string name="game_hint">Press OK or tap to shoot. Corners are harder to save, but too far is wide.</string>
+    <string name="game_goal">Goal!</string>
+    <string name="game_saved">Saved!</string>
+    <string name="game_wide">Wide!</string>
+    <string name="game_result">You scored %1$d of %2$d. Press OK or tap to play again.</string>
+    <string name="game_best">Best: %1$d</string>
 </resources>

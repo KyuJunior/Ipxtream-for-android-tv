@@ -25,6 +25,7 @@ enum class ContentSection(@StringRes val titleRes: Int, val iconRes: String) {
     UHD(R.string.section_uhd, "ic_4k"),
     MY_LIBRARY(R.string.section_library, "ic_library"),
     WHATS_NEW(R.string.section_whats_new, "ic_whats_new"),
+    GAME(R.string.section_game, "ic_game"),
     SETTINGS(R.string.section_settings, "ic_settings"),
     DOWNLOADS(R.string.section_downloads, "ic_downloads")
 }

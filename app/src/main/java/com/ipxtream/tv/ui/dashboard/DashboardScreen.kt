@@ -514,7 +514,8 @@ fun DashboardScreen(
             // Sections without a category row: the header's D-Pad Down goes to their first item.
             val isLibrarySection = uiState.activeSection == ContentSection.MY_LIBRARY ||
                 uiState.activeSection == ContentSection.UHD ||
-                uiState.activeSection == ContentSection.MATCHES
+                uiState.activeSection == ContentSection.MATCHES ||
+                uiState.activeSection == ContentSection.GAME
             val isHomeNormal = isHomeSection && uiState.searchQuery.isBlank()
             // Header → content: a requester that isn't attached in this section crashes focus
             // search, so only name one that exists; otherwise let geometry pick (Settings, Downloads).
@@ -522,7 +523,7 @@ fun DashboardScreen(
                 setOf(ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES)
             val hasFirstItem = when (uiState.activeSection) {
                 ContentSection.MY_LIBRARY -> true
-                ContentSection.MATCHES -> true
+                ContentSection.MATCHES, ContentSection.GAME -> true
                 ContentSection.UHD -> !uiState.isLoadingContent
                 ContentSection.WHATS_NEW -> uiState.whatsNewItems.isNotEmpty()
                 ContentSection.LIVE, ContentSection.VOD, ContentSection.SERIES ->
@@ -856,6 +857,12 @@ fun DashboardScreen(
                             onRefresh = onRefresh
                         )
                     }
+                    ContentSection.GAME -> com.ipxtream.tv.ui.dashboard.components.PenaltyGameScreen(
+                        firstItemFocusRequester = firstItemFocusRequester,
+                        sideNavFocusRequester   = sideNavFocusRequester,
+                        headerFocusRequester    = searchBarFocusRequester,
+                        modifier                = Modifier.fillMaxSize()
+                    )
                     ContentSection.MATCHES -> androidx.compose.runtime.CompositionLocalProvider(
                         com.ipxtream.tv.ui.dashboard.components.LocalFocusMemory provides matchesFocusMemory
                     ) {

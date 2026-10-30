@@ -42,6 +42,7 @@ import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Slideshow
+import androidx.compose.material.icons.rounded.SportsEsports
 import androidx.compose.material.icons.rounded.SportsSoccer
 import androidx.compose.material.icons.rounded.Tv
 import androidx.compose.runtime.Composable
@@ -109,6 +110,7 @@ private val NAV_SECTIONS = listOf(
     NavSectionItem(ContentSection.UHD,        Icons.Rounded.HighQuality),
     NavSectionItem(ContentSection.MY_LIBRARY, Icons.Rounded.Favorite),
     NavSectionItem(ContentSection.WHATS_NEW,  Icons.Rounded.AutoAwesome),
+    NavSectionItem(ContentSection.GAME,       Icons.Rounded.SportsEsports),
     NavSectionItem(ContentSection.DOWNLOADS,  Icons.Rounded.ArrowDownward),
     NavSectionItem(ContentSection.SETTINGS,   Icons.Rounded.Settings)
 )
@@ -200,6 +202,7 @@ fun SideNavBar(
                 NAV_SECTIONS.filter { item ->
                     when (item.section) {
                         ContentSection.WHATS_NEW  -> settings?.showWhatsNewSection ?: true
+                        ContentSection.GAME       -> com.ipxtream.tv.BuildConfig.MINIGAME
                         ContentSection.DOWNLOADS  -> com.ipxtream.tv.BuildConfig.DOWNLOADS &&
                                                      (settings?.showDownloadsSection ?: true)
                         ContentSection.MY_LIBRARY -> settings?.showLibrarySection ?: true
