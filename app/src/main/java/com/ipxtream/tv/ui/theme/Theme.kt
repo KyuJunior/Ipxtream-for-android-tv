@@ -58,6 +58,14 @@ private val IpxDarkColors = darkColorScheme(
 
 // ─── Theme Composable ─────────────────────────────────────────────────────────
 
+// The smallest layout space (dp) the screens are built for. 1080p TVs have more, so they never scale.
+private const val MIN_LAYOUT_WIDTH = 1000f
+private const val MIN_LAYOUT_HEIGHT = 440f
+
+/** Lowers [density] on small or narrow screens, such as phones, until the layout fits. */
+internal fun fittedDensity(density: Float, widthPx: Float, heightPx: Float): Float =
+    minOf(density, widthPx / MIN_LAYOUT_WIDTH, heightPx / MIN_LAYOUT_HEIGHT)
+
 /**
  * Root theme wrapper for all IPXtream TV screens.
  *
@@ -71,9 +79,14 @@ private val IpxDarkColors = darkColorScheme(
 @Composable
 fun IpxTvTheme(content: @Composable () -> Unit) {
     val currentDensity = androidx.compose.ui.platform.LocalDensity.current
-    val scaledDensity = remember(currentDensity) {
+    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+    val scaledDensity = remember(currentDensity, configuration.screenWidthDp, configuration.screenHeightDp) {
         androidx.compose.ui.unit.Density(
-            density = currentDensity.density * 0.85f,
+            density = fittedDensity(
+                density = currentDensity.density * 0.85f,
+                widthPx = configuration.screenWidthDp * currentDensity.density,
+                heightPx = configuration.screenHeightDp * currentDensity.density
+            ),
             fontScale = currentDensity.fontScale * 0.85f
         )
     }

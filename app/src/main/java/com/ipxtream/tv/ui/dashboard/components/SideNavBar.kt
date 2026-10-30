@@ -23,6 +23,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -211,21 +214,28 @@ fun SideNavBar(
                 }
             }
 
-            visibleSections.forEach { item ->
-                val isActive = item.section == activeSection
+            // Scrolls on short screens: a phone held sideways can't fit every section.
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .focusProperties { canFocus = false }
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                visibleSections.forEach { item ->
+                    val isActive = item.section == activeSection
 
-                NavItem(
-                    title               = stringResource(item.section.titleRes),
-                    icon                = item.icon,
-                    isExpanded          = isExpanded,
-                    isActive            = isActive,
-                    onSelected          = { onSectionSelected(item.section) },
-                    onNavigateToContent = onNavigateToContent,
-                    modifier            = if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier
-                )
+                    NavItem(
+                        title               = stringResource(item.section.titleRes),
+                        icon                = item.icon,
+                        isExpanded          = isExpanded,
+                        isActive            = isActive,
+                        onSelected          = { onSectionSelected(item.section) },
+                        onNavigateToContent = onNavigateToContent,
+                        modifier            = if (isActive) Modifier.focusRequester(sideNavFocusRequester) else Modifier
+                    )
+                }
             }
-
-            Spacer(Modifier.weight(1f))
         }
     }
 }

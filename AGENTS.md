@@ -619,3 +619,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Status: done. CI command passes. Emulator (Play debug preview, mock series with 3 seasons): Like, chip, Season 2, its episodes, play, back to the same episode, Up to chips and Like; Settings language chips Left to the category list. Not checked: the owner's TV and real provider, Arabic for these two screens, the Settings button fixes on screen, a series with enough seasons to scroll the chip row.
 - For the other agent: `focusProperties` on a wrapper Column reaches every focusable inside it, so `start = ...` on a whole row also blocks Left between its items.
 
+### 2026-10-30 | claude
+- Did: Phone screens (owner report: no Games icon on their phone). The side menu didn't scroll and the app is locked to landscape, so everything below 4K was unreachable. The menu's sections now scroll. `IpxTvTheme` reads the screen size and lowers the density through `fittedDensity` so every screen gets at least 1000x440 dp (a 1080p TV has more, so it doesn't change); narrower phones used to squeeze the header's account box and push the content off screen.
+- Files: ui/dashboard/components/SideNavBar.kt, ui/theme/Theme.kt, app/src/test/.../FittedDensityTest.kt, AGENTS.md
+- Status: done. CI command passes. Emulator (Play debug preview, touch on, `wm` set to the owner's 2.2:1 size and to a 16:9 phone, then reset; AVD back to `no-touch`): menu swipe, tap Games, Stack Tower by touch, full header; TV size: menu by keys, Games. Not checked: a real phone, Arabic at phone size. The status bar still draws over the header on phones.
+- For the other agent: new fixed layouts must fit 1000x440 dp, not only the TV's 1129x635.
+
