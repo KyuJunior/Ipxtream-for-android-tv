@@ -643,3 +643,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/build.gradle.kts, app/src/{play,github}/java/.../data/api/UpdateManager.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardUiState,DashboardViewModel}.kt, res/values*/strings.xml, AGENTS.md
 - Status: banner done but not on Play: it is not in 2.0.28, it goes in the next bundle. CI command passes. Emulator (a throwaway build forcing the check to true, phone size, AVD back to `no-touch`): banner, Open in Google Play opens the Play Store. Not checked: Later's result on screen, Google's real answer (it needs a Play install with a newer version live).
 - For the other agent: Google's API answers only on phones, tablets and ChromeOS, so Android TV never shows this banner. Don't add a focus request for it unless TV support is added.
+
+### 2026-10-31 | claude
+- Did: Games tab now also in the GitHub build (`MINIGAME` true; owner report: the TV, which runs `com.ipxtream.tv`, had no tab). TVs get Stack Tower and Penalty Shootout; the five touch games show only on touch screens, in either build.
+- Files: app/build.gradle.kts, AGENTS.md
+- Status: done. CI command passes. Not checked on the owner's TV.
+- For the other agent: none

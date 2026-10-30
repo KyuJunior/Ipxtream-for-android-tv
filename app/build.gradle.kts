@@ -48,7 +48,7 @@ android {
             buildConfigField("boolean", "SELF_UPDATE", "true")
             buildConfigField("boolean", "MATCH_AUTO_PLAY", "true")
             buildConfigField("boolean", "DOWNLOADS", "true")
-            buildConfigField("boolean", "MINIGAME", "false")
+            buildConfigField("boolean", "MINIGAME", "true")
         }
         create("play") {
             dimension = "store"
