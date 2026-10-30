@@ -1,12 +1,15 @@
 package com.ipxtream.tv.ui.dashboard.components
 
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -99,6 +103,17 @@ object StackRules {
     }
 }
 
+/** The games on offer. Touch-only ones need a finger, so a TV remote never sees them. */
+enum class GameId(@StringRes val title: Int, val touchOnly: Boolean) {
+    STACK(R.string.game_stack_title, false),
+    PENALTY(R.string.game_title, false),
+    NOVA(R.string.game_nova_title, true),
+    SLICER(R.string.game_slicer_title, true),
+    WRECK(R.string.game_wreck_title, true),
+    BOUNCER(R.string.game_bouncer_title, true),
+    SYNERGY(R.string.game_synergy_title, true)
+}
+
 /** The Play build's Games section: a chip per game above the one being played. */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -108,40 +123,44 @@ fun GamesScreen(
     headerFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    var penalty by rememberSaveable { mutableStateOf(false) }
-    val stackChip = remember { FocusRequester() }
-    val penaltyChip = remember { FocusRequester() }
+    val context = LocalContext.current
+    val hasTouch = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) }
+    val games = remember(hasTouch) { GameId.entries.filter { hasTouch || !it.touchOnly } }
+    var selected by rememberSaveable { mutableStateOf(GameId.STACK) }
+    val chips = remember { GameId.entries.associateWith { FocusRequester() } }
 
     Column(modifier) {
         Row(
-            modifier = Modifier.padding(horizontal = IpxSpacing.Gutter, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusProperties { canFocus = false }
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = IpxSpacing.Gutter, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            PillChip(
-                label = stringResource(R.string.game_stack_title),
-                selected = !penalty,
-                onClick = { penalty = false },
-                modifier = Modifier.focusRequester(stackChip).focusProperties {
-                    start = sideNavFocusRequester
-                    up = headerFocusRequester
-                    down = firstItemFocusRequester
-                }
-            )
-            PillChip(
-                label = stringResource(R.string.game_title),
-                selected = penalty,
-                onClick = { penalty = true },
-                modifier = Modifier.focusRequester(penaltyChip).focusProperties {
-                    up = headerFocusRequester
-                    down = firstItemFocusRequester
-                }
-            )
+            games.forEachIndexed { index, game ->
+                PillChip(
+                    label = stringResource(game.title),
+                    selected = game == selected,
+                    onClick = { selected = game },
+                    modifier = Modifier.focusRequester(chips.getValue(game)).focusProperties {
+                        if (index == 0) start = sideNavFocusRequester
+                        up = headerFocusRequester
+                        down = firstItemFocusRequester
+                    }
+                )
+            }
         }
-        val chip = if (penalty) penaltyChip else stackChip
-        if (penalty) {
-            PenaltyGameScreen(firstItemFocusRequester, sideNavFocusRequester, chip, Modifier.weight(1f).fillMaxWidth())
-        } else {
-            StackTowerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, Modifier.weight(1f).fillMaxWidth())
+        val chip = chips.getValue(selected)
+        val gameModifier = Modifier.weight(1f).fillMaxWidth()
+        when (selected) {
+            GameId.STACK -> StackTowerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.PENALTY -> PenaltyGameScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.NOVA -> NovaGameScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.SLICER -> VoidSlicerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.WRECK -> TetheredWreckScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.BOUNCER -> LogicBouncerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+            GameId.SYNERGY -> SynergyGridScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
         }
     }
 }
