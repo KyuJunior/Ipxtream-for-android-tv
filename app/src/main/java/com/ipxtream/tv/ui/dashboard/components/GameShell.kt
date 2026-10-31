@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import com.ipxtream.tv.R
 import com.ipxtream.tv.ui.theme.IpxTypography
+import com.ipxtream.tv.ui.theme.LocalReducedEffects
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 
@@ -66,16 +67,26 @@ internal fun Modifier.gameFocus(
     }
     .focusable()
 
-/** Calls [step] once a frame while [running], with seconds since the last frame (a stall counts as 0.05 s). */
+/**
+ * Calls [step] while [running] with the seconds since the last call (a stall counts as 0.05 s):
+ * every frame, or every second frame with reduced effects, which halves the redraws on weak devices.
+ */
 @Composable
 internal fun GameLoop(running: Boolean, step: (Float) -> Unit) {
     val current by rememberUpdatedState(step)
-    LaunchedEffect(running) {
+    val framesPerStep = if (LocalReducedEffects.current) 2 else 1
+    LaunchedEffect(running, framesPerStep) {
         if (!running) return@LaunchedEffect
         var last = withFrameMillis { it }
+        var frames = 0
+        var elapsed = 0f
         while (true) withFrameMillis { now ->
-            current(((now - last) / 1000f).coerceAtMost(0.05f))
+            elapsed += ((now - last) / 1000f).coerceAtMost(0.05f)
             last = now
+            if (++frames % framesPerStep == 0) {
+                current(elapsed)
+                elapsed = 0f
+            }
         }
     }
 }

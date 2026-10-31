@@ -39,7 +39,9 @@ import kotlin.random.Random
 enum class NovaKind { NORMAL, MAGNET, LASER, HOLE }
 
 /** One level of One-Tap Nova, in dp: one tap makes a blast, and every particle it touches blasts too. */
-class NovaWorld(val level: Int, val width: Float, val height: Float, random: Random) {
+class NovaWorld(val level: Int, width: Float, height: Float, random: Random) {
+    private var width = width
+    private var height = height
     val count = min(20 + level * 4, MAX_PARTICLES)
     val x = FloatArray(count) { random.nextFloat() * width }
     val y = FloatArray(count) { random.nextFloat() * height }
@@ -66,7 +68,13 @@ class NovaWorld(val level: Int, val width: Float, val height: Float, random: Ran
     var poppedCount = 0
         private set
     private var tapped = false
-    private val reach = min(width, height) * 0.26f
+    private val reach get() = min(width, height) * 0.26f
+
+    /** Follows the game area when it changes size; the next step brings any stray particle back in. */
+    fun resize(newWidth: Float, newHeight: Float) {
+        width = newWidth
+        height = newHeight
+    }
 
     val finished: Boolean get() = tapped && (0 until blasts).none { blastAge[it] < BLAST_LIFE }
     val won: Boolean get() = poppedCount >= target
@@ -174,6 +182,7 @@ internal fun NovaGameScreen(
     var popped by remember { mutableIntStateOf(0) }
     var frame by remember { mutableIntStateOf(0) }
     var size by remember { mutableStateOf(androidx.compose.ui.unit.IntSize.Zero) }
+    var finishedAt by remember { mutableStateOf(0L) }
 
     fun newWorld() {
         if (size.width == 0) return
@@ -189,6 +198,7 @@ internal fun NovaGameScreen(
             popped = it.poppedCount
             if (it.finished) {
                 finished = true
+                finishedAt = System.currentTimeMillis()
                 if (it.won) best.submit(level) else lives--
             }
         }
@@ -200,7 +210,8 @@ internal fun NovaGameScreen(
             .gameFocus(gameFocusRequester, sideNavFocusRequester, chipFocusRequester)
             .onSizeChanged {
                 size = it
-                if (world == null) newWorld()
+                val active = world
+                if (active == null) newWorld() else active.resize(it.width / density, it.height / density)
             }
             .fingerPosition(
                 onDown = { position ->
@@ -208,6 +219,7 @@ internal fun NovaGameScreen(
                     when {
                         active == null -> newWorld()
                         !finished -> active.tap(position.x / density, position.y / density)
+                        System.currentTimeMillis() - finishedAt <= 500 -> Unit  // a stray tap must not skip the result
                         active.won -> { level++; newWorld() }
                         lives <= 0 -> { level = 1; lives = 3; newWorld() }
                         else -> newWorld()

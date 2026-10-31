@@ -203,16 +203,30 @@ class SlicerGame(private val random: Random) {
             ballVx[i] = -ballVx[i]
             ballVy[i] = -ballVy[i]
         } else {
-            arms = emptyList()
-            lives--
-            if (lives <= 0) phase = SlicePhase.OVER
+            breakLine()
         }
+    }
+
+    private fun breakLine() {
+        arms = emptyList()
+        lives--
+        if (lives <= 0) phase = SlicePhase.OVER
     }
 
     private fun finishLine() {
         val line = arms.flatten().distinct()
+        val balls = (0 until ballCount).map { ballY[it].toInt() * COLS + ballX[it].toInt() }
+        // The line's last stretch can land on a ball; sealing there would wall the ball in.
+        if (balls.any { it in line }) {
+            if (shield) {
+                shield = false
+                arms = emptyList()
+            } else {
+                breakLine()
+            }
+            return
+        }
         arms = emptyList()
-        val balls = (0 until ballCount).map { ballY[it].toInt() * COLS + ballX[it].toInt() }.filter { it !in line }
         score += arena.seal(line, balls)
         if (cleared >= TARGET) {
             offers = SliceUpgrade.entries.filter { it.repeats || it !in owned }.shuffled(random).take(3)

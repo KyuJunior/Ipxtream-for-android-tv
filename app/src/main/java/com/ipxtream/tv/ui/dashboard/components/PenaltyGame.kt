@@ -1,12 +1,10 @@
 package com.ipxtream.tv.ui.dashboard.components
 
-import android.content.Context
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -32,8 +29,6 @@ import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -46,7 +41,6 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.Text
@@ -91,7 +85,6 @@ object PenaltyRules {
 private class Shot(val aim: Float, val keeper: Float, val result: ShotResult)
 
 /** Penalty shootout for the Play build's testers: OK (or a tap) shoots, then starts a new round. */
-@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun PenaltyGameScreen(
     gameFocusRequester: FocusRequester,
@@ -99,8 +92,7 @@ fun PenaltyGameScreen(
     upFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val prefs = LocalContext.current.getSharedPreferences("penalty_game", Context.MODE_PRIVATE)
-    var best by remember { mutableIntStateOf(prefs.getInt("best", 0)) }
+    val best = rememberBestScore("penalty_game")
     var results by remember { mutableStateOf(emptyList<Boolean>()) }
     var shot by remember { mutableStateOf<Shot?>(null) }
     var aim by remember { mutableFloatStateOf(0.5f) }
@@ -120,11 +112,7 @@ fun PenaltyGameScreen(
         kotlinx.coroutines.delay(900)
         results = results + (current.result == ShotResult.GOAL)
         shot = null
-        val goals = results.count { it }
-        if (results.size == PenaltyRules.SHOTS && goals > best) {
-            best = goals
-            prefs.edit().putInt("best", goals).apply()
-        }
+        if (results.size == PenaltyRules.SHOTS) best.submit(results.count { it })
     }
 
     val act by rememberUpdatedState {
@@ -143,22 +131,15 @@ fun PenaltyGameScreen(
     ) {
         Text(stringResource(R.string.game_title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
         Spacer(Modifier.height(4.dp))
-        Text(stringResource(R.string.game_best, best), style = IpxTypography.BodyMedium, color = TextSecondary)
+        Text(stringResource(R.string.game_best, best.value), style = IpxTypography.BodyMedium, color = TextSecondary)
         Spacer(Modifier.height(12.dp))
 
         Box(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .focusRequester(gameFocusRequester)
                 .onFocusChanged { focused = it.isFocused }
-                .focusProperties {
-                    start = sideNavFocusRequester
-                    up = upFocusRequester
-                    end = FocusRequester.Cancel
-                    down = FocusRequester.Cancel
-                }
-                .focusable()
+                .gameFocus(gameFocusRequester, sideNavFocusRequester, upFocusRequester)
                 .onKeyEvent { event ->
                     val ok = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
                     if (ok && event.type == KeyEventType.KeyDown) {

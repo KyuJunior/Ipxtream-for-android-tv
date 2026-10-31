@@ -649,3 +649,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: app/build.gradle.kts, AGENTS.md
 - Status: done. CI command passes. Not checked on the owner's TV.
 - For the other agent: none
+
+### 2026-10-31 | claude
+- Did: Fixed the 10 `/code-review` findings on the games, except one that turned out not to be a bug. Synergy Grid crash: `deal()` rolled rare/common once per symbol, so the pool could be empty; it now rolls once. Tethered Wreck: the dot stays inside the game area. Wreck and Nova: `resize()` keeps a run going when the area changes size. Void Slicer: a line finishing on a ball breaks instead of walling the ball in (the shield saves the life). Touch games hide on TVs that report a touchscreen (`UI_MODE_TYPE_TELEVISION`). Nova ignores taps for 500 ms after a level ends. `game_synergy_grown` replaces a hard-coded suffix. `GameLoop` steps every second frame with `LocalReducedEffects`. Stack Tower and Penalty now use `rememberBestScore` / `gameFocus` (same prefs, scores kept). The chip row's `canFocus = false` was fine: chips take D-Pad focus, no change.
+- Files: ui/dashboard/components/{GameShell,GamesScreen,NovaGame,PenaltyGame,SynergyGridGame,TetheredWreckGame,VoidSlicerGame}.kt, res/values*/strings.xml, app/src/test/.../TouchGamesTest.kt, AGENTS.md
+- Status: done, not yet sent to Play. Three new tests failed on the old code (crash, walled ball, dot off screen) and pass now. CI command passes. Emulator (Play debug preview, TV, AVD back to `no-touch`): Up to the chips, chip to chip, Penalty shot, Left to the menu, best scores kept; with touch reported, a TV shows only the two remote games. Not checked: anything on a non-TV device (no phone AVD, and the TV AVD's UI mode is locked), so the five touch games and `resize()` on screen are unit-tested only.
+- For the other agent: the emulator started with `-no-snapshot-save` drops installs when it restarts; check the version on screen after a reboot.

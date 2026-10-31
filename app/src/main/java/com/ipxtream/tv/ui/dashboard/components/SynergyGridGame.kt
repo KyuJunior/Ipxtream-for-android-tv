@@ -133,7 +133,8 @@ class SynergyGame(private val random: Random) {
 
     private fun deal(): List<SynergySymbol> = List(3) {
         val rareChance = min(10 + turn * 2, 40)
-        val pool = SynergySymbol.entries.filter { it.rare == (random.nextInt(100) < rareChance) }
+        val rare = random.nextInt(100) < rareChance
+        val pool = SynergySymbol.entries.filter { it.rare == rare }
         pool[random.nextInt(pool.size)]
     }
 
@@ -175,7 +176,8 @@ private fun SymbolTile(symbol: SynergySymbol?, growth: Int, modifier: Modifier =
     ) {
         if (symbol != null) {
             Text(
-                if (growth > 0) stringResource(symbol.title) + " +$growth" else stringResource(symbol.title),
+                if (growth > 0) stringResource(R.string.game_synergy_grown, stringResource(symbol.title), growth)
+                else stringResource(symbol.title),
                 style = IpxTypography.BodyMedium.copy(fontSize = 11.sp, lineHeight = 13.sp),
                 color = TextPrimary,
                 textAlign = TextAlign.Center,

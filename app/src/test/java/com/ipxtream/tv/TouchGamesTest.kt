@@ -84,6 +84,20 @@ class TouchGamesTest {
         assertEquals(0, cleared.arena.removed)
     }
 
+    @Test fun aFinishingLineNeverWallsABallIn() {
+        for (seed in 1..300) {
+            val game = SlicerGame(Random(seed))
+            var steps = 0
+            while (game.phase == SlicePhase.PLAYING && steps++ < 400) {
+                game.swipe(game.ballX[0].toInt(), SlicerGame.ROWS / 2, horizontal = false)
+                game.step(0.5f)  // a big step lets a line finish over a ball it never touched before
+                for (i in 0 until game.ballCount) {
+                    assertTrue("seed $seed", game.arena.isOpen(game.ballX[i].toInt(), game.ballY[i].toInt()))
+                }
+            }
+        }
+    }
+
     /** Keeps cutting between the wall and the first ball until the round ends one way or the other. */
     private fun playARound(game: SlicerGame): SlicerGame {
         var steps = 0
@@ -139,6 +153,10 @@ class TouchGamesTest {
         assertTrue(SynergyRules.SCORE_CAP <= Int.MAX_VALUE)
     }
 
+    @Test fun everyDealIsAFullHand() {
+        repeat(50_000) { assertEquals(3, SynergyGame(Random(it)).hand.size) }
+    }
+
     @Test fun missingTheQuotaEndsTheGame() {
         val game = SynergyGame(Random(2))
         var turns = 0
@@ -158,6 +176,26 @@ class TouchGamesTest {
             world.step(0.05f)
             assertTrue(world.ballX[0].isFinite() && world.ballX[0] in 0f..800f)
         }
+    }
+
+    @Test fun theDotStaysOnScreenWhenTheFingerLeavesIt() {
+        val world = WreckWorld(800f, 400f, Random(1))
+        world.targetX = -500f
+        world.targetY = 900f
+        repeat(100) { world.step(0.05f) }
+        assertEquals(0f, world.dotX, 0.01f)
+        assertEquals(400f, world.dotY, 0.01f)
+    }
+
+    @Test fun aResizeBringsTheWreckWorldInside() {
+        val world = WreckWorld(800f, 400f, Random(1))
+        world.targetX = 790f
+        world.targetY = 390f
+        repeat(20) { world.step(0.05f) }
+        world.resize(500f, 300f)
+        assertEquals(500f, world.width)
+        assertTrue(world.dotX <= 500f && world.dotY <= 300f)
+        assertTrue(world.ballX[0] <= 500f && world.ballY[0] <= 300f)
     }
 
     @Test fun enemiesEventuallyCatchAStillDot() {
@@ -235,6 +273,13 @@ class TouchGamesTest {
         world.tap(world.x[hole], world.y[hole])
         repeat(100) { world.step(0.016f) }
         assertFalse(world.popped[hole])
+    }
+
+    @Test fun aResizeBringsNovaParticlesInside() {
+        val world = NovaWorld(1, 800f, 400f, Random(1))
+        world.resize(300f, 200f)
+        world.step(0.016f)
+        assertTrue(world.x.all { it <= 300f } && world.y.all { it <= 200f })
     }
 
     @Test fun theBiggestLevelStaysWithinItsLimits() {

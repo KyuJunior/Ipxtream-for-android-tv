@@ -34,7 +34,11 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /** Tethered Wreck in dp: a fragile dot follows the finger and swings heavy balls on springs into waves. */
-class WreckWorld(val width: Float, val height: Float, private val random: Random) {
+class WreckWorld(width: Float, height: Float, private val random: Random) {
+    var width = width
+        private set
+    var height = height
+        private set
     var dotX = width / 2f
         private set
     var dotY = height / 2f
@@ -66,6 +70,18 @@ class WreckWorld(val width: Float, val height: Float, private val random: Random
     private var time = 0f
     private var spawnIn = 1f
 
+    /** Follows the game area when it changes size, so a run survives the side menu moving. */
+    fun resize(newWidth: Float, newHeight: Float) {
+        width = newWidth
+        height = newHeight
+        dotX = dotX.coerceIn(0f, width)
+        dotY = dotY.coerceIn(0f, height)
+        for (b in 0 until balls) {
+            ballX[b] = ballX[b].coerceIn(0f, width)
+            ballY[b] = ballY[b].coerceIn(0f, height)
+        }
+    }
+
     /** Advances in fixed small steps, so a slow frame can't blow the spring up. */
     fun step(dt: Float) {
         repeat(ceil(dt / STEP).toInt().coerceAtLeast(1)) { if (!over) fixedStep(STEP) }
@@ -84,8 +100,9 @@ class WreckWorld(val width: Float, val height: Float, private val random: Random
     }
 
     private fun moveDot(h: Float) {
-        val dx = targetX - dotX
-        val dy = targetY - dotY
+        // A finger can drag past the game area; enemies would never reach a dot out there.
+        val dx = targetX.coerceIn(0f, width) - dotX
+        val dy = targetY.coerceIn(0f, height) - dotY
         val distance = sqrt(dx * dx + dy * dy)
         if (distance < 0.01f) return
         val move = min(distance, DOT_SPEED * h)
@@ -226,7 +243,11 @@ internal fun TetheredWreckScreen(
     Box(
         modifier
             .gameFocus(gameFocusRequester, sideNavFocusRequester, chipFocusRequester)
-            .onSizeChanged { if (world == null) world = WreckWorld(it.width / density, it.height / density, Random.Default) }
+            .onSizeChanged {
+                val active = world
+                if (active == null) world = WreckWorld(it.width / density, it.height / density, Random.Default)
+                else active.resize(it.width / density, it.height / density)
+            }
             .fingerPosition(
                 onDown = { position ->
                     val active = world

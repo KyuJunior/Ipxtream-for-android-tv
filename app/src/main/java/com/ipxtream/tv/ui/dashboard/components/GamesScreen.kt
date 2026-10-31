@@ -1,13 +1,12 @@
 package com.ipxtream.tv.ui.dashboard.components
 
-import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -124,7 +123,11 @@ fun GamesScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val hasTouch = remember { context.packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN) }
+    val hasTouch = remember {
+        // Some TVs report a touchscreen they don't have, so the TV check comes first.
+        val isTv = context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK == Configuration.UI_MODE_TYPE_TELEVISION
+        !isTv && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+    }
     val games = remember(hasTouch) { GameId.entries.filter { hasTouch || !it.touchOnly } }
     var selected by rememberSaveable { mutableStateOf(GameId.STACK) }
     val chips = remember { GameId.entries.associateWith { FocusRequester() } }
@@ -170,7 +173,6 @@ private class CutPiece(val left: Float, val width: Float, val row: Int, val colo
 private fun blockColor(index: Int) = Color.hsv((20f + index * 11f) % 360f, 0.62f, 0.98f)
 
 /** Endless one-button stacking: OK (or a tap) drops the block; a miss ends the run. */
-@OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 private fun StackTowerScreen(
     gameFocusRequester: FocusRequester,
@@ -178,9 +180,8 @@ private fun StackTowerScreen(
     upFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val prefs = LocalContext.current.getSharedPreferences("stack_game", Context.MODE_PRIVATE)
+    val best = rememberBestScore("stack_game")
     val start = StackBlock((1f - StackRules.START_WIDTH) / 2f, StackRules.START_WIDTH)
-    var best by remember { mutableIntStateOf(prefs.getInt("best", 0)) }
     var blocks by remember { mutableStateOf(listOf(start)) }
     var combo by remember { mutableIntStateOf(0) }
     var over by remember { mutableStateOf(false) }
@@ -219,10 +220,9 @@ private fun StackTowerScreen(
                 cut = CutPiece(moving.left, moving.width, blocks.size, blockColor(blocks.size))
                 over = true
                 overAt = System.currentTimeMillis()
-                if (score > best) {
-                    best = score
+                if (score > best.value) {
                     newBest = true
-                    prefs.edit().putInt("best", score).apply()
+                    best.submit(score)
                 }
             } else {
                 val placed = drop.block
@@ -243,15 +243,8 @@ private fun StackTowerScreen(
 
     Box(
         modifier = modifier
-            .focusRequester(gameFocusRequester)
             .onFocusChanged { focused = it.isFocused }
-            .focusProperties {
-                this.start = sideNavFocusRequester
-                up = upFocusRequester
-                end = FocusRequester.Cancel
-                down = FocusRequester.Cancel
-            }
-            .focusable()
+            .gameFocus(gameFocusRequester, sideNavFocusRequester, upFocusRequester)
             .onKeyEvent { event ->
                 val ok = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
                 if (ok && event.type == KeyEventType.KeyDown) {
@@ -302,7 +295,7 @@ private fun StackTowerScreen(
                 style = IpxTypography.HeadlineMedium.copy(fontSize = 56.sp, lineHeight = 60.sp, fontWeight = FontWeight.Bold),
                 color = TextPrimary
             )
-            Text(stringResource(R.string.game_best, best), style = IpxTypography.BodyMedium, color = TextSecondary)
+            Text(stringResource(R.string.game_best, best.value), style = IpxTypography.BodyMedium, color = TextSecondary)
             if (combo >= 2 && !over) {
                 Text(stringResource(R.string.game_stack_perfect, combo), style = IpxTypography.BodyMedium, color = Accent)
             }
