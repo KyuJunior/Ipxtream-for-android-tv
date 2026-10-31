@@ -655,3 +655,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/components/{GameShell,GamesScreen,NovaGame,PenaltyGame,SynergyGridGame,TetheredWreckGame,VoidSlicerGame}.kt, res/values*/strings.xml, app/src/test/.../TouchGamesTest.kt, AGENTS.md
 - Status: done, not yet sent to Play. Three new tests failed on the old code (crash, walled ball, dot off screen) and pass now. CI command passes. Emulator (Play debug preview, TV, AVD back to `no-touch`): Up to the chips, chip to chip, Penalty shot, Left to the menu, best scores kept; with touch reported, a TV shows only the two remote games. Not checked: anything on a non-TV device (no phone AVD, and the TV AVD's UI mode is locked), so the five touch games and `resize()` on screen are unit-tested only.
 - For the other agent: the emulator started with `-no-snapshot-save` drops installs when it restarts; check the version on screen after a reboot.
+
+### 2026-10-31 | claude
+- Did: Play bundle 2.0.31 (code 105) built by `play.yml`, added to the closed test and sent for review. It has the review fixes (incl. the Synergy Grid crash) and the Play update banner.
+- Files: AGENTS.md
+- Status: waiting on Google's review; temporary upload branch deleted.
+- For the other agent: none
