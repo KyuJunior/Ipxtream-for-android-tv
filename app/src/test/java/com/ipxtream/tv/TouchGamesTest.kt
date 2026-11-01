@@ -1,16 +1,20 @@
 package com.ipxtream.tv
 
+import androidx.compose.ui.geometry.Offset
 import com.ipxtream.tv.ui.dashboard.components.BouncerCard
 import com.ipxtream.tv.ui.dashboard.components.BouncerColor
 import com.ipxtream.tv.ui.dashboard.components.BouncerGame
 import com.ipxtream.tv.ui.dashboard.components.BouncerRule
 import com.ipxtream.tv.ui.dashboard.components.BouncerShape
+import com.ipxtream.tv.ui.dashboard.components.DriftWorld
 import com.ipxtream.tv.ui.dashboard.components.GameId
 import com.ipxtream.tv.ui.dashboard.components.NovaKind
 import com.ipxtream.tv.ui.dashboard.components.NovaWorld
 import com.ipxtream.tv.ui.dashboard.components.SlicePhase
 import com.ipxtream.tv.ui.dashboard.components.SliceUpgrade
 import com.ipxtream.tv.ui.dashboard.components.SlicerGame
+import com.ipxtream.tv.ui.dashboard.components.SlingPhase
+import com.ipxtream.tv.ui.dashboard.components.SlingWorld
 import com.ipxtream.tv.ui.dashboard.components.SynergyCell
 import com.ipxtream.tv.ui.dashboard.components.SynergyGame
 import com.ipxtream.tv.ui.dashboard.components.SynergyRules
@@ -22,12 +26,141 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.random.Random
 
 class TouchGamesTest {
 
-    @Test fun onlyStackAndPenaltyReachTheRemote() {
-        assertEquals(listOf(GameId.STACK, GameId.PENALTY), GameId.entries.filter { !it.touchOnly })
+    @Test fun onlyTheOneButtonGamesReachTheRemote() {
+        assertEquals(listOf(GameId.STACK, GameId.PENALTY, GameId.DRIFT), GameId.entries.filter { !it.touchOnly })
+    }
+
+    // Comet Sling
+
+    private fun SlingWorld.settle() {
+        var limit = 0
+        while (phase == SlingPhase.FLYING && limit++ < 2000) step(0.016f)
+    }
+
+    private fun aimed(degrees: Double) = Offset(
+        (-SlingWorld.MAX_PULL * cos(Math.toRadians(degrees))).toFloat(),
+        (SlingWorld.MAX_PULL * sin(Math.toRadians(degrees))).toFloat()
+    )
+
+    @Test fun towersStandStillUntilSomethingHitsThem() {
+        for (level in 1..12) {
+            val world = SlingWorld(level)
+            val before = world.bodies.map { it.x to it.y }
+            repeat(1000) { world.step(0.016f) }
+            assertEquals(before.size, world.bodies.size)
+            world.bodies.zip(before).forEach { (body, start) ->
+                assertEquals(start.first, body.x, 1.5f)
+                assertEquals(start.second, body.y, 1.5f)
+            }
+        }
+    }
+
+    @Test fun aTinyPullFiresNothing() {
+        val world = SlingWorld(1)
+        val shots = world.shotsLeft
+        assertFalse(world.launch(Offset(-3f, 2f)))
+        assertEquals(shots, world.shotsLeft)
+        assertEquals(SlingPhase.READY, world.phase)
+    }
+
+    @Test fun thePullIsClampedSoADragCantFireHarder() {
+        assertEquals(SlingWorld.MAX_PULL, SlingWorld.clampPull(Offset(-500f, 0f)).getDistance(), 0.01f)
+    }
+
+    @Test fun everyLevelCanBeHit() {
+        for (level in 1..12) {
+            val hit = (5..60 step 5).any { degrees ->
+                val world = SlingWorld(level)
+                val glooms = world.glooms
+                assertTrue(world.launch(aimed(degrees.toDouble())))
+                world.settle()
+                world.glooms < glooms
+            }
+            assertTrue("level $level", hit)
+        }
+    }
+
+    @Test fun theFirstLevelCanBeWonAndRunningOutOfShotsLoses() {
+        val won = (5..60 step 5).any { degrees ->
+            val world = SlingWorld(1)
+            while (world.phase == SlingPhase.READY) {
+                world.launch(aimed(degrees.toDouble()))
+                world.settle()
+            }
+            world.phase == SlingPhase.WON
+        }
+        assertTrue(won)
+
+        val world = SlingWorld(1)
+        while (world.phase == SlingPhase.READY) {
+            world.launch(Offset(SlingWorld.MAX_PULL, 0f))  // pulled forward, so it flies away from the towers
+            world.settle()
+        }
+        assertEquals(SlingPhase.LOST, world.phase)
+        assertEquals(0, world.shotsLeft)
+    }
+
+    // Jelly Drift
+
+    private fun DriftWorld.autopilot(gates: Int) {
+        var limit = 0
+        while (!over && score < gates && limit++ < 200_000) {
+            val next = (0 until DriftWorld.GATES)
+                .filter { gateX[it] + DriftWorld.GATE_WIDTH / 2f >= DriftWorld.JELLY_X }
+                .minByOrNull { gateX[it] } ?: continue
+            if (y > gateCenter[next] + 18f && speedY > 0f) pulse()
+            step(DriftWorld.STEP)
+        }
+    }
+
+    @Test fun everyDriftRunCanBeSwum() {
+        for (seed in 0 until 30) {
+            val world = DriftWorld(900f, Random(seed))
+            world.autopilot(60)
+            assertFalse("seed $seed stopped at ${world.score}", world.over)
+            assertEquals(60, world.score)
+        }
+    }
+
+    @Test fun doingNothingSinksTheJelly() {
+        val world = DriftWorld(900f, Random(1))
+        repeat(200) { world.step(0.016f) }
+        assertTrue(world.over)
+        assertEquals(0, world.score)
+    }
+
+    @Test fun theCeilingStopsTheJellyInsteadOfEndingTheRun() {
+        val world = DriftWorld(900f, Random(1))
+        repeat(40) {
+            world.pulse()
+            world.step(0.016f)
+        }
+        assertFalse(world.over)
+        assertEquals(DriftWorld.RADIUS, world.y, 0.5f)
+    }
+
+    @Test fun aSlowFrameMovesTheJellyLikeManyFastOnes() {
+        val slow = DriftWorld(900f, Random(2))
+        val fast = DriftWorld(900f, Random(2))
+        slow.step(0.05f)
+        repeat(6) { fast.step(DriftWorld.STEP) }
+        assertEquals(fast.y, slow.y, 0.01f)
+    }
+
+    @Test fun gatesStayInsideTheScreenAndNarrowDownToTheLimit() {
+        val world = DriftWorld(900f, Random(3))
+        world.autopilot(60)
+        for (gate in 0 until DriftWorld.GATES) {
+            assertTrue(world.gateGap[gate] >= DriftWorld.MIN_GAP)
+            assertTrue(world.gateCenter[gate] - world.gateGap[gate] / 2f >= 0f)
+            assertTrue(world.gateCenter[gate] + world.gateGap[gate] / 2f <= DriftWorld.HEIGHT)
+        }
     }
 
     // Void Slicer

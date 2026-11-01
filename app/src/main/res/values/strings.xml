@@ -399,6 +399,15 @@ contact@dryaser.me</string>
     <string name="game_stack_perfect">Perfect ×%1$d</string>
     <string name="game_stack_over">Tower down at %1$d. Press OK or tap to try again.</string>
     <string name="game_stack_new_best">New best: %1$d! Press OK or tap to beat it.</string>
+    <string name="game_all">All games</string>
+    <string name="game_drift_title">Jelly Drift</string>
+    <string name="game_drift_hint">Press OK or tap to pulse up. Swim through the gaps in the coral.</string>
+    <string name="game_drift_over">Ouch! You passed %1$d. Press OK or tap to try again.</string>
+    <string name="game_sling_title">Comet Sling</string>
+    <string name="game_sling_hint">Drag back and let go. Knock out every purple blob.</string>
+    <string name="game_sling_status">Level %1$d · Shots %2$d</string>
+    <string name="game_sling_clear">Level clear! Tap for the next one.</string>
+    <string name="game_sling_retry">Out of shots. Tap to try this level again.</string>
     <string name="game_nova_title">One-Tap Nova</string>
     <string name="game_nova_hint">One tap per level. Start a chain reaction.</string>
     <string name="game_nova_hole_hint">One tap per level. Dark holes swallow a blast.</string>

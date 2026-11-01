@@ -8,7 +8,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -106,6 +104,8 @@ object StackRules {
 enum class GameId(@StringRes val title: Int, val touchOnly: Boolean) {
     STACK(R.string.game_stack_title, false),
     PENALTY(R.string.game_title, false),
+    DRIFT(R.string.game_drift_title, false),
+    SLING(R.string.game_sling_title, true),
     NOVA(R.string.game_nova_title, true),
     SLICER(R.string.game_slicer_title, true),
     WRECK(R.string.game_wreck_title, true),
@@ -113,7 +113,7 @@ enum class GameId(@StringRes val title: Int, val touchOnly: Boolean) {
     SYNERGY(R.string.game_synergy_title, true)
 }
 
-/** The Play build's Games section: a chip per game above the one being played. */
+/** The Games section: a menu of thumbnails; a game opens full size, and Back or "All games" returns. */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 fun GamesScreen(
@@ -129,48 +129,80 @@ fun GamesScreen(
         !isTv && context.packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
     }
     val games = remember(hasTouch) { GameId.entries.filter { hasTouch || !it.touchOnly } }
-    var selected by rememberSaveable { mutableStateOf(GameId.STACK) }
-    val chips = remember { GameId.entries.associateWith { FocusRequester() } }
+    var selected by rememberSaveable { mutableStateOf<GameId?>(null) }
+    var lastPlayed by rememberSaveable { mutableStateOf<GameId?>(null) }
+    var moveFocus by remember { mutableStateOf(false) }
+    val allGames = remember { FocusRequester() }
 
-    Column(modifier) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusProperties { canFocus = false }
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = IpxSpacing.Gutter, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            games.forEachIndexed { index, game ->
-                PillChip(
-                    label = stringResource(game.title),
-                    selected = game == selected,
-                    onClick = { selected = game },
-                    modifier = Modifier.focusRequester(chips.getValue(game)).focusProperties {
-                        if (index == 0) start = sideNavFocusRequester
-                        up = headerFocusRequester
-                        down = firstItemFocusRequester
-                    }
-                )
-            }
+    // The same requester names the card or the game, so focus follows once the swap is on screen.
+    LaunchedEffect(selected) {
+        if (moveFocus) {
+            moveFocus = false
+            runCatching { firstItemFocusRequester.requestFocus() }
         }
-        val chip = chips.getValue(selected)
+    }
+
+    fun show(game: GameId?) {
+        lastPlayed = game ?: selected
+        selected = game
+        moveFocus = true
+    }
+
+    val game = selected
+    if (game == null) {
+        GameMenu(
+            games = games,
+            lastPlayed = lastPlayed,
+            firstItemFocusRequester = firstItemFocusRequester,
+            sideNavFocusRequester = sideNavFocusRequester,
+            headerFocusRequester = headerFocusRequester,
+            onOpen = ::show,
+            modifier = modifier
+        )
+        return
+    }
+    Column(
+        modifier.onKeyEvent { event ->
+            val back = event.key == Key.Back && event.type == KeyEventType.KeyDown
+            if (back) show(null)
+            back
+        }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = IpxSpacing.Gutter, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            PillChip(
+                label = stringResource(R.string.game_all),
+                selected = false,
+                onClick = { show(null) },
+                modifier = Modifier.focusRequester(allGames).focusProperties {
+                    start = sideNavFocusRequester
+                    up = headerFocusRequester
+                    down = firstItemFocusRequester
+                }
+            )
+            Text(stringResource(game.title), style = IpxTypography.BodyMedium, color = TextPrimary)
+        }
         val gameModifier = Modifier.weight(1f).fillMaxWidth()
-        when (selected) {
-            GameId.STACK -> StackTowerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.PENALTY -> PenaltyGameScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.NOVA -> NovaGameScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.SLICER -> VoidSlicerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.WRECK -> TetheredWreckScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.BOUNCER -> LogicBouncerScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
-            GameId.SYNERGY -> SynergyGridScreen(firstItemFocusRequester, sideNavFocusRequester, chip, gameModifier)
+        when (game) {
+            GameId.STACK -> StackTowerScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.PENALTY -> PenaltyGameScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.DRIFT -> JellyDriftScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.SLING -> CometSlingScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.NOVA -> NovaGameScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.SLICER -> VoidSlicerScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.WRECK -> TetheredWreckScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.BOUNCER -> LogicBouncerScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
+            GameId.SYNERGY -> SynergyGridScreen(firstItemFocusRequester, sideNavFocusRequester, allGames, gameModifier)
         }
     }
 }
 
 private class CutPiece(val left: Float, val width: Float, val row: Int, val color: Color)
 
-private fun blockColor(index: Int) = Color.hsv((20f + index * 11f) % 360f, 0.62f, 0.98f)
+internal fun blockColor(index: Int) = Color.hsv((20f + index * 11f) % 360f, 0.62f, 0.98f)
 
 /** Endless one-button stacking: OK (or a tap) drops the block; a miss ends the run. */
 @Composable

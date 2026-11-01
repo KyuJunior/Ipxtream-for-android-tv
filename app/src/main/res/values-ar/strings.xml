@@ -399,6 +399,15 @@ contact@dryaser.me</string>
     <string name="game_stack_perfect">مثالي ×%1$d</string>
     <string name="game_stack_over">سقط البرج عند %1$d. اضغط OK أو المس الشاشة لتحاول مجددًا.</string>
     <string name="game_stack_new_best">رقم جديد: %1$d! اضغط OK أو المس الشاشة لتتجاوزه.</string>
+    <string name="game_all">كل الألعاب</string>
+    <string name="game_drift_title">رحلة القنديل</string>
+    <string name="game_drift_hint">اضغط OK أو المس الشاشة ليصعد القنديل. اسبح عبر الفتحات بين المرجان.</string>
+    <string name="game_drift_over">آخ! اجتزت %1$d. اضغط OK أو المس الشاشة للمحاولة مجددًا.</string>
+    <string name="game_sling_title">مقلاع المذنّب</string>
+    <string name="game_sling_hint">اسحب للخلف ثم اترك. أسقط كل الكائنات البنفسجية.</string>
+    <string name="game_sling_status">المستوى %1$d · الرميات %2$d</string>
+    <string name="game_sling_clear">اجتزت المستوى! المس الشاشة للمستوى التالي.</string>
+    <string name="game_sling_retry">انتهت الرميات. المس الشاشة لإعادة المستوى.</string>
     <string name="game_nova_title">نوفا اللمسة الواحدة</string>
     <string name="game_nova_hint">لمسة واحدة في كل مستوى. أشعل تفاعلًا متسلسلًا.</string>
     <string name="game_nova_hole_hint">لمسة واحدة في كل مستوى. الثقوب المظلمة تبتلع الانفجار.</string>

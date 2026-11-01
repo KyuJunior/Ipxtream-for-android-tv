@@ -661,3 +661,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: waiting on Google's review; temporary upload branch deleted.
 - For the other agent: none
+
+### 2026-11-01 | claude
+- Did: Two new original games and a game menu (owner request). **Comet Sling** (`CometSlingGame.kt`, touch only): drag back, let go, knock out the purple Gloomlets on stacked towers; `SlingWorld` is box physics (boxes don't rotate), levels come from the level number, so a retry is the same layout. **Jelly Drift** (`JellyDriftGame.kt`, phones and TVs, OK or tap): each press pulses a jellyfish up through coral gaps; `DriftWorld` uses fixed steps, so a slow TV plays the same game. Names, characters and art are our own, drawn in code; no assets. The chip row is gone: `GameMenu.kt` is a grid of thumbnail cards drawn in code, a game opens full size, and Back or the "All games" pill returns to the card you left. Back in `GamesScreen` is handled on the game's `Column`.
+- Files: ui/dashboard/components/{CometSlingGame,JellyDriftGame,GameMenu,GamesScreen}.kt, res/values*/strings.xml, app/src/test/.../TouchGamesTest.kt, AGENTS.md
+- Status: done, not pushed, not sent to Play. CI command passes (before a one-line `clipToBounds` fix; re-run after it). Emulator (Play debug preview, demo, AVD touch on, set back to `no-touch`): TV menu, Jelly Drift by keys, Back; a throwaway build forcing `hasTouch` showed all nine cards, Comet Sling by touch through level 1, phone size 1920x859. Not checked: a real phone or TV, Arabic on screen, how hard Comet Sling gets past level 2, the `clipToBounds` result on screen.
+- For the other agent: a new game needs a `GameId` entry, a `when` branch in `GamesScreen` and a thumbnail branch in `GameMenu.drawThumbnail`. Boundaries: no game copies a name, character or art from an existing game.
