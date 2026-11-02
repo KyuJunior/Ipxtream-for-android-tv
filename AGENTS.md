@@ -693,3 +693,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: gradle/libs.versions.toml, app/build.gradle.kts, app/proguard-rules.pro, ui/player/PlayerViewModel.kt, res/values*/strings.xml, src/play/res/values*/strings.xml, AGENTS.md
 - Status: done. CI command passes on Media3 1.8.0. `libffmpegJNI.so` is 16 KB aligned (ELF LOAD 0x4000, zipalign -P 16 OK). GitHub APK 4 → 10.5 MB (all four ABIs; Play's AAB delivers one). Emulator (Play debug preview, a throwaway build pointing a demo film at a local H.264 + AC3 clip, reverted before commit): the emulator has no AC3 codec, `libffmpegJNI.so` loaded and an AudioTrack started, no playback error. Not checked: a minified release build playing AC3 (mapping shows the classes kept), DTS/E-AC3 streams, a real phone.
 - For the other agent: the repo has no LICENSE file; shipping GPL-3.0 code means the app is distributed under GPL-3.0 terms, so the owner should add one. Upgrade Media3 only together with a matching `media3-ffmpeg-decoder` build.
+
+### 2026-11-02 | claude
+- Did: Added `LICENSE` with the GNU GPL-3.0 text from gnu.org (owner decision), since the app now ships the GPL-3.0 FFmpeg decoder.
+- Files: LICENSE, AGENTS.md
+- Status: done
+- For the other agent: the repository is GPL-3.0 from now on; new third-party code must be GPL-3.0 compatible.
