@@ -699,3 +699,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: LICENSE, AGENTS.md
 - Status: done
 - For the other agent: the repository is GPL-3.0 from now on; new third-party code must be GPL-3.0 compatible.
+
+### 2026-11-02 | claude
+- Did: Play bundle 2.0.36 (code 110) built by `play.yml` (upload key C9:4A…D8:B1), added to the closed test (2.0.31 was live) with release notes, and sent for Google's review. It has everything since 2.0.31: full-screen games, live reconnect, login fixes, Continue Watching, the Play policy fixes, adult filter, expiry notice, phone bars/drag-to-seek and the FFmpeg audio decoder. Play Console's only warning: no native debug symbols (the FFmpeg library).
+- Files: AGENTS.md
+- Status: waiting on Google's review; temporary upload branch deleted. Store listing text and content rating answers in Play Console are still the owner's to update.
+- For the other agent: none
