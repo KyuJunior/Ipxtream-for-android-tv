@@ -90,8 +90,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val exoPlayer: ExoPlayer = ExoPlayer.Builder(application)
         .setTrackSelector(trackSelector)
         .setLoadControl(loadControl)
-        // A codec that fails to start falls back to the next one (often a software decoder).
-        .setRenderersFactory(DefaultRenderersFactory(application).setEnableDecoderFallback(true))
+        // A codec that fails to start falls back to the next one (often a software decoder). The
+        // FFmpeg audio renderer comes after the device's own, so AC3/E-AC3/DTS play on phones without them.
+        .setRenderersFactory(
+            DefaultRenderersFactory(application)
+                .setEnableDecoderFallback(true)
+                .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+        )
         // Panels often redirect HTTPS streams to an HTTP edge server; Media3 refuses that by default.
         .setMediaSourceFactory(
             DefaultMediaSourceFactory(

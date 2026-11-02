@@ -24,3 +24,7 @@
 -dontwarn org.joda.time.**
 -dontwarn com.google.errorprone.annotations.**
 -dontwarn javax.annotation.**
+
+# Media3 loads the FFmpeg audio renderer by class name (DefaultRenderersFactory reflection), and its
+# decoder binds native methods by name. Renamed, AC3/DTS audio silently falls back to silence.
+-keep class androidx.media3.decoder.ffmpeg.** { *; }

@@ -218,6 +218,7 @@ dependencies {
     implementation(libs.media3.exoplayer)           // Core player engine
     implementation(libs.media3.exoplayer.hls)       // HLS (M3U8) support for live streams
     implementation(libs.media3.ui)                  // PlayerView (wrapped in AndroidView)
+    implementation(libs.media3.ffmpeg.decoder)      // Software AC3/E-AC3/DTS/TrueHD audio for devices without those decoders (GPL-3.0)
 
     // ─── Image loading (Coil) ─────────────────────────────────────────────────
     implementation(libs.coil.compose)               // AsyncImage for posters + channel logos

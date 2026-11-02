@@ -13,6 +13,6 @@
     <string name="legal_terms_body">Xtream TV Terms and Conditions\n\n1. Acceptance of Terms\nBy installing and using Xtream TV, you agree to these terms. If you do not agree, uninstall and do not use the application.\n\n2. Purpose and Nature of the Software\nXtream TV is an independent client media player. It does not provide, host, sell, or index any video streams, television channels, or playlists. The application is strictly a playback tool.\n\n3. User Responsibilities\nYou are solely responsible for the playlists and credentials you load. You must ensure you have the legal right or license to access your content. You must not use the application to infringe upon copyright or intellectual property rights.\n\n4. Third-Party Services\nConnections are established directly from your device to the IPTV server you specify. The developers have no affiliation with any streaming service or provider.\n\n5. Disclaimer of Warranties\nThe software is provided \"as is\" without warranty of any kind. The developers are not liable for any damages resulting from the use of this software or content accessed through it.
 
 6. Contact
-contact@dryaser.me</string>
+contact@dryaser.me\n\n7. Open-source software\nAudio for AC3, E-AC3, DTS and TrueHD uses FFmpeg through the Jellyfin Media3 FFmpeg decoder, licensed under the GNU General Public License version 3. The app\'s source code is available at github.com/kyujunior/Ipxtream-for-android-tv.</string>
     <string name="notif_channel">Xtream Downloads</string>
 </resources>
