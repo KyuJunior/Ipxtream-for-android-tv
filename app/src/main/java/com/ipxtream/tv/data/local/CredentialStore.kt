@@ -69,8 +69,18 @@ class CredentialStore(context: Context) {
         )
     }
 
+    /**
+     * Only a key that really can't open the file (bad tag / padding, a mangled keyset). A passing
+     * Keystore error (busy or locked keystore, common on cheap boxes) must not wipe every account.
+     */
     private fun isDecryptFailure(e: Throwable): Boolean =
-        generateSequence(e) { it.cause }.take(8).any { it is java.security.GeneralSecurityException }
+        generateSequence(e) { it.cause }.take(8).any {
+            it is javax.crypto.BadPaddingException ||  // includes AEADBadTagException
+                it is java.security.UnrecoverableKeyException ||
+                it.javaClass.name.endsWith("InvalidProtocolBufferException") ||
+                (it is java.security.GeneralSecurityException && it !is java.security.KeyStoreException &&
+                    it.message.orEmpty().contains("decrypt", ignoreCase = true))
+        }
 
     private val gson = Gson()
 
@@ -115,6 +125,19 @@ class CredentialStore(context: Context) {
             .remove(KEY_SERVER)
             .remove(KEY_USERNAME)
             .remove(KEY_PASSWORD)
+            .apply()
+    }
+
+    /**
+     * Logout: the active login and the default account go, so the next launch shows the sign-in
+     * form. Saved accounts stay in the account switcher.
+     */
+    fun signOut() {
+        prefs.edit()
+            .remove(KEY_SERVER)
+            .remove(KEY_USERNAME)
+            .remove(KEY_PASSWORD)
+            .remove(KEY_DEFAULT_ACCOUNT)
             .apply()
     }
 
@@ -197,12 +220,17 @@ class CredentialStore(context: Context) {
      * Retrieves the configured default account, or null.
      */
     fun getDefaultAccount(): AuthCredentials? {
-        val identifier = prefs.getString(KEY_DEFAULT_ACCOUNT, null) ?: return null
-        val parts = identifier.split("@", limit = 2)
-        if (parts.size < 2) return null
-        val username = parts[0]
-        val server = parts[1]
-        return getAccounts().firstOrNull { 
+        val identifier = try {
+            prefs.getString(KEY_DEFAULT_ACCOUNT, null)
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Default account couldn't be decrypted", e)
+            null
+        } ?: return null
+        // The server comes last and holds no '@'; a username may.
+        if ('@' !in identifier) return null
+        val username = identifier.substringBeforeLast('@')
+        val server = identifier.substringAfterLast('@')
+        return getAccounts().firstOrNull {
             it.username.equals(username, ignoreCase = true) && 
             it.server.equals(server, ignoreCase = true) 
         }

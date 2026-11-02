@@ -22,6 +22,8 @@ data class LibraryItem(
     val categoryId: String?,
     val rating: String? = null,
     val containerExtension: String? = null,
+    val season: Int? = null,         // Episodes only; null in entries saved before 2.0.33
+    val episodeNum: Int? = null,
     val lastWatchedPositionMs: Long = 0L,
     val durationMs: Long = 0L,
     val timestamp: Long = System.currentTimeMillis()
@@ -43,10 +45,9 @@ class LibraryStore(
 ) {
     private val gson = Gson()
     private val serverSlug = credentials.server.replace(Regex("[^a-zA-Z0-9]"), "_")
-    private val prefs: SharedPreferences = context.applicationContext.getSharedPreferences(
-        "ipxtream_library_${serverSlug}_${credentials.username}",
-        Context.MODE_PRIVATE
-    )
+    // A '/' in the username is an illegal file name (crashed at every launch); other names are kept as before.
+    private val prefsName = "ipxtream_library_${serverSlug}_${credentials.username.replace('/', '_')}"
+    private val prefs: SharedPreferences = context.applicationContext.getSharedPreferences(prefsName, Context.MODE_PRIVATE)
 
     companion object {
         private const val TAG = "LibraryStore"
@@ -60,8 +61,6 @@ class LibraryStore(
          */
         private val writeBlocked = java.util.Collections.synchronizedSet(mutableSetOf<String>())
     }
-
-    private val prefsName = "ipxtream_library_${serverSlug}_${credentials.username}"
 
     private val _favorites = MutableStateFlow(readList(KEY_FAVORITES))
     private val _history = MutableStateFlow(readList(KEY_HISTORY))

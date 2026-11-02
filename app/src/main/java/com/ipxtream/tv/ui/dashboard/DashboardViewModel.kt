@@ -290,10 +290,18 @@ class DashboardViewModel(
     /**
      * Records which [EpisodeItem] the user has selected for playback (Series section).
      */
-    fun startEpisodePlayback(episode: EpisodeItem) {
+    fun startEpisodePlayback(episode: EpisodeItem, series: SeriesItem) {
         // Detail screen remains behind the player panel (or closed, up to preference).
         // For TV, it's nice to leave details up underneath the split layout.
         _uiState.update { it.copy(selectedEpisode = episode, selectedStream = null) }
+        // Started from Continue Watching: load the episode list so Next Episode and Up Next work.
+        if (series.seriesId != 0 && _uiState.value.detailSeriesItem?.seriesId != series.seriesId) {
+            viewModelScope.launch {
+                repository.getSeriesInfo(series.seriesId).onSuccess { info ->
+                    _uiState.update { if (it.detailSeriesItem == null) it.copy(seriesInfo = info) else it }
+                }
+            }
+        }
     }
 
     /**
@@ -1107,7 +1115,7 @@ class DashboardViewModel(
     }
 
     fun logout() {
-        credentialStore.clearCredentials()
+        credentialStore.signOut()
         val intent = android.content.Intent(context, com.ipxtream.tv.ui.login.LoginActivity::class.java).apply {
             flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
         }

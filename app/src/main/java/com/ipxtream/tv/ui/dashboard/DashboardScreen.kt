@@ -1702,11 +1702,11 @@ private fun LibraryCard(
             val episode = remember(item) {
                 EpisodeItem(
                     id = item.id,
-                    episodeNum = 1,
+                    episodeNum = item.episodeNum ?: 1,
                     title = epTitle,
                     containerExtension = item.containerExtension ?: "mp4",
                     info = null,
-                    season = 1,
+                    season = item.season ?: 1,
                     added = null, customSid = null, directSource = null
                 )
             }

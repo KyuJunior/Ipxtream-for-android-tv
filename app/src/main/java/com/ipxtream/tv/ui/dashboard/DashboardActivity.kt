@@ -159,7 +159,7 @@ class DashboardActivity : ComponentActivity() {
                         playerViewModel.loadStream(stream, credentials)
                     },
                     onEpisodePlay = { series: com.ipxtream.tv.data.model.SeriesItem, episode: com.ipxtream.tv.data.model.EpisodeItem ->
-                        dashboardViewModel.startEpisodePlayback(episode)
+                        dashboardViewModel.startEpisodePlayback(episode, series)
                         playerViewModel.loadEpisode(episode, series, credentials)
                     },
 

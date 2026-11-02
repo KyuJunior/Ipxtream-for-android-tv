@@ -14,7 +14,11 @@ import androidx.media3.common.TrackGroup
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.VideoSize
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 import androidx.media3.exoplayer.upstream.DefaultAllocator
@@ -51,6 +55,7 @@ import com.ipxtream.tv.data.local.LibraryItem
  * Pause/resume — `DisposableEffect` in [PlayerPanel].
  * Release       — `onCleared()` here (the ONLY place).
  */
+@androidx.annotation.OptIn(markerClass = [androidx.media3.common.util.UnstableApi::class])
 class PlayerViewModel(application: Application) : AndroidViewModel(application) {
 
     // =========================================================================
@@ -85,6 +90,18 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     val exoPlayer: ExoPlayer = ExoPlayer.Builder(application)
         .setTrackSelector(trackSelector)
         .setLoadControl(loadControl)
+        // A codec that fails to start falls back to the next one (often a software decoder).
+        .setRenderersFactory(DefaultRenderersFactory(application).setEnableDecoderFallback(true))
+        // Panels often redirect HTTPS streams to an HTTP edge server; Media3 refuses that by default.
+        .setMediaSourceFactory(
+            DefaultMediaSourceFactory(
+                DefaultDataSource.Factory(
+                    application,
+                    DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
+                )
+            )
+        )
+        .setHandleAudioBecomingNoisy(true)
         .build()
         .also { player ->
             player.setAudioAttributes(
@@ -133,6 +150,13 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private var seekSaveJob: Job? = null
     private var lastProgressSaveMs = 0L
     private var hudHideJob:         Job? = null
+    private var reconnectJob:       Job? = null
+
+    // ─── Live reconnect ────────────────────────────────────────────────────────
+    private var currentUrl: String? = null
+    private var reconnectAttempts = 0
+    /** False until the current title has played once; until then an HLS/TS swap is worth trying. */
+    private var everReady = false
 
     // ─── Scoped Storage ────────────────────────────────────────────────────────
     private var credentials: AuthCredentials? = null
@@ -143,6 +167,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     // =========================================================================
 
     fun loadStream(stream: StreamItem, credentials: AuthCredentials) {
+        leaveCurrentTitle()
         this.credentials = credentials
         val store = com.ipxtream.tv.di.AppContainer.from(getApplication()).libraryStore(credentials)
         this.libraryStore = store
@@ -169,10 +194,11 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             activeSeries     = null,
             isCurrentFavorite = isFav
         ) }
-        prepareAndPlay(StreamUrlBuilder.buildForStream(credentials, stream), resumePositionMs)
+        prepareAndPlay(StreamUrlBuilder.buildForStream(credentials, stream), mediaKey(streamType, stream.streamId.toString()), resumePositionMs)
     }
 
     fun loadEpisode(episode: EpisodeItem, series: SeriesItem, credentials: AuthCredentials) {
+        leaveCurrentTitle()
         this.credentials = credentials
         val store = com.ipxtream.tv.di.AppContainer.from(getApplication()).libraryStore(credentials)
         this.libraryStore = store
@@ -196,7 +222,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             activeSeries     = series,
             isCurrentFavorite = isFav
         ) }
-        prepareAndPlay(StreamUrlBuilder.buildForEpisode(credentials, episode), resumePositionMs)
+        prepareAndPlay(StreamUrlBuilder.buildForEpisode(credentials, episode), mediaKey("episode", episode.id), resumePositionMs)
     }
 
     fun toggleCurrentFavorite() {
@@ -277,6 +303,15 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         onHudInteraction()
     }
 
+    /** Try Again on the error card. A live stream rejoins at the live edge, not where it stalled. */
+    fun retry() {
+        reconnectJob?.cancel()
+        reconnectAttempts = 0
+        if (_uiState.value.isLive) exoPlayer.seekToDefaultPosition()
+        exoPlayer.prepare()
+        exoPlayer.play()
+    }
+
     /**
      * Restarts playback from 0:00.
      */
@@ -303,6 +338,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         // Written before returning so the dashboard's Continue Watching row sees it right away.
         saveCurrentProgress(inBackground = false)
         seekSaveJob?.cancel()
+        reconnectJob?.cancel()
         stopPositionPolling()
         stopHudTimer()
         exoPlayer.stop()
@@ -637,6 +673,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         val progressFraction = currentPos.toFloat() / duration
         val id = currentState.activeStream?.streamId?.toString() ?: currentState.activeEpisode?.id ?: return
         val type = if (currentState.activeStream != null) (currentState.activeStream.streamType ?: "movie") else "episode"
+        // The player may still hold the previous title while the state already names the next one.
+        if (exoPlayer.currentMediaItem?.mediaId != mediaKey(type, id)) return
 
         if (progressFraction >= 0.90f) {
             runStoreWrite(inBackground) { store.removeFromHistory(id, type) }
@@ -665,6 +703,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     categoryId = currentState.activeSeries?.categoryId,
                     rating = episode.info?.rating,
                     containerExtension = episode.containerExtension,
+                    season = episode.season,
+                    episodeNum = episode.episodeNum,
                     lastWatchedPositionMs = currentPos,
                     durationMs = duration
                 )
@@ -694,16 +734,58 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     //  Private: prepare ExoPlayer
     // =========================================================================
 
-    private fun prepareAndPlay(url: String, startPositionMs: Long = 0L) {
-        _uiState.update { it.copy(videoWidth = 0, videoHeight = 0) }
+    /** Saves where the outgoing title stopped while the state still names it, then stops it. */
+    private fun leaveCurrentTitle() {
+        reconnectJob?.cancel()
+        if (_uiState.value.hasActiveMedia) saveCurrentProgress()
         exoPlayer.stop()
+    }
+
+    private fun mediaKey(type: String, id: String) = "$type:$id"
+
+    private fun mediaItem(url: String, key: String) = MediaItem.Builder().setUri(url).setMediaId(key).build()
+
+    private fun prepareAndPlay(url: String, key: String, startPositionMs: Long = 0L) {
+        _uiState.update { it.copy(videoWidth = 0, videoHeight = 0) }
+        currentUrl = url
+        reconnectAttempts = 0
+        everReady = false
         if (startPositionMs > 0L) {
-            exoPlayer.setMediaItem(MediaItem.fromUri(url), startPositionMs)
+            exoPlayer.setMediaItem(mediaItem(url, key), startPositionMs)
         } else {
-            exoPlayer.setMediaItem(MediaItem.fromUri(url))
+            exoPlayer.setMediaItem(mediaItem(url, key))
         }
         exoPlayer.prepare()
         exoPlayer.playWhenReady = true
+    }
+
+    /**
+     * Live only: reconnects quietly after a drop, waiting longer each time. A channel that never
+     * started also alternates between HLS and MPEG-TS, for providers or accounts that serve one only.
+     * False when it has given up, so the caller shows the error card.
+     */
+    private fun scheduleReconnect(): Boolean {
+        val limit = if (everReady) MAX_LIVE_RECONNECTS else MAX_START_ATTEMPTS
+        if (reconnectAttempts >= limit) return false
+        val url = currentUrl ?: return false
+        val key = exoPlayer.currentMediaItem?.mediaId ?: return false
+        val wait = LiveReconnect.delayMs(reconnectAttempts)
+        reconnectAttempts++
+        val nextUrl = if (everReady) url else LiveReconnect.alternate(url)
+        _uiState.update { it.copy(playbackState = PlaybackState.LOADING, isPlaying = false) }
+        reconnectJob?.cancel()
+        reconnectJob = viewModelScope.launch {
+            delay(wait)
+            if (nextUrl != url) {
+                currentUrl = nextUrl
+                exoPlayer.setMediaItem(mediaItem(nextUrl, key))
+            } else {
+                exoPlayer.seekToDefaultPosition()
+            }
+            exoPlayer.prepare()
+            exoPlayer.playWhenReady = true
+        }
+        return true
     }
 
     // =========================================================================
@@ -739,15 +821,28 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             val newState = when (state) {
                 Player.STATE_BUFFERING -> PlaybackState.LOADING
                 Player.STATE_READY     -> {
+                    everReady = true
+                    reconnectAttempts = 0
                     checkAndExtractVideoResolution()
                     PlaybackState.READY
                 }
-                Player.STATE_ENDED     -> {
+                // A live stream has no end: the provider dropped it.
+                Player.STATE_ENDED     -> if (_uiState.value.isLive) {
+                    stopPositionPolling()
+                    if (scheduleReconnect()) return
+                    _uiState.update { it.copy(error = text(R.string.player_err_network)) }
+                    PlaybackState.ERROR
+                } else {
                     stopPositionPolling()
                     clearCurrentProgressFromHistory()
                     PlaybackState.ENDED
                 }
-                else                   -> PlaybackState.IDLE
+                // Media3 goes idle after an error: keep the error card, or the spinner while reconnecting.
+                else                   -> when {
+                    reconnectJob?.isActive == true -> PlaybackState.LOADING
+                    _uiState.value.playbackState == PlaybackState.ERROR -> PlaybackState.ERROR
+                    else -> PlaybackState.IDLE
+                }
             }
             _uiState.update { it.copy(playbackState = newState) }
         }
@@ -763,6 +858,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
         override fun onPlayerError(error: PlaybackException) {
             stopPositionPolling()
+            if (_uiState.value.isLive && scheduleReconnect()) return
             _uiState.update { it.copy(
                 playbackState = PlaybackState.ERROR,
                 isPlaying     = false,
@@ -800,5 +896,19 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private companion object {
         const val HUD_TIMEOUT_MS = 5_000L
         const val PROGRESS_SAVE_INTERVAL_MS = 10_000L
+        /** About two and a half minutes of retries once a channel has played. */
+        const val MAX_LIVE_RECONNECTS = 9
+        /** A channel that never started: TS, HLS, TS within about 7 s. */
+        const val MAX_START_ATTEMPTS = 3
     }
+}
+
+/** Pure parts of the live reconnect, kept apart so they can be tested on the JVM. */
+internal object LiveReconnect {
+    /** 1 s, 2 s, 4 s … up to 30 s. */
+    fun delayMs(attempt: Int): Long = (1_000L shl attempt.coerceIn(0, 5)).coerceAtMost(30_000L)
+
+    /** HLS and MPEG-TS for the same live channel, swapped; other addresses stay as they are. */
+    fun alternate(url: String): String =
+        StreamUrlBuilder.toTransportStream(url) ?: if (url.endsWith(".ts")) url.removeSuffix(".ts") + ".m3u8" else url
 }

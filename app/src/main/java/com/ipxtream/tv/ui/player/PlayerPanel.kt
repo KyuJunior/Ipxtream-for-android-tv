@@ -188,13 +188,16 @@ fun PlayerPanel(
 
     // ── Lifecycle: Pause on background, Resume on foreground ──────────────────
     DisposableEffect(lifecycleOwner, exoPlayer) {
+        // A title the user had paused stays paused when they come back to the app.
+        var resumeOnStart = false
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
                     playerView.player = exoPlayer
-                    if (uiState.hasActiveMedia) exoPlayer.play()
+                    if (resumeOnStart) viewModel.resume()
                 }
                 Lifecycle.Event.ON_STOP -> {
+                    resumeOnStart = exoPlayer.playWhenReady
                     viewModel.pause()
                     playerView.player = null   // release video surface
                 }
@@ -611,7 +614,7 @@ fun PlayerPanel(
             ErrorOverlay(
                 message      = uiState.error ?: stringResource(R.string.player_unknown_error),
                 focusTarget  = overlayFocus,
-                onRetry      = { exoPlayer.prepare(); exoPlayer.play() },
+                onRetry      = viewModel::retry,
                 onClose      = onStop
             )
         }

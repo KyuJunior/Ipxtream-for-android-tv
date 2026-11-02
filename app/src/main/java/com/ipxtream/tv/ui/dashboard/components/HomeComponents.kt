@@ -443,11 +443,11 @@ fun ContinueWatchingCard(
                     )
                     val episode = EpisodeItem(
                         id = item.id,
-                        episodeNum = 1,
+                        episodeNum = item.episodeNum ?: 1,
                         title = item.name.substringAfter(" - ", item.name),
                         containerExtension = item.containerExtension ?: "mp4",
                         info = null,
-                        season = 1,
+                        season = item.season ?: 1,
                         added = null, customSid = null, directSource = null
                     )
                     onEpisodePlay(series, episode)

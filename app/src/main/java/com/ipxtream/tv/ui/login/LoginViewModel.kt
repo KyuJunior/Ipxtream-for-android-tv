@@ -92,6 +92,11 @@ class LoginViewModel(
                 }
 
             } catch (e: HttpException) {
+                // A saved login with the provider down: open the app on cached lists instead of the form.
+                if (autoLogin && e.code() !in AUTH_REJECTED) {
+                    _uiState.value = LoginUiState.Success(null)
+                    return@launch
+                }
                 val msg = when (e.code()) {
                     401, 403 -> text(R.string.login_invalid)
                     429 -> text(R.string.login_too_many)
@@ -101,6 +106,11 @@ class LoginViewModel(
                 _uiState.value = LoginUiState.Error(msg)
             } catch (e: IOException) {
                 // Covers: no network, DNS failure, socket timeout, malformed URL.
+                // A saved login whose TV has no Wi-Fi yet goes on to the cached lists.
+                if (autoLogin) {
+                    _uiState.value = LoginUiState.Success(null)
+                    return@launch
+                }
                 _uiState.value = LoginUiState.Error(
                     text(R.string.login_network)
                 )
@@ -139,6 +149,8 @@ class LoginViewModel(
     private companion object {
         /** Panels with a broken certificate or a closed HTTPS port must not hold up sign-in. */
         const val HTTPS_PROBE_MS = 4_000L
+        /** Only these mean the provider refused the login; anything else is an outage. */
+        val AUTH_REJECTED = setOf(401, 403)
     }
 
     /**
@@ -159,7 +171,7 @@ class LoginViewModel(
      * Call this when the user explicitly logs out.
      */
     fun logout() {
-        credentialStore.clearCredentials()
+        credentialStore.signOut()
         _uiState.value = LoginUiState.Idle
     }
 }

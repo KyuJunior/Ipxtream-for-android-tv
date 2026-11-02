@@ -19,7 +19,7 @@ sealed class LoginUiState {
      * Authentication succeeded.
      * @param authResponse Full server + user info from the Xtream Codes API.
      */
-    data class Success(val authResponse: XtreamAuthResponse) : LoginUiState()
+    data class Success(val authResponse: XtreamAuthResponse?) : LoginUiState()
 
     /**
      * Authentication failed or a network error occurred.

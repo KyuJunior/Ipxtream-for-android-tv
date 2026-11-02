@@ -379,8 +379,9 @@ class ContentRepository(
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val network = cm.activeNetwork ?: return false
         val caps    = cm.getNetworkCapabilities(network) ?: return false
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-               caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+        // Not VALIDATED: where Google's connectivity check is blocked the provider can still be reachable.
+        // A failed request falls back to the cache anyway.
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     // =========================================================================

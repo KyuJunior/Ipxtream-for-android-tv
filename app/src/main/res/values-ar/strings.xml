@@ -52,7 +52,7 @@
     <string name="content_load_failed">فشل تحميل المحتوى.</string>
     <string name="continue_watching">متابعة المشاهدة</string>
     <string name="decoder_hardware">تسريع بالعتاد (الأفضل)</string>
-    <string name="decoder_software">فك ترميز برمجي فقط (للتوافق)</string>
+    <string name="decoder_software">وضع التوافق (بدون تشغيل نفقي)</string>
     <string name="dl_active">نشط</string>
     <string name="dl_done">تم</string>
     <string name="dl_downloading">جارٍ التنزيل</string>

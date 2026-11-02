@@ -14,14 +14,16 @@ import com.ipxtream.tv.data.model.StreamItem
  * | VOD     | `{server}/movie/{user}/{pass}/{streamId}.{ext}` |
  * | Episode | `{server}/series/{user}/{pass}/{episodeId}.{ext}` |
  *
- * Always use `.m3u8` for Live — the server may also serve `.ts` but HLS
- * gives better buffering and adaptive bitrate support via ExoPlayer's
- * `HlsMediaSource`.
+ * Live asks for `.m3u8` first (better buffering via `HlsMediaSource`); the player falls back to
+ * [toTransportStream] when the provider or account doesn't serve HLS.
  *
  * For VOD and Series, the `containerExtension` from the API determines the
  * format. ExoPlayer's `DefaultMediaSourceFactory` auto-detects the source
  * type from the URL extension, so no explicit `MediaSource` override is needed
  * for common formats (mp4, mkv, avi, m3u8, mpd).
+ *
+ * Username and password are path segments, so they are percent-encoded: a `#`, `?`, `/` or
+ * space in either would otherwise break every stream while sign-in (query parameters) works.
  */
 object StreamUrlBuilder {
 
@@ -31,10 +33,9 @@ object StreamUrlBuilder {
     fun buildForStream(credentials: AuthCredentials, stream: StreamItem): String {
         com.ipxtream.tv.data.api.DemoCatalog.streamUrl(credentials.server, stream.streamId)?.let { return it }
         val base = credentials.server.trimEnd('/')
-        val u    = credentials.username
-        val p    = credentials.password
+        val u    = segment(credentials.username)
+        val p    = segment(credentials.password)
         return when {
-            stream.isLive  -> "$base/$u/$p/${stream.streamId}.m3u8"
             stream.isMovie -> {
                 val ext = stream.containerExtension?.ifBlank { null } ?: "mp4"
                 "$base/movie/$u/$p/${stream.streamId}.$ext"
@@ -48,9 +49,14 @@ object StreamUrlBuilder {
      */
     fun buildForEpisode(credentials: AuthCredentials, episode: EpisodeItem): String {
         val base = credentials.server.trimEnd('/')
-        val u    = credentials.username
-        val p    = credentials.password
         val ext  = episode.containerExtension?.ifBlank { null } ?: "mp4"
-        return "$base/series/$u/$p/${episode.id}.$ext"
+        return "$base/series/${segment(credentials.username)}/${segment(credentials.password)}/${episode.id}.$ext"
     }
+
+    /** The MPEG-TS form of a live HLS address, or null when [url] isn't one. */
+    fun toTransportStream(url: String): String? =
+        if (url.endsWith(".m3u8")) url.removeSuffix(".m3u8") + ".ts" else null
+
+    private fun segment(value: String): String =
+        java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20")
 }

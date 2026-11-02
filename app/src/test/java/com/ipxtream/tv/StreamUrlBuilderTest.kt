@@ -44,6 +44,18 @@ class StreamUrlBuilderTest {
         assertEquals("http://portal.example:8080/series/user/secret/9001.mp4", StreamUrlBuilder.buildForEpisode(creds, episode))
     }
 
+    @Test fun specialCharactersInTheLoginAreEncoded() {
+        val odd = AuthCredentials("http://portal.example:8080", "a b@x", "p#a?s/s%")
+        val url = StreamUrlBuilder.buildForStream(odd, stream("""{"stream_id":7,"name":"News","stream_type":"live"}"""))
+        assertEquals("http://portal.example:8080/a%20b%40x/p%23a%3Fs%2Fs%25/7.m3u8", url)
+        assertFalse(ApiClient.redactCredentials(url).contains("p%23a"))
+    }
+
+    @Test fun liveFallsBackToTransportStream() {
+        assertEquals("http://h/u/p/7.ts", StreamUrlBuilder.toTransportStream("http://h/u/p/7.m3u8"))
+        assertEquals(null, StreamUrlBuilder.toTransportStream("http://h/movie/u/p/7.mp4"))
+    }
+
     @Test fun loggedUrlsHideTheLogin() {
         val line = "--> GET http://portal.example/player_api.php?username=user&password=secret&action=get_vod_streams"
         val redacted = ApiClient.redactCredentials(line)

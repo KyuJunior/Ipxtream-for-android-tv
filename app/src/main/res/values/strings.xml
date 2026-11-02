@@ -52,7 +52,7 @@
     <string name="content_load_failed">Failed to load content.</string>
     <string name="continue_watching">Continue Watching</string>
     <string name="decoder_hardware">Hardware Accelerated (Optimal)</string>
-    <string name="decoder_software">Software Decoder Only (Compatibility)</string>
+    <string name="decoder_software">Compatibility Mode (no tunnelled playback)</string>
     <string name="dl_active">Active</string>
     <string name="dl_done">Done</string>
     <string name="dl_downloading">Downloading</string>
