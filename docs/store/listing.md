@@ -22,8 +22,8 @@ suggests where to get a subscription.
 English:
 
 ```
-Xtream TV is a video player for Android TV. Sign in with the Xtream Codes details from the IPTV service you already
-subscribe to, and watch its live channels, films and series with a remote-friendly interface.
+Xtream TV is a video player for Android TV. Sign in with the server address, username and password from the IPTV service you
+already subscribe to, and watch its live channels, films and series with a remote-friendly interface.
 
 The app does not include, sell or recommend any channels, films or subscriptions. You need your own service and the
 right to watch what it offers.
@@ -31,7 +31,7 @@ right to watch what it offers.
 • Live TV, films and series in one place, with fast navigation built for the remote
 • Continue Watching and favourites, kept on your TV
 • Football fixtures and live scores, with the channel you choose for each match remembered
-• Search across your service
+• Search your films and series
 • English and Arabic, with a full right-to-left layout
 • Smooth mode for less powerful TVs
 • Several accounts on one TV
@@ -41,14 +41,15 @@ right to watch what it offers.
 Try it first: "Try the demo" on the sign-in screen plays a few openly licensed films and test channels, no account
 needed.
 
-Privacy: everything you enter stays on your TV. Many IPTV services use unencrypted HTTP; the app tells you when that
+Privacy: your login goes only to your own service and is stored encrypted on your device. We collect nothing.
+Many IPTV services use unencrypted HTTP; the app tells you when that
 is the case and uses HTTPS when your service offers it.
 ```
 
 Arabic:
 
 ```
-Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول ببيانات Xtream Codes من خدمة IPTV المشترك فيها،
+Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول بعنوان الخادم واسم المستخدم وكلمة المرور من خدمة IPTV المشترك فيها،
 وشاهد قنواتها المباشرة وأفلامها ومسلسلاتها بواجهة مصمّمة لجهاز التحكم.
 
 لا يتضمن التطبيق أي قنوات أو أفلام أو اشتراكات، ولا يبيعها ولا يرشّحها. تحتاج إلى خدمتك الخاصة وإلى حق مشاهدة ما تقدّمه.
@@ -56,7 +57,7 @@ Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول �
 • القنوات المباشرة والأفلام والمسلسلات في مكان واحد مع تنقّل سريع بجهاز التحكم
 • متابعة المشاهدة والمفضلة، محفوظة على تلفازك
 • مواعيد المباريات والنتائج المباشرة، مع حفظ القناة التي تختارها لكل مباراة
-• البحث في خدمتك
+• البحث في أفلامك ومسلسلاتك
 • العربية والإنجليزية مع واجهة كاملة من اليمين إلى اليسار
 • وضع سلس للأجهزة الأقل قوة
 • عدة حسابات على تلفاز واحد
@@ -65,7 +66,7 @@ Xtream TV مشغّل فيديو لأجهزة Android TV. سجّل الدخول �
 
 جرّبه أولًا: زر "جرّب العرض التوضيحي" في شاشة تسجيل الدخول يعرض أفلامًا مفتوحة الترخيص وقنوات تجريبية دون حساب.
 
-الخصوصية: كل ما تدخله يبقى على تلفازك. كثير من خدمات IPTV تستخدم HTTP غير المشفّر؛ يوضّح التطبيق ذلك ويستخدم HTTPS عندما توفّره خدمتك.
+الخصوصية: بيانات دخولك تذهب إلى خدمتك فقط وتُحفظ مشفّرة على جهازك. لا نجمع أي بيانات. كثير من خدمات IPTV تستخدم HTTP غير المشفّر؛ يوضّح التطبيق ذلك ويستخدم HTTPS عندما توفّره خدمتك.
 ```
 
 **Graphics** (files in `الهوية البصرية/store/`):
@@ -82,7 +83,7 @@ or sports branding). They show the test account's name and a local address in th
 after the rename if that should go.
 
 **Category:** Video Players & Editors · **Tags:** video player, Android TV
-**Contact e-mail:** contact@dryaser.me · **Website:** (optional) the GitHub repository
+**Contact e-mail:** contact@dryaser.me · **Website:** leave empty (don't link the GitHub repository)
 **Privacy policy URL:** `https://kyujunior.github.io/Ipxtream-for-android-tv/privacy/` (live since 2026-10-24)
 
 ---

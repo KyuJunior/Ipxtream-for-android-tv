@@ -49,6 +49,7 @@ android {
             buildConfigField("boolean", "MATCH_AUTO_PLAY", "true")
             buildConfigField("boolean", "DOWNLOADS", "true")
             buildConfigField("boolean", "MINIGAME", "true")
+            buildConfigField("boolean", "TEAM_CRESTS", "true")
         }
         create("play") {
             dimension = "store"
@@ -63,6 +64,8 @@ android {
             buildConfigField("boolean", "DOWNLOADS", "false")
             // Penalty shootout: something to do for testers without an IPTV account (owner request).
             buildConfigField("boolean", "MINIGAME", "true")
+            // Club crests are trademarks: Matches shows team initials instead.
+            buildConfigField("boolean", "TEAM_CRESTS", "false")
         }
     }
 

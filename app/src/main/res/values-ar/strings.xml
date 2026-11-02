@@ -487,4 +487,10 @@ contact@dryaser.me</string>
     <string name="game_synergy_furnace_detail">فرن: يحرق المعدن المجاور مقابل 10 نقاط لكل قطعة.</string>
     <string name="game_synergy_crystal">بلورة</string>
     <string name="game_synergy_crystal_detail">بلورة: نادرة، قيمتها 6.</string>
+    <string name="settings_hide_adult">إخفاء محتوى البالغين</string>
+    <string name="settings_hide_adult_sub">يخفي الفئات والعناوين التي يصنّفها المزوّد للبالغين (+18، XXX).</string>
+    <string name="account_expires">ينتهي %1$s</string>
+    <string name="account_expired">انتهى %1$s</string>
+    <string name="account_rejected">رفض المزوّد تسجيل الدخول</string>
+    <string name="player_err_rejected">رفض المزوّد هذا البث. ربما انتهى اشتراكك أو بلغ حدّ الاتصالات.</string>
 </resources>

@@ -66,11 +66,22 @@ object MatchReminders {
     private const val SCAN_WORK = "match_reminders_scan"
     private const val TAG = "match_reminder"
     private const val KEY_KICKOFF = "kickoff"
+    private const val KEY_OPENED = "matches_opened"
 
-    /** Starts (or stops) the hourly scan to match the setting. Safe to call on every app start. */
+    /** Called when Matches opens: until then nobody asked about football, so nothing calls ESPN. */
+    fun markMatchesOpened(context: Context) {
+        context.getSharedPreferences("match_reminders", Context.MODE_PRIVATE).edit().putBoolean(KEY_OPENED, true).apply()
+    }
+
+    /**
+     * Starts (or stops) the hourly scan to match the setting. Safe to call on every app start.
+     * It runs only after the user has opened Matches and while notifications are allowed, so the
+     * hourly ESPN calls never happen for someone who gets nothing from them.
+     */
     fun sync(context: Context, enabled: Boolean, rescan: Boolean = false) {
         val wm = WorkManager.getInstance(context)
-        if (enabled) {
+        val opened = context.getSharedPreferences("match_reminders", Context.MODE_PRIVATE).getBoolean(KEY_OPENED, false)
+        if (enabled && opened && NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             val policy = if (rescan) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE else ExistingPeriodicWorkPolicy.KEEP
             val scan = PeriodicWorkRequestBuilder<MatchReminderScanWorker>(1, TimeUnit.HOURS)
                 .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())

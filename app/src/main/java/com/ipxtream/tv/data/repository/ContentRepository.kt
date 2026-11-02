@@ -85,6 +85,9 @@ class ContentRepository(
      * Cache TTL: [CacheManager.DEFAULT_MAX_AGE_MS] (6 hours).
      */
     suspend fun getLiveCategories(forceRefresh: Boolean = false): Result<List<Category>> =
+        rawLiveCategories(forceRefresh).map { cats -> if (hideAdult()) cats.filterNot { AdultFilter.isAdult(it.categoryName) } else cats }
+
+    private suspend fun rawLiveCategories(forceRefresh: Boolean = false): Result<List<Category>> =
         fetchWithCache(
             cacheKey = buildKey("live_categories"),
             maxAgeMs = CacheManager.DEFAULT_MAX_AGE_MS,
@@ -107,7 +110,26 @@ class ContentRepository(
             forceRefresh = forceRefresh
         ) {
             apiService.getLiveStreams(credentials.username, credentials.password, categoryId = categoryId)
-        }
+        }.map { withoutAdult(it, rawLiveCategories(), { s -> s.name }) { s -> s.categoryId } }
+    }
+
+    // =========================================================================
+    //  Adult filter (Settings → Hide Adult Content, on by default)
+    // =========================================================================
+
+    private fun hideAdult(): Boolean =
+        com.ipxtream.tv.data.local.AppSettingsStore.getInstance(context).settings.value.hideAdultContent
+
+    /** Drops items in an adult category or with an adult name. Cached lists stay whole, so the setting applies at once. */
+    private fun <T> withoutAdult(
+        items: List<T>,
+        categories: Result<List<Category>>,
+        name: (T) -> String?,
+        categoryId: (T) -> String?
+    ): List<T> {
+        if (!hideAdult()) return items
+        val adultIds = categories.getOrNull().orEmpty().filter { AdultFilter.isAdult(it.categoryName) }.map { it.categoryId }.toSet()
+        return items.filterNot { categoryId(it) in adultIds || AdultFilter.isAdult(name(it)) }
     }
 
     // =========================================================================
@@ -119,6 +141,9 @@ class ContentRepository(
      * Cache TTL: [CacheManager.DEFAULT_MAX_AGE_MS] (6 hours).
      */
     suspend fun getVodCategories(forceRefresh: Boolean = false): Result<List<Category>> =
+        rawVodCategories(forceRefresh).map { cats -> if (hideAdult()) cats.filterNot { AdultFilter.isAdult(it.categoryName) } else cats }
+
+    private suspend fun rawVodCategories(forceRefresh: Boolean = false): Result<List<Category>> =
         fetchWithCache(
             cacheKey = buildKey("vod_categories"),
             maxAgeMs = CacheManager.DEFAULT_MAX_AGE_MS,
@@ -141,7 +166,7 @@ class ContentRepository(
             forceRefresh = forceRefresh
         ) {
             apiService.getVodStreams(credentials.username, credentials.password, categoryId = categoryId)
-        }
+        }.map { withoutAdult(it, rawVodCategories(), { s -> s.name }) { s -> s.categoryId } }
     }
 
     /**
@@ -167,6 +192,9 @@ class ContentRepository(
      * Cache TTL: [CacheManager.SERIES_MAX_AGE_MS] (24 hours).
      */
     suspend fun getSeriesCategories(forceRefresh: Boolean = false): Result<List<Category>> =
+        rawSeriesCategories(forceRefresh).map { cats -> if (hideAdult()) cats.filterNot { AdultFilter.isAdult(it.categoryName) } else cats }
+
+    private suspend fun rawSeriesCategories(forceRefresh: Boolean = false): Result<List<Category>> =
         fetchWithCache(
             cacheKey = buildKey("series_categories"),
             maxAgeMs = CacheManager.SERIES_MAX_AGE_MS,
@@ -189,7 +217,7 @@ class ContentRepository(
             forceRefresh = forceRefresh
         ) {
             apiService.getSeries(credentials.username, credentials.password, categoryId = categoryId)
-        }
+        }.map { withoutAdult(it, rawSeriesCategories(), { s -> s.name }) { s -> s.categoryId } }
     }
 
     /**
@@ -326,6 +354,7 @@ class ContentRepository(
                 }
             }
 
+            com.ipxtream.tv.data.local.AccountInfoStore.loginRejected.value = lastException is AuthenticationException
             if (isSuccess && successData != null) {
                 cacheManager.save(cacheKey, successData)
                 toMemory(cacheKey, successData)

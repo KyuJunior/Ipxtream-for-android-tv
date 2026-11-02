@@ -17,13 +17,13 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Fixed third-party hosts are HTTPS only, so no later edit can quietly downgrade them. -->
+    <!-- Fixed third-party hosts are HTTPS only, so no later edit can quietly downgrade them.
+         The GitHub build has its own copy of this file that also lists the beIN guide host. -->
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">github.com</domain>
         <domain includeSubdomains="true">githubusercontent.com</domain>
         <domain includeSubdomains="true">espn.com</domain>
         <domain includeSubdomains="true">espncdn.com</domain>
-        <domain includeSubdomains="false">storagebeincom-b4dvftgkaebcayar.z01.azurefd.net</domain>
         <domain includeSubdomains="true">play.google.com</domain>
     </domain-config>
 </network-security-config>

@@ -78,6 +78,9 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
@@ -416,6 +419,7 @@ private fun Scrubber(
     onExitUp:          () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
     var pendingMs by remember { mutableStateOf<Long?>(null) }
     var committedMs by remember { mutableStateOf<Long?>(null) }
 
@@ -484,6 +488,29 @@ private fun Scrubber(
                 }
             }
             .focusable()
+            // Phones: touch or drag the timeline to seek; it commits when the finger lifts.
+            .pointerInput(durationMs) {
+                if (durationMs <= 0L) return@pointerInput
+                fun at(x: Float) = (durationMs * (x / size.width).coerceIn(0f, 1f)).toLong()
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    dragging = true
+                    pendingMs = at(down.position.x)
+                    while (true) {
+                        val change = awaitPointerEvent().changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        change.consume()
+                        pendingMs = at(change.position.x)
+                    }
+                    dragging = false
+                    pendingMs?.let { target ->
+                        pendingMs = null
+                        committedMs = target
+                        onSeekTo(target)
+                    }
+                }
+            }
             .drawBehind {
                 val h = railHeight.toPx()
                 val y = size.height / 2f
@@ -499,8 +526,8 @@ private fun Scrubber(
                 drawCircle(ChipFocused, radius = t, center = Offset(x, y))
             }
     ) {
-        // Time bubble riding above the thumb while the timeline has focus.
-        if (focused) {
+        // Time bubble riding above the thumb while the timeline has focus or a finger on it.
+        if (focused || dragging) {
             val bubbleMs = pendingMs ?: committedMs ?: positionMs
             val diff = pendingMs?.let { it - positionMs }
             Box(

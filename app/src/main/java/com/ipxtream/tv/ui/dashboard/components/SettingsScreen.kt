@@ -85,6 +85,7 @@ fun SettingsScreen(
     onToggleShowSpotlight: (Boolean) -> Unit = {},
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit = {},
     onToggleShowChannelNumbers: (Boolean) -> Unit = {},
+    onToggleHideAdult: (Boolean) -> Unit = {},
     onToggleMatchReminders: (Boolean) -> Unit = {},
     onToggle24HourClock: (Boolean) -> Unit = {},
     onBufferProfileChange: (BufferProfile) -> Unit = {},
@@ -299,6 +300,7 @@ fun SettingsScreen(
                                     onToggleSpotlight = onToggleShowSpotlight,
                                     onPerformanceModeChange = onPerformanceModeChange,
                                     onToggleChannelNumbers = onToggleShowChannelNumbers,
+                                    onToggleHideAdult = onToggleHideAdult,
                                     onToggleMatchReminders = onToggleMatchReminders,
                                     onToggle24HourClock = onToggle24HourClock,
                                     onToggleWhatsNew = onToggleShowWhatsNew,
@@ -405,6 +407,7 @@ private fun GeneralSettingsContent(
     onToggleSpotlight: (Boolean) -> Unit,
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit,
     onToggleChannelNumbers: (Boolean) -> Unit,
+    onToggleHideAdult: (Boolean) -> Unit,
     onToggleMatchReminders: (Boolean) -> Unit,
     onToggle24HourClock: (Boolean) -> Unit,
     onToggleWhatsNew: (Boolean) -> Unit,
@@ -462,6 +465,15 @@ private fun GeneralSettingsContent(
         subtitle = stringResource(R.string.settings_channel_numbers_sub),
         isChecked = settings.showChannelNumbers,
         onCheckedChange = onToggleChannelNumbers,
+        modifier = Modifier.focusProperties { start = leftNavFocus }
+    )
+
+    // Adult content
+    SettingToggleItem(
+        title = stringResource(R.string.settings_hide_adult),
+        subtitle = stringResource(R.string.settings_hide_adult_sub),
+        isChecked = settings.hideAdultContent,
+        onCheckedChange = onToggleHideAdult,
         modifier = Modifier.focusProperties { start = leftNavFocus }
     )
 

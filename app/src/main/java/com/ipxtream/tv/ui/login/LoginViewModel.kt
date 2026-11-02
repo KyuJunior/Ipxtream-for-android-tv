@@ -83,6 +83,8 @@ class LoginViewModel(
                     // Save ONLY after a confirmed successful authentication.
                     credentialStore.saveAccount(credentials)
                     credentialStore.saveCredentials(credentials)
+                    com.ipxtream.tv.data.local.AccountInfoStore(appContext).saveExpiry(credentials, response.userInfo.expDate)
+                    com.ipxtream.tv.data.local.AccountInfoStore.loginRejected.value = false
                     _uiState.value = LoginUiState.Success(response)
                 } else {
                     // The server responded but rejected the credentials.

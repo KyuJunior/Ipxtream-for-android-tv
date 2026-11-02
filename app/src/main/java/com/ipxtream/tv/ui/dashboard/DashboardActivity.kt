@@ -23,7 +23,10 @@ import com.ipxtream.tv.ui.login.LoginActivity
 import com.ipxtream.tv.ui.player.PlayerViewModel
 import com.ipxtream.tv.ui.theme.IpxTvTheme
 import com.ipxtream.tv.ui.theme.screenReaderOnlySemantics
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.displayCutout
 
 /**
  * Host Activity for the Dashboard + embedded Player.
@@ -77,15 +80,19 @@ class DashboardActivity : ComponentActivity() {
             dashboardViewModel.selectSection(com.ipxtream.tv.ui.dashboard.ContentSection.MATCHES)
         }
 
-        // Android 13+: ask for the notification permission the first time Matches opens while
-        // reminders are on, so the question comes with context instead of at launch.
-        if (android.os.Build.VERSION.SDK_INT >= 33) {
-            lifecycleScope.launch {
-                dashboardViewModel.uiState
-                    .map { it.activeSection == com.ipxtream.tv.ui.dashboard.ContentSection.MATCHES && it.settings.matchReminders }
-                    .distinctUntilChanged()
-                    .collect { if (it) maybeAskNotificationPermission() }
-            }
+        // Reminders start once Matches has been opened. Android 13+ asks for the notification
+        // permission then, so the question comes with context instead of at launch.
+        lifecycleScope.launch {
+            dashboardViewModel.uiState
+                .map { it.activeSection == com.ipxtream.tv.ui.dashboard.ContentSection.MATCHES && it.settings.matchReminders }
+                .distinctUntilChanged()
+                .collect {
+                    if (it) {
+                        com.ipxtream.tv.data.match.MatchReminders.markMatchesOpened(this@DashboardActivity)
+                        com.ipxtream.tv.data.match.MatchReminders.sync(this@DashboardActivity, true)
+                        maybeAskNotificationPermission()
+                    }
+                }
         }
 
         // Feed the real decoded resolution back into the 4K measurements. Collected here, not in
@@ -108,6 +115,9 @@ class DashboardActivity : ComponentActivity() {
         // Compose paints its own opaque background; the window's would be a second
         // full-screen fill under it on every frame (expensive on TV GPUs).
         window.setBackgroundDrawable(null)
+        hideSystemBars()
+        // Phones: keep content out of a camera notch. A TV has none, so it skips the extra fill.
+        val avoidCutout = packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)
 
         setContent {
             IpxTvTheme {
@@ -117,7 +127,12 @@ class DashboardActivity : ComponentActivity() {
 
                 // Cheap accessibility tree unless a screen reader is on (see screenReaderOnlySemantics).
                 androidx.compose.foundation.layout.Box(
-                    androidx.compose.ui.Modifier.fillMaxSize().screenReaderOnlySemantics()
+                    androidx.compose.ui.Modifier.fillMaxSize().screenReaderOnlySemantics().then(
+                        if (avoidCutout) androidx.compose.ui.Modifier
+                            .background(androidx.compose.ui.graphics.Color.Black)
+                            .windowInsetsPadding(androidx.compose.foundation.layout.WindowInsets.displayCutout)
+                        else androidx.compose.ui.Modifier
+                    )
                 ) {
                 DashboardScreen(
                     uiState            = dashState,
@@ -208,6 +223,7 @@ class DashboardActivity : ComponentActivity() {
                     onToggleShowLibrary = dashboardViewModel::setShowLibrarySection,
                     onToggleShowSpotlight = dashboardViewModel::setShowSpotlightBackdrop,
                     onToggleShowChannelNumbers = dashboardViewModel::setShowChannelNumbers,
+                    onToggleHideAdult  = dashboardViewModel::setHideAdultContent,
                     onToggleMatchReminders = dashboardViewModel::setMatchReminders,
                     onToggle24HourClock = dashboardViewModel::setIs24HourClockFormat,
                     onBufferProfileChange = dashboardViewModel::setBufferProfile,
@@ -310,6 +326,19 @@ class DashboardActivity : ComponentActivity() {
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
+    /** Phones: the status and navigation bars would cover the header and video; a swipe shows them. */
+    private fun hideSystemBars() {
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+            systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemBars()  // dialogs and the keyboard can bring the bars back
+    }
+
     /** Asks once; after a refusal the reminders simply stay silent (Settings can't re-ask). */
     private fun maybeAskNotificationPermission() {
         if (android.os.Build.VERSION.SDK_INT < 33) return
@@ -319,6 +348,12 @@ class DashboardActivity : ComponentActivity() {
         if (prefs.getBoolean("asked_permission", false)) return
         prefs.edit().putBoolean("asked_permission", true).apply()
         requestPermissions(arrayOf(permission), 0)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Reminders start as soon as notifications are allowed.
+        com.ipxtream.tv.data.match.MatchReminders.sync(this, dashboardViewModel.uiState.value.settings.matchReminders)
     }
 
     private fun resolveCredentials(): AuthCredentials? {

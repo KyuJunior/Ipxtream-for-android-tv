@@ -22,7 +22,8 @@ object DemoCatalog {
     /** stream id → the real HLS address. */
     private val STREAMS = mapOf(
         1 to "https://demo.unified-streaming.com/k8s/live/stable/live.isml/.m3u8",
-        2 to "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8",
+        // The earlier Akamai test stream went dead upstream (its variant playlists return 404).
+        2 to "https://demo.unified-streaming.com/k8s/live/scte35.isml/.m3u8",
         101 to "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
         102 to "https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8"
     )

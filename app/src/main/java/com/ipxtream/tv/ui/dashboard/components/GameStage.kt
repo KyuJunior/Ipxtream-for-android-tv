@@ -1,8 +1,6 @@
 package com.ipxtream.tv.ui.dashboard.components
 
-import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -24,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,13 +37,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.tv.material3.Text
 import com.ipxtream.tv.R
 import com.ipxtream.tv.ui.theme.Accent
@@ -66,28 +59,6 @@ private fun Context.markHowToSeen(game: GameId) {
     getSharedPreferences("game_how_to", Context.MODE_PRIVATE).edit().putBoolean(game.name, true).apply()
 }
 
-private fun Context.findActivity(): Activity? {
-    var current = this
-    while (current is ContextWrapper) {
-        if (current is Activity) return current
-        current = current.baseContext
-    }
-    return null
-}
-
-/** Hides a phone's status and navigation bars while a game is up; a TV has none to hide. */
-@Composable
-private fun ImmersiveWindow() {
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val window = view.context.findActivity()?.window
-        val controller = window?.let { WindowCompat.getInsetsController(it, view) }
-        controller?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        controller?.hide(WindowInsetsCompat.Type.systemBars())
-        onDispose { controller?.show(WindowInsetsCompat.Type.systemBars()) }
-    }
-}
-
 /** A game on the whole window, with All games and How to play pills over its top corner. */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -99,7 +70,6 @@ internal fun GameStage(game: GameId, onClose: () -> Unit, modifier: Modifier = M
     val allGames = remember { FocusRequester() }
     val playButton = remember { FocusRequester() }
 
-    ImmersiveWindow()
     BackHandler { if (howToOpen) howToOpen = false else onClose() }
 
     LaunchedEffect(howToOpen) {

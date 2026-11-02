@@ -879,7 +879,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ->
             text(R.string.player_err_network)
         PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS ->
-            text(R.string.player_err_http)
+            when ((error.cause as? androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException)?.responseCode) {
+                401, 403 -> text(R.string.player_err_rejected)
+                else -> text(R.string.player_err_http)
+            }
         PlaybackException.ERROR_CODE_DECODING_FORMAT_UNSUPPORTED ->
             text(R.string.player_err_format)
         PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW ->

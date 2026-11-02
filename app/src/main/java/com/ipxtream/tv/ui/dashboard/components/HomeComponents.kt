@@ -232,10 +232,27 @@ fun UserProfileCard(
                     style = IpxTypography.BodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
+                // The server, unless the subscription ends soon or the provider refused the login.
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val expiry = androidx.compose.runtime.remember(activeAccount) {
+                    activeAccount?.let { com.ipxtream.tv.data.local.AccountInfoStore(context).expiryMs(it) }
+                }
+                val rejected by com.ipxtream.tv.data.local.AccountInfoStore.loginRejected.collectAsState()
+                val now = System.currentTimeMillis()
+                val expiryDate = expiry?.let {
+                    java.text.DateFormat.getDateInstance(java.text.DateFormat.MEDIUM, java.util.Locale.getDefault()).format(java.util.Date(it))
+                }
+                val (status, statusColor) = when {
+                    rejected -> stringResource(R.string.account_rejected) to AccentRed
+                    expiryDate != null && expiry != null && expiry < now -> stringResource(R.string.account_expired, expiryDate) to AccentRed
+                    expiryDate != null && com.ipxtream.tv.data.local.AccountInfoStore.shouldWarn(expiry, now) ->
+                        stringResource(R.string.account_expires, expiryDate) to AccentAmber
+                    else -> bidi(serverUrl) to TextSecondary
+                }
                 Text(
-                    text = bidi(serverUrl),
+                    text = status,
                     style = IpxTypography.BodySmall.copy(fontSize = 11.sp),
-                    color = TextSecondary
+                    color = statusColor
                 )
             }
             

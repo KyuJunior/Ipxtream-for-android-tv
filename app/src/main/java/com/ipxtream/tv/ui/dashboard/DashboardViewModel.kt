@@ -1316,6 +1316,11 @@ class DashboardViewModel(
         appSettingsStore.setShowChannelNumbers(show)
     }
 
+    fun setHideAdultContent(hide: Boolean) {
+        appSettingsStore.setHideAdultContent(hide)
+        refresh()
+    }
+
     fun setMatchReminders(enabled: Boolean) {
         appSettingsStore.setMatchReminders(enabled)
         com.ipxtream.tv.data.match.MatchReminders.sync(context, enabled)

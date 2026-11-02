@@ -487,4 +487,10 @@ contact@dryaser.me</string>
     <string name="game_synergy_furnace_detail">Furnace: burns metal next to it for 10 points each.</string>
     <string name="game_synergy_crystal">Crystal</string>
     <string name="game_synergy_crystal_detail">Crystal: rare, worth 6.</string>
+    <string name="settings_hide_adult">Hide Adult Content</string>
+    <string name="settings_hide_adult_sub">Hides categories and titles your provider labels as adult (18+, XXX).</string>
+    <string name="account_expires">Expires %1$s</string>
+    <string name="account_expired">Expired %1$s</string>
+    <string name="account_rejected">Login refused by provider</string>
+    <string name="player_err_rejected">Your provider refused this stream. Your subscription may have expired or reached its connection limit.</string>
 </resources>

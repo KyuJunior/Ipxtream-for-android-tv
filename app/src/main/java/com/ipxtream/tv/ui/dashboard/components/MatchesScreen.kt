@@ -647,7 +647,7 @@ private fun ChannelHint(listing: MatchListing, modifier: Modifier) {
 @Composable
 private fun Crest(url: String?, fallback: String, size: Int) {
     Box(Modifier.size(size.dp), contentAlignment = Alignment.Center) {
-        if (url.isNullOrBlank()) {
+        if (url.isNullOrBlank() || !com.ipxtream.tv.BuildConfig.TEAM_CRESTS) {
             Box(
                 Modifier.fillMaxSize().clip(CircleShape).background(SurfaceElevated),
                 contentAlignment = Alignment.Center

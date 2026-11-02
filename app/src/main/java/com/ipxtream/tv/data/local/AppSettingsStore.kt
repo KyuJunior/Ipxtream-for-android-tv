@@ -55,6 +55,8 @@ data class AppSettings(
     val showLibrarySection: Boolean = true,
     val showSpotlightBackdrop: Boolean = true,
     val showChannelNumbers: Boolean = true,
+    /** Hides categories and titles named as adult content (data/repository/AdultFilter.kt). */
+    val hideAdultContent: Boolean = true,
     val is24HourClockFormat: Boolean = false,
     val performanceMode: PerformanceMode = PerformanceMode.AUTO,
     /** ESPN league slugs shown in Matches, in the order chosen (see FollowedCompetitions.CATALOG). */
@@ -116,6 +118,7 @@ class AppSettingsStore(private val context: Context) {
             showLibrarySection = prefs.getBoolean(KEY_SHOW_LIBRARY, true),
             showSpotlightBackdrop = prefs.getBoolean(KEY_SHOW_SPOTLIGHT, true),
             showChannelNumbers = prefs.getBoolean(KEY_SHOW_CHANNEL_NUMBERS, true),
+            hideAdultContent = prefs.getBoolean(KEY_HIDE_ADULT, true),
             is24HourClockFormat = prefs.getBoolean(KEY_IS_24_HOUR_CLOCK, false),
             // Stored as "a,b,c"; an empty string means the user turned every league off.
             followedLeagues = prefs.getString(KEY_FOLLOWED_LEAGUES, null)
@@ -176,6 +179,11 @@ class AppSettingsStore(private val context: Context) {
     fun setShowChannelNumbers(show: Boolean) {
         prefs.edit().putBoolean(KEY_SHOW_CHANNEL_NUMBERS, show).apply()
         _settings.update { it.copy(showChannelNumbers = show) }
+    }
+
+    fun setHideAdultContent(hide: Boolean) {
+        prefs.edit().putBoolean(KEY_HIDE_ADULT, hide).apply()
+        _settings.update { it.copy(hideAdultContent = hide) }
     }
 
     fun setIs24HourClockFormat(is24Hour: Boolean) {
@@ -271,6 +279,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_SHOW_LIBRARY = "key_show_library"
         private const val KEY_SHOW_SPOTLIGHT = "key_show_spotlight"
         private const val KEY_SHOW_CHANNEL_NUMBERS = "key_show_channel_numbers"
+        private const val KEY_HIDE_ADULT = "key_hide_adult_content"
         private const val KEY_FOLLOWED_LEAGUES = "key_followed_leagues"
         private const val KEY_MATCH_REMINDERS = "key_match_reminders"
         private const val KEY_IS_24_HOUR_CLOCK = "key_is_24_hour_clock"
