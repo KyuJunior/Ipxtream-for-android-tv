@@ -711,3 +711,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/components/{SlingPhysics,CometSlingGame}.kt, res/values*/strings.xml, app/src/test/.../SlingPhysicsTest.kt, AGENTS.md
 - Status: done. CI command passes. A test bot cleared levels 1–12 with plain shots (1–4 each). Emulator (Play debug preview, AVD touch on with a throwaway build showing touch games, then back to `no-touch`): level 1 shot, Streak dash broke both pillars, the roof tumbled and rested rotated. Not checked: a real phone, Arabic on screen, Trio/Meteor/Pulsar and cells on screen (unit tests only), frame rate on a slow phone.
 - For the other agent: Sling best scores use the new point scale (Gloomlet 5000, spare shot 10000), so old bests are easy to beat once.
+
+### 2026-11-02 | claude
+- Did: GitHub release v2.0.37 published by CI (the Comet Sling physics change). Play bundle 2.0.37 (code 111) built by `play.yml` (upload key C9:4A…D8:B1), added to the closed test with release notes about the Comet Sling rebuild, and sent for Google's review (2.0.36 was already approved and live).
+- Files: AGENTS.md
+- Status: Play quick checks running at the time of writing; temporary upload branch deleted.
+- For the other agent: none
