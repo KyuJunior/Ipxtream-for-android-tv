@@ -60,243 +60,6 @@ import kotlin.math.min
 import kotlin.math.sin
 import kotlin.random.Random
 
-enum class SlingKind(val density: Float, val hits: Int, val toughness: Float, val points: Int) {
-    SHOT(3f, 1, Float.MAX_VALUE, 0),
-    WOOD(1f, 1, 170f, 50),
-    STONE(2.5f, 2, 260f, 100),
-    GLOOM(0.5f, 1, 110f, 500)
-}
-
-/** Everything is an axis-aligned box and [x], [y] are its centre. shortcut: boxes never rotate, add angles if towers should topple. */
-class SlingBody(val kind: SlingKind, var x: Float, var y: Float, val w: Float, val h: Float) {
-    var vx = 0f
-    var vy = 0f
-    var hits = kind.hits
-    val inverseMass = 1f / (w * h * kind.density)
-
-    /** A speed change above the toughness costs a hit; resting weight never does. */
-    fun jolt(speedChange: Float) {
-        if (speedChange > kind.toughness) hits--
-    }
-}
-
-enum class SlingPhase { READY, FLYING, WON, LOST }
-
-/** One level of Comet Sling in world units (y down): towers come from [level], so a retry is the same layout. */
-class SlingWorld(val level: Int) {
-    val bodies = ArrayList<SlingBody>()
-
-    /** What just happened, for the screen's effects: it reads and clears these every frame. */
-    val popped = ArrayList<SlingBody>()
-    var impact = 0f
-    var impactX = 0f
-    var impactY = 0f
-
-    var phase = SlingPhase.READY
-        private set
-    var score = 0
-        private set
-    var shotsLeft = 0
-        private set
-    private var shot: SlingBody? = null
-    private var flight = 0f
-    private var calm = 0f
-    private var pending = 0f
-
-    val glooms: Int get() = bodies.count { it.kind == SlingKind.GLOOM }
-
-    init {
-        val random = Random(level)
-        var x = 500f
-        repeat(min(1 + level / 2, 3)) { tower ->
-            val material = if (level >= 3 && random.nextBoolean()) SlingKind.STONE else SlingKind.WOOD
-            build(x, min(1 + (level + tower) / 3, 3), material)
-            x += 100f + random.nextFloat() * 30f
-        }
-        shotsLeft = min(glooms + 1, 5)
-    }
-
-    private fun build(x: Float, floors: Int, material: SlingKind) {
-        bodies += SlingBody(SlingKind.GLOOM, x, GROUND - 11f, 22f, 22f)
-        var floor = GROUND
-        repeat(floors) {
-            bodies += SlingBody(material, x - 22f, floor - 22f, 10f, 44f)
-            bodies += SlingBody(material, x + 22f, floor - 22f, 10f, 44f)
-            bodies += SlingBody(material, x, floor - 49f, 60f, 10f)
-            floor -= 54f
-        }
-        bodies += SlingBody(SlingKind.GLOOM, x, floor - 11f, 22f, 22f)
-    }
-
-    /** Launches the comet from [pull] away from the sling; a tiny pull is a change of mind. */
-    fun launch(pull: Offset): Boolean {
-        val held = clampPull(pull)
-        if (phase != SlingPhase.READY || held.getDistance() < MIN_PULL) return false
-        val comet = SlingBody(SlingKind.SHOT, SLING_X + held.x, SLING_Y + held.y, SHOT_SIZE, SHOT_SIZE)
-        comet.vx = -held.x * POWER
-        comet.vy = -held.y * POWER
-        bodies += comet
-        shot = comet
-        shotsLeft--
-        phase = SlingPhase.FLYING
-        flight = 0f
-        calm = 0f
-        return true
-    }
-
-    /** Advances in fixed small steps, so a slow frame can't push a fast comet through a block. */
-    fun step(dt: Float) {
-        pending += dt  // leftover time carries over; rounding up ran the world 50% fast at 60 Hz
-        while (pending >= STEP) {
-            pending -= STEP
-            fixedStep(STEP)
-        }
-    }
-
-    private fun fixedStep(h: Float) {
-        for (body in bodies) {
-            body.vy += GRAVITY * h
-            body.x += body.vx * h
-            body.y += body.vy * h
-        }
-        repeat(PASSES) {
-            for (a in bodies.indices) for (b in a + 1 until bodies.size) collide(bodies[a], bodies[b])
-            for (body in bodies) land(body, h / PASSES)
-        }
-        clearDead()
-        if (phase == SlingPhase.FLYING) settle(h)
-        // A Gloomlet still falling when the flight limit ended the turn can die while READY.
-        if (phase == SlingPhase.READY && glooms == 0 && shot == null) {
-            score += shotsLeft * SHOT_BONUS
-            phase = SlingPhase.WON
-        }
-    }
-
-    private fun collide(a: SlingBody, b: SlingBody) {
-        val overlapX = (a.w + b.w) / 2f - abs(a.x - b.x)
-        if (overlapX <= 0f) return
-        val overlapY = (a.h + b.h) / 2f - abs(a.y - b.y)
-        if (overlapY <= 0f) return
-        val alongX = overlapX < overlapY
-        val normalX = if (!alongX) 0f else if (b.x >= a.x) 1f else -1f
-        val normalY = if (alongX) 0f else if (b.y >= a.y) 1f else -1f
-        val overlap = min(overlapX, overlapY)
-        val total = a.inverseMass + b.inverseMass
-        a.x -= normalX * overlap * a.inverseMass / total
-        a.y -= normalY * overlap * a.inverseMass / total
-        b.x += normalX * overlap * b.inverseMass / total
-        b.y += normalY * overlap * b.inverseMass / total
-
-        val closing = (b.vx - a.vx) * normalX + (b.vy - a.vy) * normalY
-        if (closing >= 0f) return
-        noteImpact(-closing, (a.x + b.x) / 2f, (a.y + b.y) / 2f)
-        val bounce = if (-closing > BOUNCE_SPEED) 0.2f else 0f
-        val impulse = -(1f + bounce) * closing / total
-        a.vx -= impulse * a.inverseMass * normalX
-        a.vy -= impulse * a.inverseMass * normalY
-        b.vx += impulse * b.inverseMass * normalX
-        b.vy += impulse * b.inverseMass * normalY
-        a.jolt(impulse * a.inverseMass)
-        b.jolt(impulse * b.inverseMass)
-
-        val sliding = (b.vx - a.vx) * -normalY + (b.vy - a.vy) * normalX
-        val grip = (-sliding / total).coerceIn(-FRICTION * impulse, FRICTION * impulse)
-        a.vx += grip * a.inverseMass * normalY
-        a.vy -= grip * a.inverseMass * normalX
-        b.vx -= grip * b.inverseMass * normalY
-        b.vy += grip * b.inverseMass * normalX
-    }
-
-    private fun noteImpact(speed: Float, x: Float, y: Float) {
-        if (speed <= impact) return
-        impact = speed
-        impactX = x
-        impactY = y
-    }
-
-    private fun land(body: SlingBody, h: Float) {
-        val bottom = GROUND - body.h / 2f
-        if (body.y < bottom) return
-        body.y = bottom
-        if (body.vy > 0f) {
-            noteImpact(body.vy, body.x, GROUND)
-            body.jolt(body.vy)
-            body.vy = if (body.vy > BOUNCE_SPEED) -body.vy * 0.2f else 0f
-        }
-        body.vx *= 1f - GROUND_DRAG * h
-    }
-
-    private fun clearDead() {
-        val iterator = bodies.iterator()
-        while (iterator.hasNext()) {
-            val body = iterator.next()
-            val outside = body.x < -EDGE || body.x > WIDTH + EDGE
-            if (body.hits > 0 && !outside) continue
-            iterator.remove()
-            popped += body
-            score += body.kind.points
-            if (body === shot) shot = null
-        }
-    }
-
-    /** The turn ends once everything is still, or after a limit in case something keeps creeping. */
-    private fun settle(h: Float) {
-        flight += h
-        calm = if (bodies.any { abs(it.vx) > STILL || abs(it.vy) > STILL }) 0f else calm + h
-        if (calm < CALM_TIME && flight < MAX_FLIGHT) return
-        shot?.let {
-            bodies.remove(it)
-            popped += it
-        }
-        shot = null
-        when {
-            glooms == 0 -> {
-                score += shotsLeft * SHOT_BONUS
-                phase = SlingPhase.WON
-            }
-            shotsLeft == 0 -> phase = SlingPhase.LOST
-            else -> phase = SlingPhase.READY
-        }
-    }
-
-    companion object {
-        const val WIDTH = 800f
-        const val HEIGHT = 360f
-        const val GROUND = 340f
-        const val SLING_X = 110f
-        const val SLING_Y = 260f
-        const val SHOT_SIZE = 18f
-        const val MAX_PULL = 70f
-        const val MIN_PULL = 12f
-        const val POWER = 12f
-        const val GRAVITY = 900f
-        const val STEP = 1f / 120f
-        const val PASSES = 3
-        const val BOUNCE_SPEED = 60f
-        const val FRICTION = 0.5f
-        const val GROUND_DRAG = 6f
-        const val EDGE = 60f
-        const val STILL = 12f
-        const val CALM_TIME = 0.4f
-        const val MAX_FLIGHT = 7f
-        const val SHOT_BONUS = 300
-
-        fun clampPull(pull: Offset): Offset {
-            val length = pull.getDistance()
-            return if (length <= MAX_PULL) pull else pull * (MAX_PULL / length)
-        }
-
-        /** Where a comet pulled by [pull] would be [time] seconds after release. */
-        fun flightPoint(pull: Offset, time: Float): Offset {
-            val held = clampPull(pull)
-            return Offset(
-                SLING_X + held.x - held.x * POWER * time,
-                SLING_Y + held.y - held.y * POWER * time + GRAVITY * time * time / 2f
-            )
-        }
-    }
-}
-
 private val SlingSkyTop = Color(0xFF090723)
 private val SlingSkyMid = Color(0xFF22104E)
 private val SlingSkyLow = Color(0xFF5B1F7C)
@@ -643,25 +406,35 @@ internal fun CometSlingScreen(
         }
         w.step(dt)
         if (!reduced && tick[0]++ % 3 == 0) {
-            w.bodies.firstOrNull { it.kind == SlingKind.SHOT }?.let { particles.burst(it.x, it.y, Accent, 1, 30f, 0.35f) }
+            for (piece in w.shots) particles.burst(piece.x, piece.y, slingLook(piece.shot).flame[1], 1, 30f, 0.35f)
         }
         for (body in w.popped) {
             when {
                 body.x !in 0f..SlingWorld.WIDTH -> Unit
-                body.kind == SlingKind.SHOT -> particles.burst(body.x, body.y, Accent, 12, 90f)
-                body.kind == SlingKind.GLOOM -> {
+                body.shot != null -> particles.burst(body.x, body.y, slingLook(body.shot).body, 12, 90f)
+                body.material == SlingMaterial.GLOOM -> {
                     particles.burst(body.x, body.y, AccentOrchid, 18, 170f)
                     particles.burst(body.x, body.y, ChipFocused, 6, 110f)
                     shake.kick(5f)
-                    pops += SlingPop("+${body.kind.points}", body.x, body.y - 14f, true)
+                    pops += SlingPop("+${body.material.points}", body.x, body.y - 14f, true)
                 }
                 else -> {
-                    particles.burst(body.x, body.y, if (body.kind == SlingKind.WOOD) SlingWood else SlingStone, 10, 120f)
-                    pops += SlingPop("+${body.kind.points}", body.x, body.y, false)
+                    particles.burst(body.x, body.y, slingMaterialColor(body.material), 12, 130f)
+                    if (body.material == SlingMaterial.CRYSTAL) particles.burst(body.x, body.y, SlingCrystalLight, 8, 160f, 0.4f)
+                    pops += SlingPop("+${body.material.points}", body.x, body.y, false)
                 }
             }
         }
         w.popped.clear()
+        for (blast in w.blasts) {
+            particles.burst(blast.x, blast.y, AccentAmber, if (reduced) 14 else 28, 280f, 0.7f)
+            particles.burst(blast.x, blast.y, Accent, if (reduced) 8 else 16, 200f, 0.6f)
+            shake.kick(8f)
+            pops += SlingPop("", blast.x, blast.y - 14f, true)
+        }
+        w.blasts.clear()
+        for (trick in w.tricks) particles.burst(trick.x, trick.y, ChipFocused, 10, 120f, 0.4f)
+        w.tricks.clear()
         if (w.impact > SlingHardHit) {
             particles.burst(w.impactX, w.impactY, AccentAmber, 7, 130f, 0.4f)
             shake.kick(min(w.impact / 90f, 7f))
@@ -700,7 +473,7 @@ internal fun CometSlingScreen(
                             pullStart = position
                             pull = Offset.Zero
                         }
-                        phase == SlingPhase.FLYING -> Unit
+                        phase == SlingPhase.FLYING -> world.activate()
                         System.currentTimeMillis() - finishedAt <= 500 -> Unit  // a stray tap must not skip the result
                         phase == SlingPhase.WON -> play(level + 1)
                         else -> play(level)
@@ -753,8 +526,10 @@ internal fun CometSlingScreen(
                 modifier = Modifier.align(Alignment.Center)
             )
         } else if (phase == SlingPhase.READY && !pulling) {
+            val loaded = world.loaded
             Text(
-                stringResource(R.string.game_sling_hint),
+                if (loaded == null) stringResource(R.string.game_sling_hint)
+                else stringResource(loaded.label) + " · " + stringResource(loaded.trick) + "\n" + stringResource(R.string.game_sling_hint),
                 style = IpxTypography.BodyMedium.copy(fontSize = 12.sp, lineHeight = 15.sp),
                 color = TextPrimary,
                 textAlign = TextAlign.Center,
@@ -768,11 +543,32 @@ internal fun CometSlingScreen(
     }
 }
 
-/** The launcher, towers, Gloomlets and comet, all in world units. */
+/** Colours of one kind of throwable: [rock] outline, [body], [glow] highlight, [spark] hot spot, and its [flame] trail. */
+private class SlingLook(val rock: Color, val body: Color, val glow: Color, val spark: Color, val flame: List<Color>)
+
+private val SlingLooks = mapOf(
+    SlingShot.EMBER to SlingLook(SlingCometRock, Accent, AccentAmber, ChipFocused, SlingFlame),
+    SlingShot.STREAK to SlingLook(Color(0xFF7A4A00), AccentAmber, Color(0xFFFFE27A), Color.White, listOf(Color.White, Color(0xFFFFE27A), AccentAmber, Accent)),
+    SlingShot.TRIO to SlingLook(SlingCrystalDeep, SlingTeal, SlingCrystalLight, Color.White, listOf(Color.White, SlingCrystalLight, SlingTeal, SlingCrystalDeep)),
+    SlingShot.METEOR to SlingLook(Color(0xFF2C2638), Color(0xFF6E6680), Color(0xFFB9B2C8), AccentAmber, listOf(AccentAmber, Accent, AccentRed, Color(0xFF5A2030))),
+    SlingShot.PULSAR to SlingLook(Color(0xFF151A52), Color(0xFF4F63FF), Color(0xFFB6C2FF), Color.White, listOf(Color.White, Color(0xFFB6C2FF), Color(0xFF4F63FF), Color(0xFF2A1F7A)))
+)
+
+private fun slingLook(kind: SlingShot?) = SlingLooks.getValue(kind ?: SlingShot.EMBER)
+
+private fun slingMaterialColor(material: SlingMaterial) = when (material) {
+    SlingMaterial.CRYSTAL -> SlingCrystal
+    SlingMaterial.STONE -> SlingStone
+    SlingMaterial.CELL -> AccentAmber
+    else -> SlingWood
+}
+
+/** The launcher, towers, Gloomlets and throwables, all in world units. */
 private fun DrawScope.drawSlingWorld(scene: SlingScene, w: SlingWorld, held: Offset?, clock: Float, reduced: Boolean) {
     val waiting = held != null || w.phase == SlingPhase.READY
+    val loaded = w.loaded
     val cometAt = Offset(SlingWorld.SLING_X, SlingWorld.SLING_Y) + (held ?: Offset.Zero)
-    val flying = w.bodies.firstOrNull { it.kind == SlingKind.SHOT }
+    val flying = w.shots.firstOrNull()
     val look = if (flying != null) Offset(flying.x, flying.y) else cometAt
     val tension = (held?.getDistance() ?: 0f) / SlingWorld.MAX_PULL
     val band = lerp(SlingTeal, Accent, tension)
@@ -787,29 +583,32 @@ private fun DrawScope.drawSlingWorld(scene: SlingScene, w: SlingWorld, held: Off
             style = Stroke(1f)
         )
     }
-    if (waiting) drawLine(band, SlingBackTip, cometAt, 3.2f, StrokeCap.Round)
+    if (waiting && loaded != null) drawLine(band, SlingBackTip, cometAt, 3.2f, StrokeCap.Round)
 
     for (body in w.bodies) {
-        val above = SlingWorld.GROUND - (body.y + body.h / 2f)
+        if (body.fixed) continue
+        val above = SlingWorld.GROUND - (body.y + body.bound)
         val near = 1f - above / 140f
         if (near > 0f) {
             drawOval(
-                Color.Black.copy(alpha = 0.32f * near),
-                Offset(body.x - body.w * 0.6f, SlingWorld.GROUND + 1f),
-                Size(body.w * 1.2f, 5f)
+                Color.Black.copy(alpha = 0.32f * near.coerceAtMost(1f)),
+                Offset(body.x - body.bound * 0.9f, SlingWorld.GROUND + 1f),
+                Size(body.bound * 1.8f, 5f)
             )
         }
     }
     for (body in w.bodies) {
-        when (body.kind) {
-            SlingKind.SHOT -> drawSlingTail(Offset(body.x, body.y), body.vx, body.vy, clock, reduced, scene)
-            SlingKind.GLOOM -> drawGloomlet(Offset(body.x, body.y), body.w / 2f, look, clock, abs(body.x) * 0.37f)
-            else -> drawSlingBlock(body)
+        val kind = body.shot
+        when {
+            body.fixed -> if (body.w < SlingWorld.WIDTH) drawSlingPlinth(body)
+            kind != null -> drawSlingTail(Offset(body.x, body.y), body.vx, body.vy, clock, reduced, kind, body.touched)
+            body.material == SlingMaterial.GLOOM -> drawGloomlet(Offset(body.x, body.y), body.w / 2f, look, clock, body.x * 0.37f, body.health)
+            else -> rotate(body.angle * 57.29578f, Offset(body.x, body.y)) { drawSlingBlock(body, clock) }
         }
     }
 
-    if (waiting) {
-        drawSlingTail(cometAt, 0f, 0f, clock, reduced, scene)
+    if (waiting && loaded != null) {
+        drawSlingTail(cometAt, 0f, 0f, clock, reduced, loaded, false)
         drawLine(band, SlingFrontTip, cometAt, 3.2f, StrokeCap.Round)
     } else {
         drawLine(SlingTeal, SlingBackTip, SlingFrontTip, 2.2f, StrokeCap.Round)
@@ -817,9 +616,14 @@ private fun DrawScope.drawSlingWorld(scene: SlingScene, w: SlingWorld, held: Off
     drawPath(scene.slingFront, SlingCrystal)
     drawPath(scene.slingFacet, SlingCrystalLight.copy(alpha = 0.7f))
 
-    val spare = if (w.phase == SlingPhase.READY) w.shotsLeft - 1 else w.shotsLeft
-    for (i in 0 until spare) {
-        drawSlingCometCore(Offset(SlingWorld.SLING_X - 34f - i * 20f, SlingWorld.GROUND - 7f), 7f)
+    // The throwables still to come wait in line behind the launcher, next one first.
+    val first = w.queue.size - w.shotsLeft + if (w.phase == SlingPhase.READY) 1 else 0
+    var x = SlingWorld.SLING_X - 32f
+    for (i in first until w.queue.size) {
+        val kind = w.queue[i]
+        val r = kind.radius * 0.75f
+        drawSlingCometCore(Offset(x, SlingWorld.GROUND - r), r, kind)
+        x -= r * 2f + 6f
     }
 
     if (held != null && held.getDistance() >= SlingWorld.MIN_PULL) {
@@ -837,49 +641,83 @@ private fun DrawScope.drawSlingWorld(scene: SlingScene, w: SlingWorld, held: Off
     }
 }
 
-private fun DrawScope.drawSlingBlock(body: SlingBody) {
-    val stone = body.kind == SlingKind.STONE
-    val cracked = stone && body.hits < body.kind.hits
-    val dark = if (stone) SlingStoneDark else SlingWoodDark
+/** A fixed moon-rock ledge that lifts a tower. */
+private fun DrawScope.drawSlingPlinth(body: SlingBody) {
     val corner = Offset(body.x - body.w / 2f, body.y - body.h / 2f)
-    drawRoundRect(dark, corner, Size(body.w, body.h), CornerRadius(1.8f))
-    drawRect(
-        if (cracked) SlingStoneCracked else if (stone) SlingStone else SlingWood,
-        corner + Offset(0.9f, 0.9f),
-        Size(body.w - 1.8f, body.h - 1.8f)
-    )
-    drawRect(Color.White.copy(alpha = 0.22f), corner + Offset(0.9f, 0.9f), Size(body.w - 1.8f, 1.4f))
-    drawRect(Color.Black.copy(alpha = 0.18f), corner + Offset(0.9f, body.h - 2.3f), Size(body.w - 1.8f, 1.4f))
+    drawRoundRect(SlingDuneMid, corner, Size(body.w, body.h + 4f), CornerRadius(4f))
+    drawRect(SlingRidge, corner + Offset(3f, body.h * 0.45f), Size(body.w - 6f, body.h * 0.55f))
+    drawRect(SlingTeal.copy(alpha = 0.8f), corner, Size(body.w, 1.4f))
+}
 
+/** Drawn level around the body's centre: the caller rotates the canvas. Cracks deepen as health drops. */
+private fun DrawScope.drawSlingBlock(body: SlingBody, clock: Float) {
+    val corner = Offset(body.x - body.w / 2f, body.y - body.h / 2f)
+    val size = Size(body.w, body.h)
+    val inner = Size(body.w - 1.8f, body.h - 1.8f)
     val middle = Offset(body.x, body.y)
     val upright = body.h > body.w
     val along = if (upright) Offset(0f, body.h / 2f) else Offset(body.w / 2f, 0f)
     val across = if (upright) Offset(body.w / 2f, 0f) else Offset(0f, body.h / 2f)
-    if (stone) {
-        val seam = dark.copy(alpha = 0.55f)
-        drawLine(seam, middle + along * 0.34f - across * 0.8f, middle + along * 0.34f + across * 0.8f, 0.8f)
-        drawLine(seam, middle - along * 0.34f - across * 0.8f, middle - along * 0.34f + across * 0.8f, 0.8f)
-        if (cracked) {
-            val a = middle + along * 0.5f - across * 0.9f
-            val b = middle + along * 0.22f + across * 0.15f
-            val c = middle - along * 0.08f - across * 0.25f
-            val d = middle - along * 0.42f + across * 0.9f
-            drawLine(dark, a, b, 1f)
-            drawLine(dark, b, c, 1f)
-            drawLine(dark, c, d, 1f)
-            drawLine(dark, b, middle + along * 0.62f + across * 0.85f, 0.8f)
+    val dark: Color
+    when (body.material) {
+        SlingMaterial.CRYSTAL -> {
+            dark = SlingCrystalDeep
+            drawRoundRect(SlingCrystalLight.copy(alpha = 0.85f), corner, size, CornerRadius(1.5f))
+            drawRect(SlingCrystal.copy(alpha = 0.55f), corner + Offset(0.9f, 0.9f), inner)
+            drawLine(Color.White.copy(alpha = 0.6f), middle - along * 0.7f - across * 0.4f, middle - along * 0.2f + across * 0.4f, 1f)
         }
-    } else {
-        val grain = dark.copy(alpha = 0.5f)
-        drawLine(grain, middle + across * 0.32f - along * 0.84f, middle + across * 0.32f + along * 0.84f, 0.7f)
-        drawLine(grain, middle - across * 0.34f - along * 0.6f, middle - across * 0.34f + along * 0.72f, 0.7f)
-        drawCircle(dark, 0.9f, middle + along * 0.8f)
-        drawCircle(dark, 0.9f, middle - along * 0.8f)
+        SlingMaterial.STONE -> {
+            dark = SlingStoneDark
+            drawRoundRect(dark, corner, size, CornerRadius(1.8f))
+            drawRect(if (body.health < 0.67f) SlingStoneCracked else SlingStone, corner + Offset(0.9f, 0.9f), inner)
+            val seam = dark.copy(alpha = 0.55f)
+            drawLine(seam, middle + along * 0.34f - across * 0.8f, middle + along * 0.34f + across * 0.8f, 0.8f)
+            drawLine(seam, middle - along * 0.34f - across * 0.8f, middle - along * 0.34f + across * 0.8f, 0.8f)
+        }
+        SlingMaterial.CELL -> {
+            dark = SlingStoneDark
+            drawRoundRect(dark, corner, size, CornerRadius(2.5f))
+            drawRoundRect(
+                Accent.copy(alpha = 0.55f + 0.35f * abs(sin(clock * 5f))),
+                corner + Offset(2f, 2f),
+                Size(body.w - 4f, body.h - 4f),
+                CornerRadius(1.5f)
+            )
+            drawLine(ChipFocused, middle + Offset(1.5f, -5f), middle + Offset(-2f, 0.5f), 1.4f, StrokeCap.Round)
+            drawLine(ChipFocused, middle + Offset(-2f, 0.5f), middle + Offset(1.5f, 0.5f), 1.4f, StrokeCap.Round)
+            drawLine(ChipFocused, middle + Offset(1.5f, 0.5f), middle + Offset(-1.5f, 5f), 1.4f, StrokeCap.Round)
+        }
+        else -> {
+            dark = SlingWoodDark
+            drawRoundRect(dark, corner, size, CornerRadius(1.8f))
+            drawRect(SlingWood, corner + Offset(0.9f, 0.9f), inner)
+            val grain = dark.copy(alpha = 0.5f)
+            drawLine(grain, middle + across * 0.32f - along * 0.84f, middle + across * 0.32f + along * 0.84f, 0.7f)
+            drawLine(grain, middle - across * 0.34f - along * 0.6f, middle - across * 0.34f + along * 0.72f, 0.7f)
+            drawCircle(dark, 0.9f, middle + along * 0.8f)
+            drawCircle(dark, 0.9f, middle - along * 0.8f)
+        }
+    }
+    if (body.material != SlingMaterial.CRYSTAL) {
+        drawRect(Color.White.copy(alpha = 0.22f), corner + Offset(0.9f, 0.9f), Size(body.w - 1.8f, 1.4f))
+        drawRect(Color.Black.copy(alpha = 0.18f), corner + Offset(0.9f, body.h - 2.3f), Size(body.w - 1.8f, 1.4f))
+    }
+    val crack = if (body.material == SlingMaterial.CRYSTAL) Color.White.copy(alpha = 0.8f) else dark
+    val bend = middle - along * 0.08f - across * 0.25f
+    if (body.health < 0.67f) {
+        val knee = middle + along * 0.22f + across * 0.15f
+        drawLine(crack, middle + along * 0.5f - across * 0.9f, knee, 1f)
+        drawLine(crack, knee, bend, 1f)
+        drawLine(crack, knee, middle + along * 0.62f + across * 0.85f, 0.8f)
+    }
+    if (body.health < 0.34f) {
+        drawLine(crack, bend, middle - along * 0.42f + across * 0.9f, 1f)
+        drawLine(crack, bend, middle - along * 0.7f - across * 0.6f, 0.8f)
     }
 }
 
-/** A round one-eyed creature that watches [look]; it blinks on its own beat from [seed]. */
-private fun DrawScope.drawGloomlet(center: Offset, r: Float, look: Offset, clock: Float, seed: Float) {
+/** A round one-eyed creature that watches [look]; it blinks on its own beat from [seed], and squints once hurt. */
+private fun DrawScope.drawGloomlet(center: Offset, r: Float, look: Offset, clock: Float, seed: Float, health: Float = 1f) {
     val sway = sin(clock * 2.6f + seed) * r * 0.14f
     drawGloomAntenna(center, r, -1f, sway)
     drawGloomAntenna(center, r, 1f, sway)
@@ -896,6 +734,11 @@ private fun DrawScope.drawGloomlet(center: Offset, r: Float, look: Offset, clock
         drawCircle(Color.White, r * 0.44f, eye)
         drawCircle(SlingGloomDeep, r * 0.23f, pupil)
         drawCircle(Color.White, r * 0.07f, pupil - Offset(r * 0.07f, r * 0.08f))
+        if (health < 0.99f) {
+            // A heavy lid over the top of the eye, and a bruise.
+            drawArc(SlingGloomDeep, 180f, 180f, true, eye - Offset(r * 0.46f, r * 0.46f), Size(r * 0.92f, r * 0.92f))
+            drawCircle(SlingGloomDeep.copy(alpha = 0.5f), r * 0.2f, center + Offset(r * 0.48f, r * 0.3f))
+        }
     }
     val mouth = center + Offset(0f, r * 0.56f)
     drawLine(SlingGloomDeep, mouth - Offset(r * 0.2f, 0f), mouth + Offset(r * 0.2f, 0f), r * 0.1f, StrokeCap.Round)
@@ -924,25 +767,43 @@ private fun DrawScope.drawGloomTally(s: Float, total: Int, alive: Int, clock: Fl
     }
 }
 
-/** The comet's flame streams away from its travel, and licks upward while it waits. */
-private fun DrawScope.drawSlingTail(center: Offset, vx: Float, vy: Float, clock: Float, reduced: Boolean, scene: SlingScene) {
-    val radius = SlingWorld.SHOT_SIZE / 2f
+/** The trail streams away from the throwable's travel and licks upward while it waits. A lit Pulsar pulses. */
+private fun DrawScope.drawSlingTail(center: Offset, vx: Float, vy: Float, clock: Float, reduced: Boolean, kind: SlingShot, lit: Boolean) {
+    val look = slingLook(kind)
+    val radius = kind.radius
     val steps = if (reduced) 3 else 9
-    val back = Offset(-vx, -vy) * 0.06f + Offset(sin(clock * 11f) * 2.5f, -13f)
-    if (!reduced) {
-        translate(center.x, center.y) { drawCircle(scene.emberGlow, 30f, Offset.Zero) }
-    }
+    val back = Offset(-vx, -vy) * 0.06f + Offset(sin(clock * 11f) * 2.5f, -radius * 1.4f)
+    if (!reduced) drawCircle(look.flame[1].copy(alpha = 0.18f), radius * 2.6f, center)
     for (i in steps downTo 1) {
         val t = i / steps.toFloat()
-        val flame = SlingFlame[(t * (SlingFlame.size - 1)).toInt()]
+        val flame = look.flame[(t * (look.flame.size - 1)).toInt()]
         drawCircle(flame.copy(alpha = 0.78f * (1f - t * 0.8f)), radius * (1.05f - 0.8f * t), center + back * t)
     }
-    drawSlingCometCore(center, radius)
+    drawSlingCometCore(center, radius, kind)
+    if (kind == SlingShot.PULSAR && lit) {
+        drawCircle(Color.White.copy(alpha = 0.5f + 0.5f * abs(sin(clock * 18f))), radius * 1.5f, center, style = Stroke(1.6f))
+    }
 }
 
-private fun DrawScope.drawSlingCometCore(center: Offset, radius: Float) {
-    drawCircle(SlingCometRock, radius, center)
-    drawCircle(Accent, radius * 0.84f, center + Offset(-radius * 0.06f, -radius * 0.08f))
-    drawCircle(AccentAmber, radius * 0.56f, center + Offset(-radius * 0.12f, -radius * 0.14f))
-    drawCircle(ChipFocused, radius * 0.3f, center + Offset(-radius * 0.2f, -radius * 0.24f))
+private fun DrawScope.drawSlingCometCore(center: Offset, radius: Float, kind: SlingShot) {
+    val look = slingLook(kind)
+    drawCircle(look.rock, radius, center)
+    drawCircle(look.body, radius * 0.84f, center + Offset(-radius * 0.06f, -radius * 0.08f))
+    drawCircle(look.glow, radius * 0.56f, center + Offset(-radius * 0.12f, -radius * 0.14f))
+    drawCircle(look.spark, radius * 0.3f, center + Offset(-radius * 0.2f, -radius * 0.24f))
+    when (kind) {
+        SlingShot.METEOR -> {
+            drawCircle(look.rock.copy(alpha = 0.6f), radius * 0.2f, center + Offset(radius * 0.35f, radius * 0.3f))
+            drawCircle(look.rock.copy(alpha = 0.6f), radius * 0.14f, center + Offset(-radius * 0.4f, radius * 0.4f))
+        }
+        SlingShot.STREAK -> drawLine(
+            Color.White.copy(alpha = 0.8f),
+            center + Offset(-radius * 0.5f, radius * 0.3f),
+            center + Offset(radius * 0.5f, -radius * 0.3f),
+            1.2f,
+            StrokeCap.Round
+        )
+        SlingShot.PULSAR -> drawCircle(look.glow, radius * 1.2f, center, style = Stroke(0.9f))
+        else -> Unit
+    }
 }

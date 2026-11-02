@@ -405,7 +405,7 @@ contact@dryaser.me\n\n7. Open-source software\nAudio for AC3, E-AC3, DTS and Tru
     <string name="game_how_stack">A block slides across the top of the tower.\nPress OK or tap to drop it. Only the part that overlaps stays.\nLand three perfect drops in a row to win width back.</string>
     <string name="game_how_penalty">A marker sweeps across the goal, faster on each shot.\nPress OK or tap to shoot. The keeper dives to a random side.\nCorners are safest, but too far goes wide. You get five shots.</string>
     <string name="game_how_drift">Press OK or tap to pulse the jellyfish upward.\nBetween pulses it sinks, so keep a steady rhythm.\nSwim through the coral gaps. Touching coral or the sea floor ends the run.</string>
-    <string name="game_how_sling">Drag back anywhere on the screen, then let go to fire the comet.\nThe dots show the start of its path.\nKnock out every purple blob before your shots run out. Spare shots score extra.</string>
+    <string name="game_how_sling">Drag back anywhere on the screen, then let go to fire.\nThe dots show the start of its path.\nTap while it flies to use its trick: Streak dashes, Trio splits, Meteor slams down, Pulsar blasts.\nCrystal shatters, wood breaks, stone takes big hits. Glowing cells explode.\nKnock out every purple blob before your shots run out. Spare shots score extra.</string>
     <string name="game_how_nova">You get one tap per level.\nThe blast pops any particle it touches, and each one blasts in turn.\nReach the target number to clear the level. Dark holes swallow a blast.</string>
     <string name="game_how_slicer" formatted="false">Swipe up, down or sideways to grow a line from your finger.\nIf a ball touches the growing line, you lose a life.\nA finished line removes the side with no balls. Clear 75% and pick an upgrade.</string>
     <string name="game_how_wreck">Drag to move the small bright dot.\nThe heavy ball follows on a tether. Swing it fast to crush enemies.\nDon\'t let an enemy touch the dot.</string>
@@ -422,6 +422,16 @@ contact@dryaser.me\n\n7. Open-source software\nAudio for AC3, E-AC3, DTS and Tru
     <string name="game_sling_status">Level %1$d · Shots %2$d</string>
     <string name="game_sling_clear">Level clear! Tap for the next one.</string>
     <string name="game_sling_retry">Out of shots. Tap to try this level again.</string>
+    <string name="game_sling_ember">Ember</string>
+    <string name="game_sling_ember_trick">A solid all-round hit.</string>
+    <string name="game_sling_streak">Streak</string>
+    <string name="game_sling_streak_trick">Tap in flight to dash. Splits wood.</string>
+    <string name="game_sling_trio">Trio</string>
+    <string name="game_sling_trio_trick">Tap in flight to split in three. Shatters crystal.</string>
+    <string name="game_sling_meteor">Meteor</string>
+    <string name="game_sling_meteor_trick">Tap in flight to slam down. Cracks stone.</string>
+    <string name="game_sling_pulsar">Pulsar</string>
+    <string name="game_sling_pulsar_trick">Tap to blast. It also goes off soon after a hit.</string>
     <string name="game_nova_title">One-Tap Nova</string>
     <string name="game_nova_hint">One tap per level. Start a chain reaction.</string>
     <string name="game_nova_hole_hint">One tap per level. Dark holes swallow a blast.</string>
