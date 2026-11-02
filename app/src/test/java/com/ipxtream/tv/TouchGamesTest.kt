@@ -112,7 +112,7 @@ class TouchGamesTest {
         var limit = 0
         while (!over && score < gates && limit++ < 200_000) {
             val next = (0 until DriftWorld.GATES)
-                .filter { gateX[it] + DriftWorld.GATE_WIDTH / 2f >= DriftWorld.JELLY_X }
+                .filter { gateX[it] + DriftWorld.GATE_WIDTH / 2f + DriftWorld.HIT_RADIUS >= DriftWorld.JELLY_X }  // until the jelly is fully out
                 .minByOrNull { gateX[it] } ?: continue
             if (y > gateCenter[next] + 18f && speedY > 0f) pulse()
             step(DriftWorld.STEP)

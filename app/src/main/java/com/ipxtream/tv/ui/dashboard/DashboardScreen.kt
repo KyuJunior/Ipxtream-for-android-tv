@@ -337,7 +337,11 @@ fun DashboardScreen(
 
     // Movies/episodes, and a match started from Matches, play full screen; other live channels split.
     val showFullScreenPlayer = uiState.hasActivePlayback && (!playback.isLive || uiState.playFullScreen) && exoPlayer != null
-    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.isUpdateDialogOpen || showFullScreenPlayer
+    var openGame by androidx.compose.runtime.saveable.rememberSaveable {
+        mutableStateOf<com.ipxtream.tv.ui.dashboard.components.GameId?>(null)
+    }
+    val isOverlayOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null || uiState.isUpdateDialogOpen ||
+        showFullScreenPlayer || openGame != null
     val isDetailsOpen = uiState.detailVodItem != null || uiState.detailSeriesItem != null
 
     androidx.activity.compose.BackHandler(enabled = showFullScreenPlayer) {
@@ -863,6 +867,7 @@ fun DashboardScreen(
                         firstItemFocusRequester = firstItemFocusRequester,
                         sideNavFocusRequester   = sideNavFocusRequester,
                         headerFocusRequester    = searchBarFocusRequester,
+                        onOpen                  = { openGame = it },
                         modifier                = Modifier.fillMaxSize()
                     )
                     ContentSection.MATCHES -> androidx.compose.runtime.CompositionLocalProvider(
@@ -1057,7 +1062,27 @@ fun DashboardScreen(
                 .align(Alignment.CenterStart)
                 .focusProperties { canFocus = !isOverlayOpen }
         )
-                
+
+        openGame?.let { game ->
+            com.ipxtream.tv.ui.dashboard.components.GameStage(
+                game     = game,
+                onClose  = { openGame = null },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // Back from a game lands on its card, once the menu can take focus again.
+        var gameWasOpen by remember { mutableStateOf(false) }
+        LaunchedEffect(openGame) {
+            if (openGame != null) {
+                gameWasOpen = true
+            } else if (gameWasOpen) {
+                gameWasOpen = false
+                kotlinx.coroutines.delay(50)
+                runCatching { firstItemFocusRequester.requestFocus() }
+            }
+        }
+
         // ─── Overlay Phase: Detail Screens (Phase 7) ─────────────────────────
         if (uiState.detailVodItem != null) {
             com.ipxtream.tv.ui.dashboard.components.VodDetailScreen(

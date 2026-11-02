@@ -399,6 +399,20 @@ contact@dryaser.me</string>
     <string name="game_stack_perfect">Perfect ×%1$d</string>
     <string name="game_stack_over">Tower down at %1$d. Press OK or tap to try again.</string>
     <string name="game_stack_new_best">New best: %1$d! Press OK or tap to beat it.</string>
+    <string name="game_how_to">How to play</string>
+    <string name="game_how_play">Play</string>
+    <string name="game_new_best">New best!</string>
+    <string name="game_how_stack">A block slides across the top of the tower.\nPress OK or tap to drop it. Only the part that overlaps stays.\nLand three perfect drops in a row to win width back.</string>
+    <string name="game_how_penalty">A marker sweeps across the goal, faster on each shot.\nPress OK or tap to shoot. The keeper dives to a random side.\nCorners are safest, but too far goes wide. You get five shots.</string>
+    <string name="game_how_drift">Press OK or tap to pulse the jellyfish upward.\nBetween pulses it sinks, so keep a steady rhythm.\nSwim through the coral gaps. Touching coral or the sea floor ends the run.</string>
+    <string name="game_how_sling">Drag back anywhere on the screen, then let go to fire the comet.\nThe dots show the start of its path.\nKnock out every purple blob before your shots run out. Spare shots score extra.</string>
+    <string name="game_how_nova">You get one tap per level.\nThe blast pops any particle it touches, and each one blasts in turn.\nReach the target number to clear the level. Dark holes swallow a blast.</string>
+    <string name="game_how_slicer" formatted="false">Swipe up, down or sideways to grow a line from your finger.\nIf a ball touches the growing line, you lose a life.\nA finished line removes the side with no balls. Clear 75% and pick an upgrade.</string>
+    <string name="game_how_wreck">Drag to move the small bright dot.\nThe heavy ball follows on a tether. Swing it fast to crush enemies.\nDon\'t let an enemy touch the dot.</string>
+    <string name="game_how_bouncer">Read the rule at the top. It changes as you play.\nSwipe right to accept a card, or left to reject it.\nA wrong call or a card that reaches the gate costs a life. Gold cards count double.</string>
+    <string name="game_how_synergy">You get three symbols each turn. Tap squares to place them.\nPress Run to score. Neighbouring symbols boost each other.\nMeet the quota every five turns or the game ends.</string>
+    <string name="game_synergy_stage">Stage %1$d</string>
+    <string name="game_synergy_ready">All placed. Press Run.</string>
     <string name="game_all">All games</string>
     <string name="game_drift_title">Jelly Drift</string>
     <string name="game_drift_hint">Press OK or tap to pulse up. Swim through the gaps in the coral.</string>

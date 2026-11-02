@@ -145,7 +145,7 @@ private val Wood = Color(0xFFB9774A)
 private val Grass = Color(0xFF2E7D4F)
 
 /** Each thumbnail is drawn in code from the game's own look, on a 160 by 100 sketch. */
-private fun DrawScope.drawThumbnail(game: GameId) {
+internal fun DrawScope.drawThumbnail(game: GameId) {
     val u = size.height / 100f
     val margin = (size.width - 160f * u) / 2f
     fun p(x: Float, y: Float) = Offset(margin + x * u, y * u)

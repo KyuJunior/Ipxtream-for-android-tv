@@ -17,9 +17,12 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.ViewRootForTest
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.window.DialogWindowProvider
 
@@ -114,7 +117,10 @@ class TouchBridge(
     private fun clickableAt(x: Float, y: Float): SemanticsNode? {
         val compose = findCompose(root() ?: return null) ?: return null
         val point = Offset(x, y)
-        return allNodes(compose.semanticsOwner.rootSemanticsNode)
+        val everything = allNodes(compose.semanticsOwner.rootSemanticsNode)
+        // A full-screen layer marked touchShield() hides what it covers: only its own controls count.
+        val shield = everything.lastOrNull { it.config.contains(TouchShieldKey) && it.boundsInWindow.contains(point) }
+        return (if (shield != null) allNodes(shield) else everything)
             .filter { it.config.contains(SemanticsActions.OnClick) }
             .filter { !it.config.contains(SemanticsProperties.Disabled) }
             .filter { !it.config.contains(SemanticsActions.SetText) }  // text fields handle touch
@@ -181,3 +187,8 @@ private class TouchBridgeWindowCallback(
         delegate.onPointerCaptureChanged(hasCapture)
     }
 }
+
+private val TouchShieldKey = SemanticsPropertyKey<Unit>("TouchShield")
+
+/** Marks a layer drawn over other screens, so a tap on it never reaches the controls hidden below. */
+fun Modifier.touchShield(): Modifier = semantics { set(TouchShieldKey, Unit) }

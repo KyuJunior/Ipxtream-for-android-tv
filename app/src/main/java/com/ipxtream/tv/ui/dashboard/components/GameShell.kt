@@ -1,14 +1,19 @@
 package com.ipxtream.tv.ui.dashboard.components
 
 import android.content.Context
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -21,18 +26,31 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import com.ipxtream.tv.R
+import com.ipxtream.tv.ui.theme.Accent
+import com.ipxtream.tv.ui.theme.AccentAmber
+import com.ipxtream.tv.ui.theme.GlassStroke
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.LocalReducedEffects
+import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sin
+import kotlin.random.Random
 
 /** Keeps a game's best score in its own local prefs. */
 internal class BestScore(private val prefs: android.content.SharedPreferences) {
@@ -52,20 +70,19 @@ internal fun rememberBestScore(name: String): BestScore {
     return remember(name) { BestScore(context.getSharedPreferences(name, Context.MODE_PRIVATE)) }
 }
 
-/** The focus target every game needs: the header and side menu jump to it on the way in. */
+/** The focus target every game needs. It fills the window: only Up leaves it, for the top pills. */
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-internal fun Modifier.gameFocus(
-    game: FocusRequester,
-    sideNav: FocusRequester,
-    chip: FocusRequester
-): Modifier = focusRequester(game)
+internal fun Modifier.gameFocus(game: FocusRequester, bar: FocusRequester): Modifier = focusRequester(game)
     .focusProperties {
-        start = sideNav
-        up = chip
+        start = FocusRequester.Cancel
+        up = bar
         end = FocusRequester.Cancel
         down = FocusRequester.Cancel
     }
     .focusable()
+
+/** True while How to play is open or focus sits on the top pills: every game clock stops. */
+internal val LocalGamePaused = compositionLocalOf { false }
 
 /**
  * Calls [step] while [running] with the seconds since the last call (a stall counts as 0.05 s):
@@ -75,8 +92,9 @@ internal fun Modifier.gameFocus(
 internal fun GameLoop(running: Boolean, step: (Float) -> Unit) {
     val current by rememberUpdatedState(step)
     val framesPerStep = if (LocalReducedEffects.current) 2 else 1
-    LaunchedEffect(running, framesPerStep) {
-        if (!running) return@LaunchedEffect
+    val active = running && !LocalGamePaused.current
+    LaunchedEffect(active, framesPerStep) {
+        if (!active) return@LaunchedEffect
         var last = withFrameMillis { it }
         var frames = 0
         var elapsed = 0f
@@ -112,16 +130,150 @@ internal fun Modifier.fingerPosition(
         }
     }
 
-/** The big score and the best score over a game. */
+/** The big score and the best score, in a glass capsule so they read over any artwork. */
 @Composable
 internal fun GameScore(score: String, best: Int, modifier: Modifier = Modifier, extra: String? = null) {
-    Column(modifier.fillMaxWidth().padding(top = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Box(modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.TopCenter) {
+        Column(
+            Modifier
+                .background(Color.Black.copy(alpha = 0.42f), RoundedCornerShape(18.dp))
+                .padding(horizontal = 20.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                score,
+                style = IpxTypography.HeadlineMedium.copy(fontSize = 30.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold),
+                color = TextPrimary
+            )
+            Text(
+                stringResource(R.string.game_best, best),
+                style = IpxTypography.BodyMedium.copy(fontSize = 12.sp, lineHeight = 15.sp),
+                color = TextSecondary
+            )
+            if (extra != null) {
+                Text(
+                    extra,
+                    style = IpxTypography.BodyMedium.copy(fontSize = 12.sp, lineHeight = 15.sp),
+                    color = TextSecondary
+                )
+            }
+        }
+    }
+}
+
+/** The one result screen every game ends on. */
+@Composable
+internal fun GameResultPanel(
+    title: String,
+    score: String,
+    best: Int,
+    newBest: Boolean,
+    hint: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier
+            .background(SlateDeep.copy(alpha = 0.9f), RoundedCornerShape(20.dp))
+            .border(1.dp, GlassStroke, RoundedCornerShape(20.dp))
+            .padding(horizontal = 36.dp, vertical = 18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(title, style = IpxTypography.HeadlineMedium, color = TextPrimary, textAlign = TextAlign.Center)
         Text(
             score,
-            style = IpxTypography.HeadlineMedium.copy(fontSize = 34.sp, lineHeight = 38.sp, fontWeight = FontWeight.Bold),
-            color = TextPrimary
+            style = IpxTypography.HeadlineMedium.copy(fontSize = 46.sp, lineHeight = 52.sp, fontWeight = FontWeight.Bold),
+            color = Accent
         )
-        Text(stringResource(R.string.game_best, best), style = IpxTypography.BodyMedium, color = TextSecondary)
-        if (extra != null) Text(extra, style = IpxTypography.BodyMedium, color = TextSecondary)
+        Text(
+            if (newBest) stringResource(R.string.game_new_best) else stringResource(R.string.game_best, best),
+            style = IpxTypography.BodyMedium,
+            color = if (newBest) AccentAmber else TextSecondary
+        )
+        Text(hint, style = IpxTypography.BodyMedium, color = TextPrimary, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
     }
+}
+
+/** A sky or sea behind a game. Cheap: one gradient, no blur. */
+internal fun DrawScope.drawGameBackdrop(top: Color, bottom: Color) {
+    drawRect(Brush.verticalGradient(listOf(top, bottom)))
+}
+
+/** Pooled sparks for hits and wins. Works in whatever units the game passes in; adds no garbage per frame. */
+internal class GameParticles(private val reduced: Boolean, capacity: Int = 140) {
+    private val x = FloatArray(capacity)
+    private val y = FloatArray(capacity)
+    private val vx = FloatArray(capacity)
+    private val vy = FloatArray(capacity)
+    private val life = FloatArray(capacity)
+    private val span = FloatArray(capacity)
+    private val tint = IntArray(capacity)
+    private var next = 0
+
+    fun burst(atX: Float, atY: Float, color: Color, count: Int, speed: Float, seconds: Float = 0.6f) {
+        repeat(if (reduced) count / 3 + 1 else count) {
+            val angle = Random.nextFloat() * 6.283f
+            val pace = speed * (0.3f + Random.nextFloat() * 0.7f)
+            x[next] = atX
+            y[next] = atY
+            vx[next] = cos(angle) * pace
+            vy[next] = sin(angle) * pace
+            span[next] = seconds * (0.6f + Random.nextFloat() * 0.4f)
+            life[next] = span[next]
+            tint[next] = color.toArgb()
+            next = (next + 1) % x.size
+        }
+    }
+
+    fun step(dt: Float, gravity: Float = 0f) {
+        for (i in x.indices) {
+            if (life[i] <= 0f) continue
+            life[i] -= dt
+            vy[i] += gravity * dt
+            x[i] += vx[i] * dt
+            y[i] += vy[i] * dt
+        }
+    }
+
+    /** [scale] and the origin map the game's units to pixels; [radius] is in pixels. */
+    fun draw(scope: DrawScope, scale: Float, originX: Float, originY: Float, radius: Float) {
+        for (i in x.indices) {
+            if (life[i] <= 0f) continue
+            val fade = (life[i] / span[i]).coerceIn(0f, 1f)
+            scope.drawCircle(
+                Color(tint[i]).copy(alpha = fade),
+                radius * (0.4f + 0.6f * fade),
+                Offset(originX + x[i] * scale, originY + y[i] * scale)
+            )
+        }
+    }
+}
+
+@Composable
+internal fun rememberGameParticles(): GameParticles {
+    val reduced = LocalReducedEffects.current
+    return remember(reduced) { GameParticles(reduced) }
+}
+
+/** A short decaying camera kick for big hits; nothing moves with reduced effects. */
+internal class GameShake(private val reduced: Boolean) {
+    private var power = 0f
+    private var clock = 0f
+
+    fun kick(strength: Float) {
+        if (!reduced) power = max(power, strength)
+    }
+
+    fun step(dt: Float) {
+        clock += dt
+        power = max(0f, power - power * 9f * dt - dt)
+    }
+
+    val x: Float get() = sin(clock * 71f) * power
+    val y: Float get() = cos(clock * 53f) * power
+}
+
+@Composable
+internal fun rememberGameShake(): GameShake {
+    val reduced = LocalReducedEffects.current
+    return remember(reduced) { GameShake(reduced) }
 }
