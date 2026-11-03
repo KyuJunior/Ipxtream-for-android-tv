@@ -84,6 +84,7 @@ fun SettingsScreen(
     onToggleShowLibrary: (Boolean) -> Unit = {},
     onToggleShowSpotlight: (Boolean) -> Unit = {},
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit = {},
+    onAppThemeChange: (com.ipxtream.tv.data.local.AppTheme) -> Unit = {},
     onToggleShowChannelNumbers: (Boolean) -> Unit = {},
     onToggleHideAdult: (Boolean) -> Unit = {},
     onToggleMatchReminders: (Boolean) -> Unit = {},
@@ -299,6 +300,7 @@ fun SettingsScreen(
                                     onLanguageChange = onAppLanguageChange,
                                     onToggleSpotlight = onToggleShowSpotlight,
                                     onPerformanceModeChange = onPerformanceModeChange,
+                                    onAppThemeChange = onAppThemeChange,
                                     onToggleChannelNumbers = onToggleShowChannelNumbers,
                                     onToggleHideAdult = onToggleHideAdult,
                                     onToggleMatchReminders = onToggleMatchReminders,
@@ -406,6 +408,7 @@ private fun GeneralSettingsContent(
     onLanguageChange: (AppLanguage) -> Unit,
     onToggleSpotlight: (Boolean) -> Unit,
     onPerformanceModeChange: (com.ipxtream.tv.data.local.PerformanceMode) -> Unit,
+    onAppThemeChange: (com.ipxtream.tv.data.local.AppTheme) -> Unit,
     onToggleChannelNumbers: (Boolean) -> Unit,
     onToggleHideAdult: (Boolean) -> Unit,
     onToggleMatchReminders: (Boolean) -> Unit,
@@ -425,6 +428,17 @@ private fun GeneralSettingsContent(
         onSelect = onLanguageChange,
         labelProvider = { it.displayName },
         modifier = Modifier.focusRequester(initialFocus),
+        startFocus = leftNavFocus
+    )
+
+    // Theme
+    SettingSelectorItem(
+        title = stringResource(R.string.settings_theme),
+        subtitle = stringResource(if (settings.appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) R.string.settings_theme_apple_sub else R.string.settings_theme_ember_sub),
+        options = com.ipxtream.tv.data.local.AppTheme.values().toList(),
+        selected = settings.appTheme,
+        onSelect = onAppThemeChange,
+        labelProvider = { stringResource(it.labelRes) },
         startFocus = leftNavFocus
     )
 

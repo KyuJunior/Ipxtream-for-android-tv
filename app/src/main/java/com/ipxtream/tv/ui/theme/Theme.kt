@@ -3,6 +3,7 @@ package com.ipxtream.tv.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
@@ -41,7 +42,7 @@ object IpxTypography {
 
 // ─── Colour Scheme ────────────────────────────────────────────────────────────
 
-private val IpxDarkColors = darkColorScheme(
+private fun ipxDarkColors() = darkColorScheme(
     primary          = Accent,
     onPrimary        = TextOnAccent,
     primaryContainer = SlateGlass,
@@ -97,6 +98,10 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
         settingsStore.settings.collect { value = it.performanceMode }
     }
     val reducedEffects = remember(perfMode) { reducedEffectsFor(context, perfMode) }
+    val appTheme = settingsStore.settings.collectAsState().value.appTheme
+    val colors = if (appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) AppleColors else EmberColors
+    // Written before the content reads it, so the first frame already has the chosen palette.
+    if (activeColors !== colors) activeColors = colors
 
     // Rows and grids stay still while focus moves across visible items (see EdgeBringIntoViewSpec).
     val bringIntoView = remember(scaledDensity) { EdgeBringIntoViewSpec(edgePx = with(scaledDensity) { 48.dp.toPx() }) }
@@ -109,7 +114,7 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
     ) {
         // Standard M3 theme (for non-TV composables like TextField, SnackBar)
         MaterialTheme(
-            colorScheme = IpxDarkColors
+            colorScheme = remember(colors) { ipxDarkColors() }
         ) {
             // TV M3 theme (for Card, Surface focus states, etc.)
             TvMaterialTheme(

@@ -157,6 +157,11 @@ contact@dryaser.me\n\n7. Open-source software\nAudio for AC3, E-AC3, DTS and Tru
     <string name="performance_current_smooth">Smooth.</string>
     <string name="performance_full">Full Effects</string>
     <string name="performance_smooth">Smooth (Reduced Effects)</string>
+    <string name="theme_ember">Ember (Default)</string>
+    <string name="theme_apple">Apple</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_ember_sub">The app\'s own warm colours: Ember orange and soft Halo focus.</string>
+    <string name="settings_theme_apple_sub">Apple TV look: neutral greys, system blue and a white focus.</string>
     <string name="player_cant_play">Can\'t play this right now</string>
     <string name="player_err_behind_live">Fell behind the live stream. Reconnecting...</string>
     <string name="player_err_code">Playback error (%1$d).</string>

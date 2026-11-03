@@ -717,3 +717,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: Play quick checks running at the time of writing; temporary upload branch deleted.
 - For the other agent: none
+
+### 2026-11-03 | claude
+- Did: Apple theme as a Settings option (owner request). Settings → General → Theme: "Ember (Default)" or "Apple" (`AppTheme` in `AppSettingsStore`, key `key_app_theme`). `ui/theme/Color.kt` now holds two palettes (`EmberColors`, `AppleColors`: tvOS dark greys #1C1C1E/#2C2C2E/#3A3A3C, system blue #0A84FF with white text, white focus platter, white progress, Apple's dark green/red/yellow/purple); every token is a getter on `activeColors` (snapshot state), which `IpxTvTheme` sets from the setting, so the switch applies live, no restart. `ThemePaletteTest` checks text/focus contrast in both palettes.
+- Files: ui/theme/{Color,Theme}.kt, data/local/AppSettingsStore.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/SettingsScreen.kt, res/values*/strings.xml, app/src/test/.../ThemePaletteTest.kt, AGENTS.md
+- Status: done. CI command passes. Emulator (Play debug preview): Theme row, switching to Apple recolours the screen at once, kept after a restart. Not checked: the player HUD, games and Arabic in the Apple theme; the logo and launcher icon stay in brand colours on purpose.
+- For the other agent: colour tokens are no longer constants; a top-level `val x = listOf(Accent, …)` captures one palette for good, so read tokens inside composition/draw.

@@ -39,6 +39,11 @@ enum class PerformanceMode(@StringRes val labelRes: Int) {
     SMOOTH(R.string.performance_smooth)
 }
 
+enum class AppTheme(@StringRes val labelRes: Int) {
+    EMBER(R.string.theme_ember),
+    APPLE(R.string.theme_apple)
+}
+
 enum class AppLanguage(val code: String, val displayName: String) {
     ENGLISH("en", "English"),
     ARABIC("ar", "العربية (Arabic)"),
@@ -59,6 +64,7 @@ data class AppSettings(
     val hideAdultContent: Boolean = true,
     val is24HourClockFormat: Boolean = false,
     val performanceMode: PerformanceMode = PerformanceMode.AUTO,
+    val appTheme: AppTheme = AppTheme.EMBER,
     /** ESPN league slugs shown in Matches, in the order chosen (see FollowedCompetitions.CATALOG). */
     val followedLeagues: List<String> = com.ipxtream.tv.data.match.FollowedCompetitions.DEFAULT,
     /** Notify shortly before matches of the followed leagues kick off (data/match/MatchReminders.kt). */
@@ -110,9 +116,13 @@ class AppSettingsStore(private val context: Context) {
         val perfName = prefs.getString(KEY_PERFORMANCE_MODE, PerformanceMode.AUTO.name) ?: PerformanceMode.AUTO.name
         val perf = runCatching { PerformanceMode.valueOf(perfName) }.getOrDefault(PerformanceMode.AUTO)
 
+        val themeName = prefs.getString(KEY_APP_THEME, AppTheme.EMBER.name) ?: AppTheme.EMBER.name
+        val theme = runCatching { AppTheme.valueOf(themeName) }.getOrDefault(AppTheme.EMBER)
+
         return AppSettings(
             appLanguage = lang,
             performanceMode = perf,
+            appTheme = theme,
             showWhatsNewSection = prefs.getBoolean(KEY_SHOW_WHATS_NEW, true),
             showDownloadsSection = prefs.getBoolean(KEY_SHOW_DOWNLOADS, true),
             showLibrarySection = prefs.getBoolean(KEY_SHOW_LIBRARY, true),
@@ -194,6 +204,11 @@ class AppSettingsStore(private val context: Context) {
     fun setPerformanceMode(mode: PerformanceMode) {
         prefs.edit().putString(KEY_PERFORMANCE_MODE, mode.name).apply()
         _settings.update { it.copy(performanceMode = mode) }
+    }
+
+    fun setAppTheme(theme: AppTheme) {
+        prefs.edit().putString(KEY_APP_THEME, theme.name).apply()
+        _settings.update { it.copy(appTheme = theme) }
     }
 
     fun setBufferProfile(profile: BufferProfile) {
@@ -294,6 +309,7 @@ class AppSettingsStore(private val context: Context) {
         private const val KEY_SUBTITLE_TEXT_SIZE = "key_subtitle_text_size"
         private const val KEY_AUTO_REFRESH_CACHE = "key_auto_refresh_cache"
         private const val KEY_PERFORMANCE_MODE = "key_performance_mode"
+        private const val KEY_APP_THEME = "key_app_theme"
 
         @Volatile
         private var instance: AppSettingsStore? = null

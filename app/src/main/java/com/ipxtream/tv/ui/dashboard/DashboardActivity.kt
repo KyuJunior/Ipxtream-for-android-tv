@@ -228,6 +228,7 @@ class DashboardActivity : ComponentActivity() {
                     onToggle24HourClock = dashboardViewModel::setIs24HourClockFormat,
                     onBufferProfileChange = dashboardViewModel::setBufferProfile,
                     onPerformanceModeChange = dashboardViewModel::setPerformanceMode,
+                    onAppThemeChange = dashboardViewModel::setAppTheme,
                     onToggleAutoPlayNextEpisode = dashboardViewModel::setAutoPlayNextEpisode,
                     onAspectRatioChange = dashboardViewModel::setDefaultAspectRatio,
                     onDecoderModeChange = dashboardViewModel::setDecoderMode,

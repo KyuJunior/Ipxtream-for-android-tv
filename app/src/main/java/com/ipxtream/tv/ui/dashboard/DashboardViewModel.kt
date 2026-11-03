@@ -1334,6 +1334,10 @@ class DashboardViewModel(
         appSettingsStore.setPerformanceMode(mode)
     }
 
+    fun setAppTheme(theme: com.ipxtream.tv.data.local.AppTheme) {
+        appSettingsStore.setAppTheme(theme)
+    }
+
     fun setBufferProfile(profile: com.ipxtream.tv.data.local.BufferProfile) {
         appSettingsStore.setBufferProfile(profile)
     }
