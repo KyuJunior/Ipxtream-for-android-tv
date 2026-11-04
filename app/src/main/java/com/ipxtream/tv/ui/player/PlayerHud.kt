@@ -146,11 +146,13 @@ fun PlayerHud(
     onEpisodesClick:    (() -> Unit)? = null,
     onClose:            () -> Unit,
     playButtonFocus:    FocusRequester,
+    scrubberFocus:      FocusRequester,
+    scrubNudge:         Int,
+    onScrubNudgeUsed:   () -> Unit,
     onHideAndFocusRoot: () -> Unit,
     modifier:           Modifier = Modifier
 ) {
     val visible = uiState.isHudVisible && uiState.playbackState != PlaybackState.ENDED
-    val scrubberFocus = remember { FocusRequester() }
     val smoothPosition = rememberSmoothPosition(
         positionMs = uiState.currentPositionMs,
         durationMs = uiState.durationMs,
@@ -217,7 +219,9 @@ fun PlayerHud(
                         downTarget        = playButtonFocus,
                         onSeekTo          = onSeekTo,
                         onTogglePlayPause = onTogglePlayPause,
-                        onExitUp          = onHideAndFocusRoot
+                        onExitUp          = onHideAndFocusRoot,
+                        nudge             = scrubNudge,
+                        onNudgeUsed       = onScrubNudgeUsed
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth()) {
@@ -416,12 +420,22 @@ private fun Scrubber(
     downTarget:        FocusRequester,
     onSeekTo:          (Long) -> Unit,
     onTogglePlayPause: () -> Unit,
-    onExitUp:          () -> Unit
+    onExitUp:          () -> Unit,
+    nudge:             Int,
+    onNudgeUsed:       () -> Unit
 ) {
     var focused by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
     var pendingMs by remember { mutableStateOf<Long?>(null) }
     var committedMs by remember { mutableStateOf<Long?>(null) }
+
+    // Left/Right pressed while the controls were hidden: take that press as the first 10 s scrub step.
+    LaunchedEffect(nudge) {
+        if (nudge == 0) return@LaunchedEffect
+        val base = pendingMs ?: committedMs ?: positionMs
+        pendingMs = (base + nudge * 10_000L).coerceIn(0L, durationMs.coerceAtLeast(0L))
+        onNudgeUsed()
+    }
 
     // Commit the scrub once the user stops pressing.
     LaunchedEffect(pendingMs) {

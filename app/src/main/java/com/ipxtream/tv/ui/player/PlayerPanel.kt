@@ -231,6 +231,9 @@ fun PlayerPanel(
     // ── Focus Requester to steal focus on launch ─────────────────────────────
     val focusRequester = remember { FocusRequester() }
     val playButtonFocus = remember { FocusRequester() }
+    val scrubberFocus = remember { FocusRequester() }
+    var scrubNudge by remember { mutableIntStateOf(0) }
+    var hudOpensOnTimeline by remember { mutableStateOf(false) }
 
     androidx.compose.runtime.LaunchedEffect(uiState.hasActiveMedia, uiState.activeEpisode, uiState.activeStream) {
         // Don't grab focus while closing (state resets as the panel fades out).
@@ -242,7 +245,8 @@ fun PlayerPanel(
     androidx.compose.runtime.LaunchedEffect(uiState.isHudVisible) {
         if (uiState.isHudVisible) {
             delay(50)
-            runCatching { playButtonFocus.requestFocus() }
+            runCatching { (if (hudOpensOnTimeline) scrubberFocus else playButtonFocus).requestFocus() }
+            hudOpensOnTimeline = false
         } else {
             runCatching { focusRequester.requestFocus() }
         }
@@ -424,18 +428,20 @@ fun PlayerPanel(
                             }
 
                             Key.DirectionLeft,
-                            Key.MediaRewind -> {
-                                seekBy(-10_000L)
-                                viewModel.onHudInteraction()
-                                runCatching { playButtonFocus.requestFocus() }
-                                true
-                            }
-
+                            Key.MediaRewind,
                             Key.DirectionRight,
                             Key.MediaFastForward -> {
-                                seekBy(10_000L)
-                                viewModel.onHudInteraction()
-                                runCatching { playButtonFocus.requestFocus() }
+                                val dir = if (event.key == Key.DirectionRight || event.key == Key.MediaFastForward) 1 else -1
+                                if (!uiState.isLive && uiState.durationMs > 0) {
+                                    // Open the controls on the timeline, so further Left/Right presses keep seeking.
+                                    scrubNudge = dir
+                                    hudOpensOnTimeline = true
+                                    viewModel.onHudInteraction()
+                                } else {
+                                    seekBy(dir * 10_000L)
+                                    viewModel.onHudInteraction()
+                                    runCatching { playButtonFocus.requestFocus() }
+                                }
                                 true
                             }
 
@@ -584,6 +590,9 @@ fun PlayerPanel(
             onEpisodesClick    = onEpisodesClick,
             onClose            = onStop,
             playButtonFocus    = playButtonFocus,
+            scrubberFocus      = scrubberFocus,
+            scrubNudge         = scrubNudge,
+            onScrubNudgeUsed   = { scrubNudge = 0 },
             onHideAndFocusRoot = {
                 viewModel.hideHud()
                 runCatching { focusRequester.requestFocus() }

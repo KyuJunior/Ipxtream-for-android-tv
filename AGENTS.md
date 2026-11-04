@@ -723,3 +723,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/theme/{Color,Theme}.kt, data/local/AppSettingsStore.kt, ui/dashboard/{DashboardActivity,DashboardScreen,DashboardViewModel}.kt, ui/dashboard/components/SettingsScreen.kt, res/values*/strings.xml, app/src/test/.../ThemePaletteTest.kt, AGENTS.md
 - Status: done. CI command passes. Emulator (Play debug preview): Theme row, switching to Apple recolours the screen at once, kept after a restart. Not checked: the player HUD, games and Arabic in the Apple theme; the logo and launcher icon stay in brand colours on purpose.
 - For the other agent: colour tokens are no longer constants; a top-level `val x = listOf(Accent, …)` captures one palette for good, so read tokens inside composition/draw.
+
+### 2026-11-04 | claude
+- Did: Left/Right while a film or episode plays now keep seeking (owner report: only the first press seeked; the HUD then put focus on Play, so later presses walked the buttons). With the controls hidden, Left/Right (and rewind/fast-forward keys) open the HUD with focus on the timeline and count as its first 10 s step (`scrubNudge` → `Scrubber`), so every further press scrubs (10 s, then 30 s/60 s when held) and commits after 650 ms. Live channels and titles with unknown length keep the old ±10 s + Play focus.
+- Files: ui/player/{PlayerPanel,PlayerHud}.kt, AGENTS.md
+- Status: done. CI command passes. Emulator (Play debug preview, demo, Tears of Steel): three Right presses with the HUD hidden moved 1:27 → 1:57. Not checked: Left on screen (same code path), the owner's TV and remote.
+- For the other agent: `PlayerHud` takes `scrubberFocus`/`scrubNudge` from `PlayerPanel` now.
