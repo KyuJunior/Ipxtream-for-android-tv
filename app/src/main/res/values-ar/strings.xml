@@ -430,6 +430,20 @@ contact@dryaser.me\n\n7. البرمجيات مفتوحة المصدر\nيستخ�
     <string name="game_scores_top">أفضل 10</string>
     <string name="game_scores_recent">آخر الجولات</string>
     <string name="game_scores_empty">لم تلعب أي جولة بعد. أنهِ جولة لتظهر هنا.</string>
+    <string name="game_player_title">اختر اسمك كلاعب</string>
+    <string name="game_player_hint">يظهر بجانب نتائجك، فيعرف كل من يلعب على هذا الجهاز نتيجة من هذه.</string>
+    <string name="game_player_field">اسم اللاعب</string>
+    <string name="game_player_save">حفظ</string>
+    <string name="game_player_random">اسم عشوائي</string>
+    <string name="game_player_chip">اللاعب: %1$s</string>
+    <string-array name="game_name_adjectives">
+        <item>الصقر</item><item>النمر</item><item>المذنب</item><item>الباندا</item><item>الذئب</item>
+        <item>الصاروخ</item><item>الثعلب</item><item>النسر</item><item>القرش</item><item>التنين</item>
+    </string-array>
+    <string-array name="game_name_nouns">
+        <item>السريع</item><item>الشجاع</item><item>المحظوظ</item><item>الهادئ</item><item>الكوني</item>
+        <item>الذهبي</item><item>الذكي</item><item>الجامح</item><item>القوي</item><item>الخفي</item>
+    </string-array>
     <string name="game_sling_clear">اجتزت المستوى! المس الشاشة للمستوى التالي.</string>
     <string name="game_sling_retry">انتهت الرميات. المس الشاشة لإعادة المستوى.</string>
     <string name="game_sling_ember">جمرة</string>

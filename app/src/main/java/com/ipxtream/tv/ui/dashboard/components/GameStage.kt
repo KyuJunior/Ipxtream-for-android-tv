@@ -225,6 +225,9 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
         ?: java.util.Locale.getDefault()
     val dates = remember(locale) { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT, locale) }
     fun date(play: GamePlay) = if (play.at > 0) dates.format(java.util.Date(play.at)) else "—"
+    val context = LocalContext.current
+    val me = remember { context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE).getString(GamePlayerName.KEY, null).orEmpty() }
+    fun mine(play: GamePlay) = me.isNotEmpty() && play.name == me
 
     // The empty pointer block keeps touches on this sheet from reaching the game below.
     Box(
@@ -249,11 +252,11 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
                 Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text(stringResource(R.string.game_scores_top), style = IpxTypography.TitleMedium, color = Accent)
-                        top.forEachIndexed { index, play -> ScoreRow("${index + 1}", play.score, date(play), highlight = index == 0) }
+                        top.forEachIndexed { index, play -> ScoreRow("${index + 1}", play, date(play), best = index == 0, mine = mine(play)) }
                     }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text(stringResource(R.string.game_scores_recent), style = IpxTypography.TitleMedium, color = Accent)
-                        recent.forEach { play -> ScoreRow(null, play.score, date(play), highlight = false) }
+                        recent.forEach { play -> ScoreRow(null, play, date(play), best = false, mine = mine(play)) }
                     }
                 }
             }
@@ -268,16 +271,24 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
 }
 
 @Composable
-private fun ScoreRow(rank: String?, score: Int, date: String, highlight: Boolean) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+private fun ScoreRow(rank: String?, play: GamePlay, date: String, best: Boolean, mine: Boolean) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         if (rank != null) {
             Text(rank, style = IpxTypography.BodyMedium, color = TextSecondary, modifier = Modifier.widthIn(min = 22.dp))
         }
         Text(
-            score.toString(),
+            play.score.toString(),
             style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"),
-            color = if (highlight) Accent else TextPrimary,
+            color = if (best) Accent else TextPrimary,
             modifier = Modifier.widthIn(min = 56.dp)
+        )
+        // The viewer's own scores stand out so they can find themselves among other players.
+        Text(
+            play.name.ifEmpty { "—" },
+            style = IpxTypography.BodyMedium,
+            color = if (mine) Accent else TextPrimary,
+            maxLines = 1,
+            modifier = Modifier.weight(1f)
         )
         Text(date, style = IpxTypography.BodyMedium.copy(fontSize = 12.sp), color = TextSecondary)
     }

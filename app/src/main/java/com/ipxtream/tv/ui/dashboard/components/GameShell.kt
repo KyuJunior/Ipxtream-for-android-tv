@@ -53,9 +53,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 
 /** One finished run: its [score] and when it ended ([at], epoch ms; 0 for a best saved before history existed). */
-internal data class GamePlay(val score: Int, val at: Long)
+internal data class GamePlay(val score: Int, val at: Long, val name: String = "")
 
-/** The recent plays and the top 10 of a game, stored on this device as "score:time;score:time". */
+/** The recent plays and the top 10 of a game, stored on this device as "score:time:name;…" (older entries have no name). */
 internal object GameRecords {
     const val HISTORY = 10
     const val TOP = 10
@@ -64,10 +64,15 @@ internal object GameRecords {
         val parts = entry.split(':')
         val score = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
         val at = parts.getOrNull(1)?.toLongOrNull() ?: return@mapNotNull null
-        if (parts.size == 2) GamePlay(score, at) else null
+        when (parts.size) {
+            2 -> GamePlay(score, at)
+            3 -> GamePlay(score, at, parts[2])
+            else -> null
+        }
     }
 
-    fun format(plays: List<GamePlay>): String = plays.joinToString(";") { "${it.score}:${it.at}" }
+    fun format(plays: List<GamePlay>): String =
+        plays.joinToString(";") { "${it.score}:${it.at}:${GamePlayerName.clean(it.name)}" }
 
     fun addToHistory(history: List<GamePlay>, play: GamePlay): List<GamePlay> = (listOf(play) + history).take(HISTORY)
 
@@ -77,7 +82,23 @@ internal object GameRecords {
 }
 
 /** Keeps a game's best score, its recent plays and its top 10 in the game's own local prefs. */
-internal class BestScore(private val prefs: android.content.SharedPreferences) {
+/** The name a player shows under on this device's leaderboards. */
+internal object GamePlayerName {
+    const val PREFS = "games_player"
+    const val KEY = "name"
+    const val MAX = 20
+
+    /** No separators of the stored format, no control characters, at most [MAX] characters. */
+    fun clean(raw: String): String = raw.filterNot { it == ':' || it == ';' || it.isISOControl() }.trim().take(MAX)
+
+    fun random(adjectives: List<String>, nouns: List<String>, random: kotlin.random.Random = kotlin.random.Random): String =
+        clean("${adjectives.random(random)} ${nouns.random(random)} ${random.nextInt(10, 100)}")
+}
+
+internal class BestScore(
+    private val prefs: android.content.SharedPreferences,
+    private val player: android.content.SharedPreferences? = null
+) {
     private var stored by mutableIntStateOf(prefs.getInt("best", 0))
     val value: Int get() = stored
 
@@ -89,7 +110,7 @@ internal class BestScore(private val prefs: android.content.SharedPreferences) {
 
     /** A run has ended: it goes into the history and, if good enough, the top 10. */
     fun played(score: Int, at: Long = System.currentTimeMillis()) {
-        val play = GamePlay(score, at)
+        val play = GamePlay(score, at, player?.getString(GamePlayerName.KEY, null).orEmpty())
         prefs.edit()
             .putString("history", GameRecords.format(GameRecords.addToHistory(history(), play)))
             .putString("top", GameRecords.format(GameRecords.addToTop(top(), play)))
@@ -107,7 +128,12 @@ internal class BestScore(private val prefs: android.content.SharedPreferences) {
 @Composable
 internal fun rememberBestScore(name: String): BestScore {
     val context = LocalContext.current
-    return remember(name) { BestScore(context.getSharedPreferences(name, Context.MODE_PRIVATE)) }
+    return remember(name) {
+        BestScore(
+            context.getSharedPreferences(name, Context.MODE_PRIVATE),
+            context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE)
+        )
+    }
 }
 
 /** The focus target every game needs. It fills the window: only Up leaves it, for the top pills. */

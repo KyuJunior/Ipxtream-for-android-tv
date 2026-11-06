@@ -6,11 +6,13 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,6 +25,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -59,6 +63,7 @@ import com.ipxtream.tv.ui.theme.AccentGreen
 import com.ipxtream.tv.ui.theme.AccentOrchid
 import com.ipxtream.tv.ui.theme.AccentRed
 import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.IpxSpacing
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.LocalReducedEffects
 import com.ipxtream.tv.ui.theme.TextPrimary
@@ -144,19 +149,55 @@ fun GamesScreen(
     }
     val games = remember(hasTouch) { GameId.entries.filter { hasTouch || !it.touchOnly } }
     var lastPlayed by rememberSaveable { mutableStateOf<GameId?>(null) }
+    val playerPrefs = remember { context.getSharedPreferences(GamePlayerName.PREFS, android.content.Context.MODE_PRIVATE) }
+    var player by remember { mutableStateOf(playerPrefs.getString(GamePlayerName.KEY, null).orEmpty()) }
+    // The first visit asks for a name; the chip above the games changes it later.
+    var naming by rememberSaveable { mutableStateOf(player.isEmpty()) }
+    val playerChip = remember { FocusRequester() }
 
-    GameMenu(
-        games = games,
-        lastPlayed = lastPlayed,
-        firstItemFocusRequester = firstItemFocusRequester,
-        sideNavFocusRequester = sideNavFocusRequester,
-        headerFocusRequester = headerFocusRequester,
-        onOpen = {
-            lastPlayed = it
-            onOpen(it)
-        },
-        modifier = modifier
-    )
+    Column(modifier) {
+        PillChip(
+            label = stringResource(R.string.game_player_chip, player),
+            selected = false,
+            onClick = { naming = true },
+            modifier = Modifier
+                .padding(start = IpxSpacing.Gutter, top = 4.dp, bottom = 4.dp)
+                .focusRequester(playerChip)
+                .focusProperties {
+                    up = headerFocusRequester
+                    start = sideNavFocusRequester
+                    down = firstItemFocusRequester
+                }
+        )
+        GameMenu(
+            games = games,
+            lastPlayed = lastPlayed,
+            firstItemFocusRequester = firstItemFocusRequester,
+            sideNavFocusRequester = sideNavFocusRequester,
+            headerFocusRequester = playerChip,
+            onOpen = {
+                lastPlayed = it
+                onOpen(it)
+            },
+            modifier = Modifier.weight(1f)
+        )
+    }
+    var named by remember { mutableStateOf(false) }
+    if (naming) {
+        PlayerNameDialog(current = player) { name ->
+            playerPrefs.edit().putString(GamePlayerName.KEY, name).apply()
+            player = name
+            naming = false
+            named = true
+        }
+    }
+    // Back on the games, on the chip that shows the new name, not wherever focus fell when the dialog closed.
+    LaunchedEffect(named) {
+        if (!named) return@LaunchedEffect
+        kotlinx.coroutines.delay(100)
+        runCatching { playerChip.requestFocus() }
+        named = false
+    }
 }
 
 internal fun blockColor(index: Int) = Color.hsv((20f + index * 11f) % 360f, 0.62f, 0.98f)

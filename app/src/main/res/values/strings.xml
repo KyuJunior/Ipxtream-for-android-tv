@@ -430,6 +430,20 @@ contact@dryaser.me\n\n7. Open-source software\nAudio for AC3, E-AC3, DTS and Tru
     <string name="game_scores_top">Top 10</string>
     <string name="game_scores_recent">Recent plays</string>
     <string name="game_scores_empty">No games played yet. Finish a game and it shows here.</string>
+    <string name="game_player_title">Choose your player name</string>
+    <string name="game_player_hint">It shows next to your scores, so everyone on this device knows whose score is whose.</string>
+    <string name="game_player_field">Player name</string>
+    <string name="game_player_save">Save</string>
+    <string name="game_player_random">Random name</string>
+    <string name="game_player_chip">Player: %1$s</string>
+    <string-array name="game_name_adjectives">
+        <item>Swift</item><item>Brave</item><item>Lucky</item><item>Silent</item><item>Cosmic</item>
+        <item>Golden</item><item>Clever</item><item>Wild</item><item>Mighty</item><item>Sneaky</item>
+    </string-array>
+    <string-array name="game_name_nouns">
+        <item>Falcon</item><item>Tiger</item><item>Comet</item><item>Panda</item><item>Wolf</item>
+        <item>Rocket</item><item>Fox</item><item>Eagle</item><item>Shark</item><item>Dragon</item>
+    </string-array>
     <string name="game_sling_clear">Level clear! Tap for the next one.</string>
     <string name="game_sling_retry">Out of shots. Tap to try this level again.</string>
     <string name="game_sling_ember">Ember</string>
