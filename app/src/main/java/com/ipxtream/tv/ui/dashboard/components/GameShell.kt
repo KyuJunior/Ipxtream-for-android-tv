@@ -84,8 +84,8 @@ internal object GameRecords {
 /** Keeps a game's best score, its recent plays and its top 10 in the game's own local prefs. */
 /** The name a player shows under on this device's leaderboards. */
 internal object GamePlayerName {
-    const val PREFS = "games_player"
-    const val KEY = "name"
+    const val PREFS = com.ipxtream.tv.data.game.PlayerKeys.PREFS
+    const val KEY = com.ipxtream.tv.data.game.PlayerKeys.NAME
     const val MAX = 20
 
     /** No separators of the stored format, no control characters, at most [MAX] characters. */
@@ -97,7 +97,9 @@ internal object GamePlayerName {
 
 internal class BestScore(
     private val prefs: android.content.SharedPreferences,
-    private val player: android.content.SharedPreferences? = null
+    private val player: android.content.SharedPreferences? = null,
+    /** The game's id on the public leaderboard (its prefs name); empty = local only. */
+    private val game: String = ""
 ) {
     private var stored by mutableIntStateOf(prefs.getInt("best", 0))
     val value: Int get() = stored
@@ -116,6 +118,12 @@ internal class BestScore(
             .putString("top", GameRecords.format(GameRecords.addToTop(top(), play)))
             .apply()
         submit(score)
+        sync()
+    }
+
+    /** Sends this game's best to the public leaderboard if it isn't there yet. */
+    fun sync() {
+        if (game.isNotEmpty() && player != null) com.ipxtream.tv.data.game.Leaderboard.sync(game, prefs, player)
     }
 
     fun history(): List<GamePlay> = GameRecords.parse(prefs.getString("history", null))
@@ -131,7 +139,8 @@ internal fun rememberBestScore(name: String): BestScore {
     return remember(name) {
         BestScore(
             context.getSharedPreferences(name, Context.MODE_PRIVATE),
-            context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE)
+            context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE),
+            name
         )
     }
 }

@@ -35,6 +35,8 @@ android {
         targetSdk     = 36
         versionCode   = versionProps.getProperty("VERSION_CODE").toInt()
         versionName   = versionProps.getProperty("VERSION_NAME")
+        // Public game leaderboard (server/leaderboard). Empty = scores stay on the device.
+        buildConfigField("String", "LEADERBOARD_URL", "\"https://xtream-leaderboard.yaseralhasany2.workers.dev\"")
     }
 
     // Two release channels from one codebase (docs/play-store-plan.md). Flavor-only code lives in

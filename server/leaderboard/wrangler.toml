@@ -1,0 +1,8 @@
+name = "xtream-leaderboard"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "xtream-leaderboard"
+database_id = "1e18f268-4042-4b70-814a-2ffc58bcf326"

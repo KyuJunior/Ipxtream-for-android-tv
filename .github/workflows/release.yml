@@ -12,6 +12,7 @@ on:
       - 'الهوية البصرية/**'
       - '.gitignore'
       - '.github/workflows/play.yml'
+      - 'server/**'
 
 permissions:
   contents: write

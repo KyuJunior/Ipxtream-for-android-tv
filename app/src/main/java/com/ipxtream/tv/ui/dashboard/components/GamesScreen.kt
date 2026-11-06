@@ -185,7 +185,9 @@ fun GamesScreen(
     var named by remember { mutableStateOf(false) }
     if (naming) {
         PlayerNameDialog(current = player) { name ->
-            playerPrefs.edit().putString(GamePlayerName.KEY, name).apply()
+            val renamed = player.isNotEmpty() && player != name
+            playerPrefs.edit().putString(GamePlayerName.KEY, name).commit()
+            if (renamed) com.ipxtream.tv.data.game.Leaderboard.rename(playerPrefs)
             player = name
             naming = false
             named = true

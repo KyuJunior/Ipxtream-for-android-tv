@@ -2,7 +2,6 @@ package com.ipxtream.tv.ui.dashboard.components
 
 import android.content.Context
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -42,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import com.ipxtream.tv.R
+import com.ipxtream.tv.data.game.Leaderboard
 import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.GlassStroke
 import com.ipxtream.tv.ui.theme.IpxTypography
@@ -182,7 +182,7 @@ private fun HowToPlay(game: GameId, playButton: FocusRequester, onPlay: () -> Un
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(Modifier.weight(0.42f).aspectRatio(16f / 10f).clip(RoundedCornerShape(14.dp))) {
-                Canvas(Modifier.fillMaxSize()) { drawThumbnail(game) }
+                GameThumbnail(game, Modifier.fillMaxSize())
             }
             Column(Modifier.weight(0.58f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(stringResource(game.title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
@@ -215,7 +215,7 @@ private fun HowToPlay(game: GameId, playButton: FocusRequester, onPlay: () -> Un
     }
 }
 
-/** This game's top 10 and its recent plays, all kept on this device. */
+/** The public top (or, offline, this device's top 10) and this device's recent plays. */
 @Composable
 private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val records = rememberBestScore(game.prefs)
@@ -226,8 +226,16 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
     val dates = remember(locale) { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT, locale) }
     fun date(play: GamePlay) = if (play.at > 0) dates.format(java.util.Date(play.at)) else "—"
     val context = LocalContext.current
-    val me = remember { context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE).getString(GamePlayerName.KEY, null).orEmpty() }
+    val playerPrefs = remember { context.getSharedPreferences(GamePlayerName.PREFS, Context.MODE_PRIVATE) }
+    val me = remember { playerPrefs.getString(GamePlayerName.KEY, null).orEmpty() }
     fun mine(play: GamePlay) = me.isNotEmpty() && play.name == me
+    var board by remember(game) { mutableStateOf<Leaderboard.Board?>(null) }
+    var loading by remember(game) { mutableStateOf(Leaderboard.enabled) }
+    LaunchedEffect(game) {
+        records.sync()  // a best that couldn't be sent earlier
+        board = Leaderboard.top(game.prefs, playerPrefs)
+        loading = false
+    }
 
     // The empty pointer block keeps touches on this sheet from reaching the game below.
     Box(
@@ -246,18 +254,46 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(stringResource(game.title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
-            if (top.isEmpty()) {
-                Text(stringResource(R.string.game_scores_empty), style = IpxTypography.BodyMedium, color = TextSecondary)
-            } else {
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(stringResource(R.string.game_scores_top), style = IpxTypography.TitleMedium, color = Accent)
-                        top.forEachIndexed { index, play -> ScoreRow("${index + 1}", play, date(play), best = index == 0, mine = mine(play)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    val global = board
+                    when {
+                        loading -> {
+                            Text(stringResource(R.string.game_scores_everyone), style = IpxTypography.TitleMedium, color = Accent)
+                            Text(stringResource(R.string.game_scores_loading), style = IpxTypography.BodyMedium, color = TextSecondary)
+                        }
+                        global != null -> {
+                            Text(stringResource(R.string.game_scores_everyone), style = IpxTypography.TitleMedium, color = Accent)
+                            if (global.top.isEmpty()) {
+                                Text(stringResource(R.string.game_scores_board_empty), style = IpxTypography.BodyMedium, color = TextSecondary)
+                            }
+                            global.top.take(SHOWN).forEachIndexed { index, entry ->
+                                ScoreRow("${index + 1}", GamePlay(entry.score, 0L, entry.name), "", best = index == 0, mine = entry.you)
+                            }
+                            val rank = global.yourRank
+                            if (rank != null && rank > SHOWN) {
+                                ScoreRow(
+                                    stringResource(R.string.game_scores_you, rank),
+                                    GamePlay(global.yourScore ?: 0, 0L, me), "", best = false, mine = true
+                                )
+                            }
+                        }
+                        else -> {
+                            val label = if (Leaderboard.enabled) R.string.game_scores_offline else R.string.game_scores_top
+                            Text(stringResource(label), style = IpxTypography.TitleMedium, color = Accent)
+                            if (top.isEmpty()) {
+                                Text(stringResource(R.string.game_scores_empty), style = IpxTypography.BodyMedium, color = TextSecondary)
+                            }
+                            top.forEachIndexed { index, play -> ScoreRow("${index + 1}", play, date(play), best = index == 0, mine = mine(play)) }
+                        }
                     }
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(stringResource(R.string.game_scores_recent), style = IpxTypography.TitleMedium, color = Accent)
-                        recent.forEach { play -> ScoreRow(null, play, date(play), best = false, mine = mine(play)) }
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(stringResource(R.string.game_scores_recent), style = IpxTypography.TitleMedium, color = Accent)
+                    if (recent.isEmpty()) {
+                        Text(stringResource(R.string.game_scores_empty), style = IpxTypography.BodyMedium, color = TextSecondary)
                     }
+                    recent.forEach { play -> ScoreRow(null, play, date(play), best = false, mine = mine(play)) }
                 }
             }
             PillChip(
@@ -269,6 +305,9 @@ private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () ->
         }
     }
 }
+
+/** Rows of the public board shown in the panel; a player further down sees their own rank under them. */
+private const val SHOWN = 10
 
 @Composable
 private fun ScoreRow(rank: String?, play: GamePlay, date: String, best: Boolean, mine: Boolean) {

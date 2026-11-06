@@ -43,6 +43,7 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.ipxtream.tv.R
 import com.ipxtream.tv.ui.theme.Accent
 import com.ipxtream.tv.ui.theme.AccentOrchid
 import com.ipxtream.tv.ui.theme.ChipFocused
@@ -123,7 +124,7 @@ private fun GameCard(game: GameId, onClick: () -> Unit, modifier: Modifier = Mod
         shape = ClickableSurfaceDefaults.shape(shape = shape)
     ) {
         Box(Modifier.fillMaxSize()) {
-            Canvas(Modifier.fillMaxSize()) { drawThumbnail(game) }
+            GameThumbnail(game, Modifier.fillMaxSize())
             Text(
                 text = stringResource(game.title),
                 style = IpxTypography.BodyMedium,
@@ -137,6 +138,27 @@ private fun GameCard(game: GameId, onClick: () -> Unit, modifier: Modifier = Mod
                     .padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 8.dp)
             )
         }
+    }
+}
+
+/** Painted key art where a game has it, else the thumbnail drawn in code. */
+@Composable
+internal fun GameThumbnail(game: GameId, modifier: Modifier = Modifier) {
+    val art = when (game) {
+        GameId.DRIFT -> R.drawable.game_art_drift
+        GameId.SLING -> R.drawable.game_art_sling
+        GameId.NOVA -> R.drawable.game_art_nova
+        else -> null
+    }
+    if (art != null) {
+        androidx.compose.foundation.Image(
+            painter = androidx.compose.ui.res.painterResource(art),
+            contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = modifier
+        )
+    } else {
+        Canvas(modifier) { drawThumbnail(game) }
     }
 }
 

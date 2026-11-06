@@ -34,6 +34,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.tv.material3.Text
 import com.ipxtream.tv.R
 import com.ipxtream.tv.ui.theme.Accent
+import com.ipxtream.tv.ui.theme.AccentRed
 import com.ipxtream.tv.ui.theme.BorderSubtle
 import com.ipxtream.tv.ui.theme.GlassStroke
 import com.ipxtream.tv.ui.theme.IpxTypography
@@ -57,7 +58,13 @@ internal fun PlayerNameDialog(current: String, onDone: (String) -> Unit) {
     )
     var text by remember { mutableStateOf(current) }
     val field = remember { FocusRequester() }
-    val finish = { onDone(GamePlayerName.clean(text).ifEmpty { randomName() }) }
+    var refused by remember { mutableStateOf(false) }
+    val finish = {
+        val name = GamePlayerName.clean(text)
+        // An offensive name stays in the field with a note, so the player can change it.
+        if (name.isNotEmpty() && GameNameFilter.isBlocked(name)) refused = true
+        else onDone(name.ifEmpty { randomName() })
+    }
 
     Dialog(onDismissRequest = finish, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         TouchBridgeDialogHost {
@@ -75,7 +82,7 @@ internal fun PlayerNameDialog(current: String, onDone: (String) -> Unit) {
                     Text(stringResource(R.string.game_player_hint), style = IpxTypography.BodyMedium, color = TextSecondary)
                     OutlinedTextField(
                         value = text,
-                        onValueChange = { text = it.take(GamePlayerName.MAX) },
+                        onValueChange = { text = it.take(GamePlayerName.MAX); refused = false },
                         placeholder = { Text(stringResource(R.string.game_player_field), color = TextMuted) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -90,6 +97,9 @@ internal fun PlayerNameDialog(current: String, onDone: (String) -> Unit) {
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth().focusRequester(field)
                     )
+                    if (refused) {
+                        Text(stringResource(R.string.game_player_blocked), style = IpxTypography.BodyMedium, color = AccentRed)
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         PillChip(label = stringResource(R.string.game_player_save), selected = true, onClick = finish)
                         PillChip(label = stringResource(R.string.game_player_random), selected = false, onClick = { onDone(randomName()) })

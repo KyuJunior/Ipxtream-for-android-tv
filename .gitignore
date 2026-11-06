@@ -16,3 +16,5 @@ SECRETS.local.md
 
 # graphify knowledge graph output (local)
 graphify-out/
+server/leaderboard/node_modules/
+server/leaderboard/.wrangler/
