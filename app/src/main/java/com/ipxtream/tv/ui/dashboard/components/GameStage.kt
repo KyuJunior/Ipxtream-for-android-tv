@@ -65,15 +65,22 @@ private fun Context.markHowToSeen(game: GameId) {
 internal fun GameStage(game: GameId, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var howToOpen by remember(game) { mutableStateOf(!context.seenHowTo(game)) }
+    var scoresOpen by remember(game) { mutableStateOf(false) }
     var barFocused by remember { mutableStateOf(false) }
     val gameFocus = remember { FocusRequester() }
     val allGames = remember { FocusRequester() }
     val playButton = remember { FocusRequester() }
 
-    BackHandler { if (howToOpen) howToOpen = false else onClose() }
+    BackHandler {
+        when {
+            howToOpen -> howToOpen = false
+            scoresOpen -> scoresOpen = false
+            else -> onClose()
+        }
+    }
 
-    LaunchedEffect(howToOpen) {
-        if (howToOpen) {
+    LaunchedEffect(howToOpen, scoresOpen) {
+        if (howToOpen || scoresOpen) {
             runCatching { playButton.requestFocus() }
         } else {
             context.markHowToSeen(game)
@@ -82,7 +89,7 @@ internal fun GameStage(game: GameId, onClose: () -> Unit, modifier: Modifier = M
     }
 
     Box(modifier.touchShield().background(SlateDeep)) {
-        CompositionLocalProvider(LocalGamePaused provides (howToOpen || barFocused)) {
+        CompositionLocalProvider(LocalGamePaused provides (howToOpen || scoresOpen || barFocused)) {
             val area = Modifier.fillMaxSize()
             when (game) {
                 GameId.STACK -> StackTowerScreen(gameFocus, allGames, area)
@@ -97,7 +104,7 @@ internal fun GameStage(game: GameId, onClose: () -> Unit, modifier: Modifier = M
             }
         }
 
-        if (!howToOpen) {
+        if (!howToOpen && !scoresOpen) {
             Row(
                 Modifier
                     .align(Alignment.TopStart)
@@ -121,12 +128,28 @@ internal fun GameStage(game: GameId, onClose: () -> Unit, modifier: Modifier = M
                     selected = false,
                     onClick = { howToOpen = true },
                     modifier = Modifier.focusProperties {
+                        up = FocusRequester.Cancel
+                        down = gameFocus
+                    }
+                )
+                PillChip(
+                    label = stringResource(R.string.game_scores),
+                    selected = false,
+                    onClick = { scoresOpen = true },
+                    modifier = Modifier.focusProperties {
                         end = FocusRequester.Cancel
                         up = FocusRequester.Cancel
                         down = gameFocus
                     }
                 )
             }
+        } else if (scoresOpen) {
+            GameScores(
+                game = game,
+                closeButton = playButton,
+                onClose = { scoresOpen = false },
+                modifier = Modifier.fillMaxSize()
+            )
         } else {
             HowToPlay(
                 game = game,
@@ -189,5 +212,73 @@ private fun HowToPlay(game: GameId, playButton: FocusRequester, onPlay: () -> Un
                 )
             }
         }
+    }
+}
+
+/** This game's top 10 and its recent plays, all kept on this device. */
+@Composable
+private fun GameScores(game: GameId, closeButton: FocusRequester, onClose: () -> Unit, modifier: Modifier = Modifier) {
+    val records = rememberBestScore(game.prefs)
+    val top = remember(game) { records.top() }
+    val recent = remember(game) { records.history() }
+    val locale = androidx.core.os.ConfigurationCompat.getLocales(LocalContext.current.resources.configuration)[0]
+        ?: java.util.Locale.getDefault()
+    val dates = remember(locale) { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT, locale) }
+    fun date(play: GamePlay) = if (play.at > 0) dates.format(java.util.Date(play.at)) else "—"
+
+    // The empty pointer block keeps touches on this sheet from reaching the game below.
+    Box(
+        modifier.background(Color.Black.copy(alpha = 0.72f)).pointerInput(Unit) {
+            awaitEachGesture { awaitFirstDown(requireUnconsumed = false) }
+        },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            Modifier
+                .padding(16.dp)
+                .widthIn(max = 760.dp)
+                .background(SlateDeep, RoundedCornerShape(22.dp))
+                .border(1.dp, GlassStroke, RoundedCornerShape(22.dp))
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(stringResource(game.title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
+            if (top.isEmpty()) {
+                Text(stringResource(R.string.game_scores_empty), style = IpxTypography.BodyMedium, color = TextSecondary)
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(stringResource(R.string.game_scores_top), style = IpxTypography.TitleMedium, color = Accent)
+                        top.forEachIndexed { index, play -> ScoreRow("${index + 1}", play.score, date(play), highlight = index == 0) }
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(stringResource(R.string.game_scores_recent), style = IpxTypography.TitleMedium, color = Accent)
+                        recent.forEach { play -> ScoreRow(null, play.score, date(play), highlight = false) }
+                    }
+                }
+            }
+            PillChip(
+                label = stringResource(R.string.game_how_play),
+                selected = true,
+                onClick = onClose,
+                modifier = Modifier.focusRequester(closeButton)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScoreRow(rank: String?, score: Int, date: String, highlight: Boolean) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        if (rank != null) {
+            Text(rank, style = IpxTypography.BodyMedium, color = TextSecondary, modifier = Modifier.widthIn(min = 22.dp))
+        }
+        Text(
+            score.toString(),
+            style = IpxTypography.BodyMedium.copy(fontFeatureSettings = "tnum"),
+            color = if (highlight) Accent else TextPrimary,
+            modifier = Modifier.widthIn(min = 56.dp)
+        )
+        Text(date, style = IpxTypography.BodyMedium.copy(fontSize = 12.sp), color = TextSecondary)
     }
 }

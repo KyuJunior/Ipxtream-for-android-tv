@@ -425,6 +425,11 @@ contact@dryaser.me\n\n7. البرمجيات مفتوحة المصدر\nيستخ�
     <string name="game_sling_title">مقلاع المذنّب</string>
     <string name="game_sling_hint">اسحب للخلف ثم اترك. أسقط كل الكائنات البنفسجية.</string>
     <string name="game_sling_status">المستوى %1$d · الرميات %2$d</string>
+    <string name="game_sling_level_pick">المستوى %1$d / %2$d</string>
+    <string name="game_scores">النتائج</string>
+    <string name="game_scores_top">أفضل 10</string>
+    <string name="game_scores_recent">آخر الجولات</string>
+    <string name="game_scores_empty">لم تلعب أي جولة بعد. أنهِ جولة لتظهر هنا.</string>
     <string name="game_sling_clear">اجتزت المستوى! المس الشاشة للمستوى التالي.</string>
     <string name="game_sling_retry">انتهت الرميات. المس الشاشة لإعادة المستوى.</string>
     <string name="game_sling_ember">جمرة</string>

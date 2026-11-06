@@ -789,7 +789,7 @@ internal fun VoidSlicerScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("slicer_game")
+    val best = rememberBestScore(GameId.SLICER.prefs)
     val density = LocalDensity.current.density
     val reduced = LocalReducedEffects.current
     val particles = rememberGameParticles()
@@ -839,7 +839,7 @@ internal fun VoidSlicerScreen(
         if (phase != SlicePhase.OVER && game.phase == SlicePhase.OVER) {
             overAt = System.currentTimeMillis()
             newBest = game.score > best.value
-            best.submit(game.score)
+            best.played(game.score)
         }
         if (phase != SlicePhase.CHOOSING && game.phase == SlicePhase.CHOOSING) choosingAt = System.currentTimeMillis()
         phase = game.phase

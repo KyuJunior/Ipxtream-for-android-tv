@@ -395,7 +395,7 @@ internal fun JellyDriftScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("drift_game")
+    val best = rememberBestScore(GameId.DRIFT.prefs)
     val particles = rememberGameParticles()
     val shake = rememberGameShake()
     val reduced = LocalReducedEffects.current
@@ -436,7 +436,7 @@ internal fun JellyDriftScreen(
                 }
                 if (w.over) {
                     newBest = w.score > best.value
-                    best.submit(w.score)
+                    best.played(w.score)
                     over = true
                     overAt = System.currentTimeMillis()
                     settling = true

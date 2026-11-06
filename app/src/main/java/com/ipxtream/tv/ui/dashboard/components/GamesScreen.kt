@@ -112,17 +112,19 @@ object StackRules {
 enum class GameId(
     @StringRes val title: Int,
     @StringRes val howTo: Int,
-    val touchOnly: Boolean
+    val touchOnly: Boolean,
+    /** The game's prefs file (best score, history, top 10). */
+    val prefs: String
 ) {
-    STACK(R.string.game_stack_title, R.string.game_how_stack, false),
-    PENALTY(R.string.game_title, R.string.game_how_penalty, false),
-    DRIFT(R.string.game_drift_title, R.string.game_how_drift, false),
-    SLING(R.string.game_sling_title, R.string.game_how_sling, true),
-    NOVA(R.string.game_nova_title, R.string.game_how_nova, true),
-    SLICER(R.string.game_slicer_title, R.string.game_how_slicer, true),
-    WRECK(R.string.game_wreck_title, R.string.game_how_wreck, true),
-    BOUNCER(R.string.game_bouncer_title, R.string.game_how_bouncer, true),
-    SYNERGY(R.string.game_synergy_title, R.string.game_how_synergy, true)
+    STACK(R.string.game_stack_title, R.string.game_how_stack, false, "stack_game"),
+    PENALTY(R.string.game_title, R.string.game_how_penalty, false, "penalty_game"),
+    DRIFT(R.string.game_drift_title, R.string.game_how_drift, false, "drift_game"),
+    SLING(R.string.game_sling_title, R.string.game_how_sling, true, "sling_game"),
+    NOVA(R.string.game_nova_title, R.string.game_how_nova, true, "nova_game"),
+    SLICER(R.string.game_slicer_title, R.string.game_how_slicer, true, "slicer_game"),
+    WRECK(R.string.game_wreck_title, R.string.game_how_wreck, true, "wreck_game"),
+    BOUNCER(R.string.game_bouncer_title, R.string.game_how_bouncer, true, "bouncer_game"),
+    SYNERGY(R.string.game_synergy_title, R.string.game_how_synergy, true, "synergy_game")
 }
 
 /** The Games section: a menu of thumbnails. An opened game is drawn over everything by [GameStage]. */
@@ -506,7 +508,7 @@ internal fun StackTowerScreen(
     upFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("stack_game")
+    val best = rememberBestScore(GameId.STACK.prefs)
     val reduced = LocalReducedEffects.current
     val paused = LocalGamePaused.current
     val density = LocalDensity.current.density
@@ -567,7 +569,7 @@ internal fun StackTowerScreen(
                 if (drop == null) {
                     over = true
                     newBest = row - 1 > best.value
-                    best.submit(row - 1)
+                    best.played(row - 1)
                     fx.scene?.let { fx.missed(it, moving, top, row, sparks) }
                     shake.kick(11f * density)
                 } else {

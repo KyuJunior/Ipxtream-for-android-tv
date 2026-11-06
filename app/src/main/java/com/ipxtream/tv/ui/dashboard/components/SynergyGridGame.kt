@@ -739,7 +739,7 @@ internal fun SynergyGridScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("synergy_game")
+    val best = rememberBestScore(GameId.SYNERGY.prefs)
     val particles = rememberGameParticles()
     val shake = rememberGameShake()
     val reduced = LocalReducedEffects.current
@@ -782,7 +782,7 @@ internal fun SynergyGridScreen(
             if (game.over) {
                 val score = game.total.toInt()
                 newBest = score > best.value
-                best.submit(score)
+                best.played(score)
                 overAt = SystemClock.uptimeMillis()
                 shake.kick(5f)
             } else if (game.stage > stage) {

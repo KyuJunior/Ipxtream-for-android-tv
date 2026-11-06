@@ -203,7 +203,7 @@ fun PenaltyGameScreen(
     upFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("penalty_game")
+    val best = rememberBestScore(GameId.PENALTY.prefs)
     val reduced = LocalReducedEffects.current
     val paused = LocalGamePaused.current
     val density = LocalDensity.current.density
@@ -261,7 +261,7 @@ fun PenaltyGameScreen(
                     if (results.size == PenaltyRules.SHOTS) {
                         val score = results.count { it }
                         newBest = score > best.value
-                        best.submit(score)
+                        best.played(score)
                         finished = true
                         settled = false
                         finishedAt = System.currentTimeMillis()

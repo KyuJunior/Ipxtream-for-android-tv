@@ -3,7 +3,12 @@ package com.ipxtream.tv.ui.dashboard.components
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -338,7 +343,11 @@ internal fun CometSlingScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("sling_game")
+    val best = rememberBestScore(GameId.SLING.prefs)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val slingPrefs = remember { context.getSharedPreferences(GameId.SLING.prefs, android.content.Context.MODE_PRIVATE) }
+    // The furthest level reached: the game reopens there, and any level up to it can be picked.
+    var reached by remember { mutableIntStateOf(slingPrefs.getInt("reached", 1).coerceAtLeast(1)) }
     val reduced = LocalReducedEffects.current
     val paused by rememberUpdatedState(LocalGamePaused.current)
     val particles = rememberGameParticles()
@@ -355,9 +364,9 @@ internal fun CometSlingScreen(
         }
     }
     val ringStroke = remember { Stroke(1.8f) }
-    var level by remember { mutableIntStateOf(1) }
+    var level by remember { mutableIntStateOf(reached) }
     var banked by remember { mutableIntStateOf(0) }
-    var world by remember { mutableStateOf(SlingWorld(1)) }
+    var world by remember { mutableStateOf(SlingWorld(reached)) }
     var phase by remember { mutableStateOf(SlingPhase.READY) }
     var score by remember { mutableIntStateOf(0) }
     var shots by remember { mutableIntStateOf(world.shotsLeft) }
@@ -456,7 +465,15 @@ internal fun CometSlingScreen(
                 }
                 val total = if (phase == SlingPhase.WON) banked else banked + w.score
                 newBest = total > best.value
-                best.submit(total)
+                if (phase == SlingPhase.WON) {
+                    best.submit(total)
+                    if (level + 1 > reached) {
+                        reached = level + 1
+                        slingPrefs.edit().putInt("reached", reached).apply()
+                    }
+                } else {
+                    best.played(total)  // a lost level ends the run
+                }
             }
         }
     }
@@ -476,7 +493,7 @@ internal fun CometSlingScreen(
                         phase == SlingPhase.FLYING -> world.activate()
                         System.currentTimeMillis() - finishedAt <= 500 -> Unit  // a stray tap must not skip the result
                         phase == SlingPhase.WON -> play(level + 1)
-                        else -> play(level)
+                        else -> { banked = 0; play(level) }
                     }
                 },
                 onMove = { position -> if (pull != null) pull = (position - pullStart) / worldScale() },
@@ -525,7 +542,35 @@ internal fun CometSlingScreen(
                 hint = stringResource(if (phase == SlingPhase.WON) R.string.game_sling_clear else R.string.game_sling_retry),
                 modifier = Modifier.align(Alignment.Center)
             )
-        } else if (phase == SlingPhase.READY && !pulling) {
+        }
+        // Not hidden while pulling: a tap on an arrow also starts a pull, and the arrow must still be there on release.
+        if (phase == SlingPhase.READY && reached > 1) {
+            // Previous / next level; arrows stay left-to-right like a timeline.
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(
+                    // Below the remaining-blob row, which also sits top-end.
+                    Modifier.align(Alignment.TopEnd).padding(top = 60.dp, end = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    PillChip(label = "‹", selected = false, quiet = level <= 1, onClick = {
+                        if (level > 1) { banked = 0; play(level - 1) }
+                    })
+                    Text(
+                        stringResource(R.string.game_sling_level_pick, level, reached),
+                        style = IpxTypography.BodyMedium,
+                        color = TextPrimary,
+                        modifier = Modifier
+                            .background(Color.Black.copy(alpha = 0.42f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 10.dp, vertical = 2.dp)
+                    )
+                    PillChip(label = "›", selected = false, quiet = level >= reached, onClick = {
+                        if (level < reached) { banked = 0; play(level + 1) }
+                    })
+                }
+            }
+        }
+        if (!finished && phase == SlingPhase.READY && !pulling) {
             val loaded = world.loaded
             Text(
                 if (loaded == null) stringResource(R.string.game_sling_hint)

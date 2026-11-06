@@ -328,7 +328,7 @@ internal fun TetheredWreckScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("wreck_game")
+    val best = rememberBestScore(GameId.WRECK.prefs)
     val reduced = LocalReducedEffects.current
     val paused by rememberUpdatedState(LocalGamePaused.current)
     val density = LocalDensity.current.density
@@ -381,7 +381,7 @@ internal fun TetheredWreckScreen(
                     over = true
                     overAt = System.currentTimeMillis()
                     newBest = it.kills > best.value
-                    best.submit(it.kills)
+                    best.played(it.kills)
                     fx.hurtFlash = 1f
                     shake.kick(12f)
                     particles.burst(it.dotX, it.dotY, ChipFocused, 26, 240f, 0.8f)

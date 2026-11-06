@@ -496,7 +496,7 @@ internal fun NovaGameScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("nova_game")
+    val best = rememberBestScore(GameId.NOVA.prefs)
     val reduced = LocalReducedEffects.current
     val density = LocalDensity.current.density
     val paused by rememberUpdatedState(LocalGamePaused.current)
@@ -543,6 +543,7 @@ internal fun NovaGameScreen(
                 best.submit(level)
             } else {
                 lives--
+                if (lives <= 0) best.played(level - 1)  // levels cleared in this run
             }
         }
         if (finished && lives <= 0) {  // let the sparks finish, then stop drawing behind the result

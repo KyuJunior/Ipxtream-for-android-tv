@@ -49,7 +49,7 @@ class TouchBridge(
     private var tracking = false
     private var longPressDone = false
     private val longPress = Runnable {
-        val node = target ?: return@Runnable
+        val node = target?.takeIf { it.layoutInfo.isAttached } ?: return@Runnable
         val action = node.config.getOrNull(SemanticsActions.OnLongClick)?.action ?: return@Runnable
         longPressDone = true
         node.config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke()
@@ -78,7 +78,8 @@ class TouchBridge(
                 val node = target
                 val handled = longPressDone
                 reset()
-                if (!handled && node != null) {
+                // The control can leave the screen between down and up; acting on it then crashes.
+                if (!handled && node != null && node.layoutInfo.isAttached) {
                     node.config.getOrNull(SemanticsActions.RequestFocus)?.action?.invoke()
                     tapping = true
                     try { node.config.getOrNull(SemanticsActions.OnClick)?.action?.invoke() }

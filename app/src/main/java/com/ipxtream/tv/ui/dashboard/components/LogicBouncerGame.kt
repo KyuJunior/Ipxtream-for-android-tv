@@ -590,7 +590,7 @@ internal fun LogicBouncerScreen(
     chipFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
-    val best = rememberBestScore("bouncer_game")
+    val best = rememberBestScore(GameId.BOUNCER.prefs)
     val density = LocalDensity.current.density
     val reduced = LocalReducedEffects.current
     val paused by rememberUpdatedState(LocalGamePaused.current)
@@ -625,7 +625,7 @@ internal fun LogicBouncerScreen(
             over = true
             overAt = System.currentTimeMillis()
             newBest = game.score > best.value
-            best.submit(game.score)
+            best.played(game.score)
         }
     }
 

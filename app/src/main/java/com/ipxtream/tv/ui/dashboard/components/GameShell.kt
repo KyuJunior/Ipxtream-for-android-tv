@@ -52,7 +52,31 @@ import kotlin.math.max
 import kotlin.math.sin
 import kotlin.random.Random
 
-/** Keeps a game's best score in its own local prefs. */
+/** One finished run: its [score] and when it ended ([at], epoch ms; 0 for a best saved before history existed). */
+internal data class GamePlay(val score: Int, val at: Long)
+
+/** The recent plays and the top 10 of a game, stored on this device as "score:time;score:time". */
+internal object GameRecords {
+    const val HISTORY = 10
+    const val TOP = 10
+
+    fun parse(text: String?): List<GamePlay> = text.orEmpty().split(';').mapNotNull { entry ->
+        val parts = entry.split(':')
+        val score = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
+        val at = parts.getOrNull(1)?.toLongOrNull() ?: return@mapNotNull null
+        if (parts.size == 2) GamePlay(score, at) else null
+    }
+
+    fun format(plays: List<GamePlay>): String = plays.joinToString(";") { "${it.score}:${it.at}" }
+
+    fun addToHistory(history: List<GamePlay>, play: GamePlay): List<GamePlay> = (listOf(play) + history).take(HISTORY)
+
+    /** Highest first; an equal score keeps the earlier run ahead. */
+    fun addToTop(top: List<GamePlay>, play: GamePlay): List<GamePlay> =
+        (top + play).sortedWith(compareByDescending<GamePlay> { it.score }.thenBy { it.at }).take(TOP)
+}
+
+/** Keeps a game's best score, its recent plays and its top 10 in the game's own local prefs. */
 internal class BestScore(private val prefs: android.content.SharedPreferences) {
     private var stored by mutableIntStateOf(prefs.getInt("best", 0))
     val value: Int get() = stored
@@ -62,6 +86,22 @@ internal class BestScore(private val prefs: android.content.SharedPreferences) {
         stored = score
         prefs.edit().putInt("best", score).apply()
     }
+
+    /** A run has ended: it goes into the history and, if good enough, the top 10. */
+    fun played(score: Int, at: Long = System.currentTimeMillis()) {
+        val play = GamePlay(score, at)
+        prefs.edit()
+            .putString("history", GameRecords.format(GameRecords.addToHistory(history(), play)))
+            .putString("top", GameRecords.format(GameRecords.addToTop(top(), play)))
+            .apply()
+        submit(score)
+    }
+
+    fun history(): List<GamePlay> = GameRecords.parse(prefs.getString("history", null))
+
+    /** A best kept from before the top 10 existed shows as its first entry. */
+    fun top(): List<GamePlay> = GameRecords.parse(prefs.getString("top", null))
+        .ifEmpty { if (stored > 0) listOf(GamePlay(stored, 0L)) else emptyList() }
 }
 
 @Composable
