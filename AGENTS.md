@@ -748,3 +748,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Status: done. Server tests (`npm test`) and the CI command pass. Emulator against `wrangler dev`: the device best uploaded under the player name, ranked among other players, own row highlighted; an offensive name refused in the dialog. Live server: empty board answers, offensive name refused. Not checked: the app against the live server, Arabic on screen.
 - Also: painted key art (owner-made, no text) for Jelly Drift, Comet Sling and One-Tap Nova in `res/drawable-nodpi/game_art_*.jpg` (800 px), shown by `GameThumbnail` on the cards and in How to play; the other six keep their drawn thumbnails.
 - For the other agent: owner must update Play Console → Data safety (player name, random id, scores, shown publicly). Scores come from the client, so they can be faked; only a global cap exists (`SCORE_MAX`). Deploy server changes with `npx wrangler deploy` in `server/leaderboard` (owner's login).
+
+### 2026-11-07 | claude
+- Did: Play bundle 2.0.42 (code 116) built by `play.yml` (upload key C9:4A…D8:B1), added to the closed test with release notes (leaderboard, scores, art, Apple theme, seeking), and sent for review together with an updated Data safety form: collected, not shared, optional, for app functionality: Name (player name), Other actions (game scores), Device or other IDs (random player id); encrypted in transit; no in-app account creation, sign-in with an outside service subscription; deletion via the privacy page (email). Xtream TV's Play Console is under dr.yaser.dev@gmail.com (`/u/1/` in the built-in browser), not yaseralhasany2@gmail.com.
+- Files: AGENTS.md
+- Status: waiting on Google's review; temporary upload branch deleted.
+- For the other agent: none
