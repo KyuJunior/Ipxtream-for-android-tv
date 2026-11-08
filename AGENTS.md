@@ -754,3 +754,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: waiting on Google's review; temporary upload branch deleted.
 - For the other agent: none
+
+### 2026-11-08 | claude
+- Did: Applied for production access for Xtream TV in Play Console (owner approved), after the closed test met 12 testers × 14 days. Answers are based on `reviews/play-production-access-answers.md` (local), shortened to the form's 300-character limit. Android vitals: no crash or ANR issues in the last 28 days. Google says the review usually takes up to 7 days and it will email the account owner.
+- Files: AGENTS.md
+- Status: waiting on Google's decision. Once approved, a production release still has to be created and sent for review.
+- For the other agent: testers should stay in the closed test until Google decides.
