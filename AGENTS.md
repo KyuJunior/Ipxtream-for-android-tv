@@ -760,3 +760,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: waiting on Google's decision. Once approved, a production release still has to be created and sent for review.
 - For the other agent: testers should stay in the closed test until Google decides.
+
+### 2026-11-09 | claude
+- Did: Fixed "sometimes you can't get back to the category chips from the videos" (owner report). The chip row's return requester (`categoryRowFocusRequester`) sat on the "All" chip; once the row scrolled far enough right, that chip left composition, so Up from the grid's first row (and menu → content) named a detached requester and the key was swallowed. `CategoryRow` now keeps the requester on the selected chip while it is composed, else the first visible chip (same `focusAnchorIndex` as `PosterGrid`), and the `LazyRow` itself can't take focus.
+- Files: ui/dashboard/components/CategoryRow.kt, AGENTS.md
+- Status: done. CI command passes. Emulator (GitHub debug preview, a mock provider with 40 film categories): chips scrolled to Category 25 then Down/Up returns to a visible chip; Category 27 selected, Up from the grid lands on it. Not checked: Live TV and Series (same component), the owner's TV, Arabic.
+- For the other agent: any lazy row/list holding a shared `FocusRequester` must move it onto a composed item (see `focusAnchorIndex`).

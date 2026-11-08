@@ -17,9 +17,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -72,10 +74,29 @@ fun CategoryRow(
     modifier:                Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
+    val currentCategories by rememberUpdatedState(categories)
+    val currentSelected by rememberUpdatedState(selectedCategoryId)
+    // The return requester sits on the selected chip, else the first visible one: the row drops
+    // chips scrolled out of view, and a requester left on "All" then makes Up from the grid do nothing.
+    val anchorIndex by remember(listState) {
+        derivedStateOf {
+            val selected = currentSelected?.let { id -> currentCategories.indexOfFirst { it.categoryId == id } + 1 } ?: 0
+            focusAnchorIndex(
+                preferred = selected,
+                visible   = listState.layoutInfo.visibleItemsInfo.map { it.index },
+                count     = currentCategories.size + 1
+            )
+        }
+    }
+    val chipRequester: @Composable (Int) -> Modifier = { index ->
+        val own = remember { FocusRequester() }
+        val isAnchor by remember(index) { derivedStateOf { anchorIndex == index } }
+        Modifier.focusRequester(if (isAnchor && firstChipFocusRequester != null) firstChipFocusRequester else own)
+    }
 
     LazyRow(
         state           = listState,
-        modifier        = modifier.height(58.dp),
+        modifier        = modifier.height(58.dp).focusProperties { canFocus = false },
         contentPadding  = PaddingValues(horizontal = com.ipxtream.tv.ui.theme.IpxSpacing.Gutter),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -86,7 +107,7 @@ fun CategoryRow(
                 isSelected = selectedCategoryId == null,
                 onClick    = { onCategorySelected(null) },
                 modifier   = Modifier
-                    .then(if (firstChipFocusRequester != null) Modifier.focusRequester(firstChipFocusRequester) else Modifier)
+                    .then(chipRequester(0))
                     .focusProperties {
                         if (sideNavFocusRequester != null) start = sideNavFocusRequester
                         if (gridFocusRequester != null) down = gridFocusRequester
@@ -96,12 +117,12 @@ fun CategoryRow(
         }
 
         // Per-category chips
-        itemsIndexed(categories, key = { index, category -> "${category.categoryId}_$index" }) { _, category ->
+        itemsIndexed(categories, key = { index, category -> "${category.categoryId}_$index" }) { index, category ->
             CategoryChip(
                 label      = category.categoryName,
                 isSelected = category.categoryId == selectedCategoryId,
                 onClick    = { onCategorySelected(category.categoryId) },
-                modifier   = Modifier.focusProperties {
+                modifier   = chipRequester(index + 1).focusProperties {
                     if (gridFocusRequester != null) down = gridFocusRequester
                     if (searchBarFocusRequester != null) up = searchBarFocusRequester
                 }
