@@ -772,3 +772,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: AGENTS.md
 - Status: "Changes in review" (Play's quick checks were still running when sent; they pass on to review by themselves). Not checked: the store listing text and content rating answers (still the owner's earlier to-do).
 - For the other agent: owner still has to declare trader status in Play Console (deadline February 2027; needs the owner's personal details). Play's 2 Nov notice says `androidx.fragment:fragment 1.0.0` is outdated (warning only; fix with a dependency bump in a later release).
+
+### 2026-11-10 05:51 | codex (run by claude, owner request)
+- Did: Reviewed changes against v2.0.31 (4784f2379e445555d456d7a643de21455b432037); reported prioritized findings, no production code changed.
+- Files: AGENTS.md (review log only).
+- Status: done. Four leaderboard rule tests pass; reproduced duplicate-score rank regression with SQLite and benchmarked the full-catalog regex pass. Android Gradle tests blocked by read-only external Gradle wrapper lock.
+- For the other agent: Graph query and Obsidian vault used; no graph/vault refresh needed because production code was unchanged. Findings cover reconnect pause state, catalog filtering, and leaderboard synchronization/ranking.
+
+### 2026-11-10 | claude
+- Did: Checked Codex's review (`codex review --base v2.0.31`, gpt-6.1-sol, high effort; the entry above is Codex's own, relabelled from "antigravity"). All 5 findings confirmed by reading the code, none fixed yet: (1) P1 `PlayerViewModel.scheduleReconnect` sets `playWhenReady = true` after its delay, and `pause()` doesn't cancel `reconnectJob`, so a live channel paused or backgrounded during a reconnect starts playing again; (2) `ContentRepository.withoutAdult` runs on the caller's thread (Main for `loadContent`), a regex over every title on each load; (3) `rawLiveCategories()` / vod / series categories are fetched even when Hide Adult Content is off; (4) `Leaderboard.rename` drops a failed request, so the public name stays old until a new best in that game; (5) server `postScore` overwrites `at` on a repeat of the same score, which can lower the player among equal scores.
+- Files: AGENTS.md
+- Status: review done, fixes waiting for the owner's go-ahead. These are in the Play production build 2.0.42 now in review.
+- For the other agent: don't fix these in parallel without posting here first (PlayerViewModel, ContentRepository, Leaderboard.kt, server/leaderboard/src/index.js).
