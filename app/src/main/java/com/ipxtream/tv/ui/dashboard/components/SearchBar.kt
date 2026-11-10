@@ -73,12 +73,24 @@ fun SearchBar(
     val focusManager = LocalFocusManager.current
     val keys = directionalKeys()
 
+    // Apple: a filled field with no rim at rest, a lighter fill and a white ring on focus.
+    val apple = com.ipxtream.tv.ui.theme.isAppleDesign
     val bgColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0x33FFFFFF) else Color(0x14FFFFFF),
+        targetValue = when {
+            apple && isFocused -> com.ipxtream.tv.ui.theme.AppleSegmentSelected
+            apple -> com.ipxtream.tv.ui.theme.AppleFill
+            isFocused -> Color(0x33FFFFFF)
+            else -> Color(0x14FFFFFF)
+        },
         label = "searchBgColor"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0x66FFFFFF) else Color(0x1AFFFFFF),
+        targetValue = when {
+            apple && isFocused -> Color.White
+            apple -> Color.Transparent
+            isFocused -> Color(0x66FFFFFF)
+            else -> Color(0x1AFFFFFF)
+        },
         label = "searchBorderColor"
     )
 
@@ -101,7 +113,7 @@ fun SearchBar(
             }
             .background(bgColor, RoundedCornerShape(50))
             .border(
-                width = 1.dp,
+                width = if (apple) 2.dp else 1.dp,
                 color = borderColor,
                 shape = RoundedCornerShape(50)
             )

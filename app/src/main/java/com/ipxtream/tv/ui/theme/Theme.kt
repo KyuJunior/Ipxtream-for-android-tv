@@ -22,22 +22,51 @@ import androidx.tv.material3.MaterialTheme as TvMaterialTheme
 
 private val IpxFontFamily = FontFamily.Default
 
-/** Base typography styles scaled for a 10-foot TV viewing distance. */
+private class TypeScale(
+    val heroTitle: TextStyle, val displayLarge: TextStyle, val headlineMedium: TextStyle,
+    val titleLarge: TextStyle, val rowTitle: TextStyle, val titleMedium: TextStyle,
+    val bodyLarge: TextStyle, val bodyMedium: TextStyle, val bodySmall: TextStyle,
+    val labelSmall: TextStyle, val eyebrow: TextStyle
+)
+
+private fun style(weight: FontWeight, size: Int, line: Int, tracking: Float = 0f) =
+    TextStyle(fontFamily = IpxFontFamily, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = tracking.sp)
+
+// Display sizes use tight negative tracking, body sizes stay neutral.
+private val EmberType = TypeScale(
+    heroTitle = style(FontWeight.Bold, 52, 56, -1.2f), displayLarge = style(FontWeight.Bold, 48, 54, -1.0f),
+    headlineMedium = style(FontWeight.SemiBold, 28, 34, -0.4f), titleLarge = style(FontWeight.SemiBold, 22, 28, -0.2f),
+    rowTitle = style(FontWeight.SemiBold, 20, 26, -0.2f), titleMedium = style(FontWeight.Medium, 16, 22, -0.1f),
+    bodyLarge = style(FontWeight.Normal, 16, 24), bodyMedium = style(FontWeight.Normal, 14, 20),
+    bodySmall = style(FontWeight.Normal, 12, 16), labelSmall = style(FontWeight.Medium, 11, 16, 0.4f),
+    eyebrow = style(FontWeight.SemiBold, 12, 16, 1.6f)
+)
+
+// Apple's scale: Large Title 34/41 bold, Title 22/28 bold, Body 17/22, Subheadline 15/20, Footnote 13/18.
+private val AppleType = TypeScale(
+    heroTitle = style(FontWeight.Bold, 52, 56, 0.3f), displayLarge = style(FontWeight.Bold, 46, 52, 0.3f),
+    headlineMedium = style(FontWeight.Bold, 34, 41, 0.4f), titleLarge = style(FontWeight.Bold, 22, 28, -0.26f),
+    rowTitle = style(FontWeight.Bold, 20, 25, -0.45f), titleMedium = style(FontWeight.SemiBold, 17, 22, -0.43f),
+    bodyLarge = style(FontWeight.Normal, 17, 22, -0.43f), bodyMedium = style(FontWeight.Normal, 15, 20, -0.23f),
+    bodySmall = style(FontWeight.Normal, 13, 18, -0.08f), labelSmall = style(FontWeight.SemiBold, 11, 13, 0.06f),
+    eyebrow = style(FontWeight.SemiBold, 13, 18, 0.2f)
+)
+
+/** Type styles for a 10-foot TV viewing distance. They follow the design chosen in Settings. */
 object IpxTypography {
-    // Display sizes use tight negative tracking, body sizes stay neutral —
-    // the same optical rules Apple applies to SF Pro Display vs. SF Pro Text.
-    val HeroTitle     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Bold,     fontSize = 52.sp, lineHeight = 56.sp, letterSpacing = (-1.2).sp)
-    val DisplayLarge  = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Bold,     fontSize = 48.sp, lineHeight = 54.sp, letterSpacing = (-1.0).sp)
-    val HeadlineMedium = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 28.sp, lineHeight = 34.sp, letterSpacing = (-0.4).sp)
-    val TitleLarge    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 22.sp, lineHeight = 28.sp, letterSpacing = (-0.2).sp)
-    val RowTitle      = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp, letterSpacing = (-0.2).sp)
-    val TitleMedium   = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,   fontSize = 16.sp, lineHeight = 22.sp, letterSpacing = (-0.1).sp)
-    val BodyLarge     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 16.sp, lineHeight = 24.sp)
-    val BodyMedium    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 14.sp, lineHeight = 20.sp)
-    val BodySmall     = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Normal,   fontSize = 12.sp, lineHeight = 16.sp)
-    val LabelSmall    = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.Medium,   fontSize = 11.sp, lineHeight = 16.sp, letterSpacing = 0.4.sp)
-    /** Small all-caps label above a title ("MOVIE", "NEW SEASON"). */
-    val Eyebrow       = TextStyle(fontFamily = IpxFontFamily, fontWeight = FontWeight.SemiBold, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 1.6.sp)
+    private val scale get() = if (isAppleDesign) AppleType else EmberType
+    val HeroTitle get() = scale.heroTitle
+    val DisplayLarge get() = scale.displayLarge
+    val HeadlineMedium get() = scale.headlineMedium
+    val TitleLarge get() = scale.titleLarge
+    val RowTitle get() = scale.rowTitle
+    val TitleMedium get() = scale.titleMedium
+    val BodyLarge get() = scale.bodyLarge
+    val BodyMedium get() = scale.bodyMedium
+    val BodySmall get() = scale.bodySmall
+    val LabelSmall get() = scale.labelSmall
+    /** Small label above a title ("MOVIE", "NEW SEASON"). */
+    val Eyebrow get() = scale.eyebrow
 }
 
 // ─── Colour Scheme ────────────────────────────────────────────────────────────
@@ -102,6 +131,8 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
     val colors = if (appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) AppleColors else EmberColors
     // Written before the content reads it, so the first frame already has the chosen palette.
     if (activeColors !== colors) activeColors = colors
+    val design = if (appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) IpxDesign.APPLE else IpxDesign.EMBER
+    if (activeDesign != design) activeDesign = design
 
     // Rows and grids stay still while focus moves across visible items (see EdgeBringIntoViewSpec).
     val bringIntoView = remember(scaledDensity) { EdgeBringIntoViewSpec(edgePx = with(scaledDensity) { 48.dp.toPx() }) }

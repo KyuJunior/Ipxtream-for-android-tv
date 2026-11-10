@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.focusable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -145,7 +146,7 @@ fun SettingsScreen(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(ipxShape(8.dp))
                             .background(Accent.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
@@ -166,7 +167,7 @@ fun SettingsScreen(
                 if (feedbackMessage != null) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
+                            .clip(ipxShape(8.dp))
                             .background(AccentGreen.copy(alpha = 0.2f))
                             .padding(horizontal = 14.dp, vertical = 6.dp)
                     ) {
@@ -201,16 +202,16 @@ fun SettingsScreen(
                     modifier = Modifier
                         .width(260.dp)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(ipxShape(12.dp))
                         .background(SlatePrimary)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                        .then(if (isAppleDesign) Modifier else Modifier.border(1.dp, BorderSubtle, ipxShape(12.dp)))
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(12.dp)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                        verticalArrangement = Arrangement.spacedBy(if (isAppleDesign) 2.dp else 6.dp)
                     ) {
                         SettingsCategory.values().forEachIndexed { index, category ->
                             val isSelected = category == selectedCategory
@@ -223,7 +224,7 @@ fun SettingsScreen(
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(48.dp)
+                                    .height(if (isAppleDesign) 52.dp else 48.dp)
                                     .then(if (index == 0) Modifier.focusRequester(leftNavFocusRequester) else Modifier)
                                     .onFocusChanged { state ->
                                         isFocused = state.isFocused
@@ -237,17 +238,17 @@ fun SettingsScreen(
                                             true
                                         } else false
                                     },
-                                shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(8.dp)),
+                                shape = ClickableSurfaceDefaults.shape(if (isAppleDesign) RoundedCornerShape(26.dp) else ipxShape(8.dp)),
                                 colors = ClickableSurfaceDefaults.colors(
-                                    containerColor = if (isSelected) Accent.copy(alpha = 0.15f) else Color.Transparent,
-                                    focusedContainerColor = Color.White.copy(alpha = 0.2f)
+                                    containerColor = if (isAppleDesign) { if (isSelected) AppleSegmentSelected else SlateCard } else if (isSelected) Accent.copy(alpha = 0.15f) else Color.Transparent,
+                                    focusedContainerColor = if (isAppleDesign) ChipFocused else Color.White.copy(alpha = 0.2f)
                                 ),
                                 border = ClickableSurfaceDefaults.border(
-                                    border = Border(
+                                    border = if (isAppleDesign) Border.None else Border(
                                         if (isSelected) BorderStroke(1.dp, Accent.copy(alpha = 0.4f)) else BorderStroke(0.dp, Color.Transparent),
-                                        shape = RoundedCornerShape(8.dp)
+                                        shape = ipxShape(8.dp)
                                     ),
-                                    focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(8.dp))
+                                    focusedBorder = if (isAppleDesign) Border.None else Border(BorderStroke(2.dp, BorderFocus), shape = ipxShape(8.dp))
                                 )
                             ) {
                                 Row(
@@ -260,13 +261,13 @@ fun SettingsScreen(
                                     Icon(
                                         imageVector = category.icon,
                                         contentDescription = stringResource(category.titleRes),
-                                        tint = if (isSelected || isFocused) Accent else TextSecondary,
+                                        tint = if (isAppleDesign && isFocused) TextOnFocus else if (isAppleDesign && isSelected) TextPrimary else if (isSelected || isFocused) Accent else TextSecondary,
                                         modifier = Modifier.size(20.dp)
                                     )
                                     Text(
                                         text = stringResource(category.titleRes),
                                         style = IpxTypography.BodyMedium,
-                                        color = if (isSelected || isFocused) TextPrimary else TextSecondary,
+                                        color = if (isAppleDesign && isFocused) TextOnFocus else if (isSelected || isFocused) TextPrimary else TextSecondary,
                                         fontWeight = if (isSelected || isFocused) FontWeight.Bold else FontWeight.Normal
                                     )
                                 }
@@ -280,16 +281,16 @@ fun SettingsScreen(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(ipxShape(12.dp))
                         .background(SlatePrimary)
-                        .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                        .then(if (isAppleDesign) Modifier else Modifier.border(1.dp, BorderSubtle, ipxShape(12.dp)))
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(20.dp)
                             .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                        verticalArrangement = Arrangement.spacedBy(if (isAppleDesign) 2.dp else 16.dp)
                     ) {
                         when (selectedCategory) {
                             SettingsCategory.GENERAL -> {
@@ -510,7 +511,7 @@ private fun GeneralSettingsContent(
     )
 
     Spacer(Modifier.height(8.dp))
-    Text(stringResource(R.string.settings_side_nav_sections), style = IpxTypography.TitleMedium, color = Accent)
+    Text(stringResource(R.string.settings_side_nav_sections), style = if (isAppleDesign) IpxTypography.TitleMedium.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold) else IpxTypography.TitleMedium, color = if (isAppleDesign) TextSecondary else Accent)
 
     SettingToggleItem(
         title = stringResource(R.string.settings_show_whats_new),
@@ -698,11 +699,13 @@ private fun AccountsSettingsContent(
         Button(
             onClick = onAddAccount,
             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+            modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus },
+            colors = if (isAppleDesign) settingsActionButtonColors(primary = true) else ButtonDefaults.colors(),
+            shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
         ) {
-            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextOnFocus)
+            Icon(imageVector = Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp), tint = if (isAppleDesign) LocalContentColor.current else TextOnFocus)
             Spacer(Modifier.width(6.dp))
-            Text(stringResource(R.string.accounts_add), fontSize = 12.sp, color = TextOnFocus, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.accounts_add), fontSize = 12.sp, color = if (isAppleDesign) Color.Unspecified else TextOnFocus, fontWeight = FontWeight.Bold)
         }
     }
 
@@ -714,7 +717,7 @@ private fun AccountsSettingsContent(
             Text(stringResource(R.string.accounts_none), style = IpxTypography.BodyMedium, color = TextMuted)
         }
     } else {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(if (isAppleDesign) 2.dp else 10.dp)) {
             uiState.accounts.forEach { account ->
                 val isActive = uiState.activeAccount?.username == account.username && uiState.activeAccount?.server == account.server
                 val isDefault = uiState.defaultAccount?.username == account.username && uiState.defaultAccount?.server == account.server
@@ -722,8 +725,8 @@ private fun AccountsSettingsContent(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(if (isActive) SlateCard else SlateDeep)
+                        .clip(if (isAppleDesign) RoundedCornerShape(26.dp) else ipxShape(10.dp))
+                        .background(if (isAppleDesign || isActive) SlateCard else SlateDeep)
                         .padding(14.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -768,32 +771,36 @@ private fun AccountsSettingsContent(
                             if (!isActive) {
                                 Button(
                                     onClick = { onSwitchAccount(account.server, account.username) },
-                                    modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus }
+                                    modifier = Modifier.height(30.dp).focusProperties { start = leftNavFocus },
+                                    colors = if (isAppleDesign) settingsActionButtonColors(primary = true) else ButtonDefaults.colors(),
+                                    shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                                 ) {
-                                    Text(stringResource(R.string.accounts_switch), fontSize = 11.sp, color = TextOnFocus)
+                                    Text(stringResource(R.string.accounts_switch), fontSize = 11.sp, color = if (isAppleDesign) Color.Unspecified else TextOnFocus)
                                 }
                             }
                             if (!isDefault) {
                                 Button(
                                     onClick = { onSetDefaultAccount(account.server, account.username) },
                                     modifier = Modifier.height(30.dp).focusProperties { if (isActive) start = leftNavFocus },
-                                    colors = ButtonDefaults.colors(
+                                    colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(
                                         containerColor = Color.Transparent,
                                         focusedContainerColor = SlateCard
-                                    )
+                                    ),
+                                    shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                                 ) {
-                                    Text(stringResource(R.string.accounts_set_default), fontSize = 11.sp, color = TextPrimary)
+                                    Text(stringResource(R.string.accounts_set_default), fontSize = 11.sp, color = if (isAppleDesign) Color.Unspecified else TextPrimary)
                                 }
                             }
                             Button(
                                 onClick = { onRemoveAccount(account.server, account.username) },
                                 modifier = Modifier.height(30.dp).focusProperties { if (isActive && isDefault) start = leftNavFocus },
-                                colors = ButtonDefaults.colors(
+                                colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(
                                     containerColor = Color.Red.copy(alpha = 0.75f),
                                     focusedContainerColor = Color.Red
-                                )
+                                ),
+                                shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                             ) {
-                                Text(stringResource(R.string.accounts_remove), fontSize = 11.sp, color = Color.White)
+                                Text(stringResource(R.string.accounts_remove), fontSize = 11.sp, color = if (isAppleDesign) Color.Unspecified else Color.White)
                             }
                         }
                     }
@@ -861,7 +868,7 @@ private fun AboutSettingsContent(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(ipxShape(10.dp))
             .background(SlateCard)
             .padding(16.dp)
     ) {
@@ -879,7 +886,7 @@ private fun AboutSettingsContent(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(ipxShape(10.dp))
             .background(SlateCard)
             .padding(16.dp)
     ) {
@@ -943,13 +950,17 @@ private fun AboutSettingsContent(
                 if (uiState.updateRelease != null && uiState.updateDownloadProgress == null) {
                     Button(
                         onClick = onDownloadUpdate,
-                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus },
+                        colors = if (isAppleDesign) settingsActionButtonColors(primary = true) else ButtonDefaults.colors(),
+                        shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                     ) {
-                        Text(stringResource(R.string.update_download), color = TextOnFocus, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.update_download), color = if (isAppleDesign) Color.Unspecified else TextOnFocus, fontWeight = FontWeight.Bold)
                     }
                     Button(
                         onClick = onDismissUpdate,
-                        modifier = Modifier.height(34.dp)
+                        modifier = Modifier.height(34.dp),
+                        colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(),
+                        shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                     ) {
                         Text(stringResource(R.string.action_later))
                     }
@@ -957,7 +968,9 @@ private fun AboutSettingsContent(
                     Button(
                         onClick = onCheckUpdates,
                         enabled = !uiState.isCheckingForUpdate && uiState.updateDownloadProgress == null,
-                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus }
+                        modifier = Modifier.height(34.dp).focusRequester(initialFocus).focusProperties { start = leftNavFocus },
+                        colors = if (isAppleDesign) settingsActionButtonColors(primary = true) else ButtonDefaults.colors(),
+                        shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
                     ) {
                         Text(when {
                             !BuildConfig.SELF_UPDATE      -> stringResource(R.string.update_open_play)
@@ -977,7 +990,7 @@ private fun AboutSettingsContent(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(ipxShape(12.dp))
                 .background(SlateCard)
                 .padding(16.dp)
         ) {
@@ -997,7 +1010,9 @@ private fun AboutSettingsContent(
             Spacer(Modifier.height(8.dp))
             Button(
                 onClick = { com.ipxtream.tv.data.local.CrashLog.clear(crashContext); lastCrash = null },
-                modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus }
+                modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
+                colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(),
+                shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
             ) {
                 Text(stringResource(R.string.action_clear))
             }
@@ -1009,10 +1024,11 @@ private fun AboutSettingsContent(
         Button(
             onClick = onOpenTerms,
             modifier = Modifier.height(34.dp).focusProperties { start = leftNavFocus },
-            colors = ButtonDefaults.colors(
+            colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(
                 containerColor = SlateCard,
                 focusedContainerColor = Accent
-            )
+            ),
+            shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
         ) {
             Text(stringResource(R.string.legal_terms_short), style = IpxTypography.BodySmall)
         }
@@ -1020,10 +1036,11 @@ private fun AboutSettingsContent(
         Button(
             onClick = onOpenPrivacy,
             modifier = Modifier.height(34.dp),
-            colors = ButtonDefaults.colors(
+            colors = if (isAppleDesign) settingsActionButtonColors(primary = false) else ButtonDefaults.colors(
                 containerColor = SlateCard,
                 focusedContainerColor = Accent
-            )
+            ),
+            shape = if (isAppleDesign) ButtonDefaults.shape(CircleShape) else ButtonDefaults.shape()
         ) {
             Text(stringResource(R.string.legal_privacy_title), style = IpxTypography.BodySmall)
         }
@@ -1036,9 +1053,18 @@ private fun AboutSettingsContent(
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
+private fun settingsActionButtonColors(primary: Boolean) = ButtonDefaults.colors(
+    containerColor = if (primary) Accent else AppleFill,
+    contentColor = if (primary) TextOnAccent else Accent,
+    focusedContainerColor = ChipFocused,
+    focusedContentColor = TextOnFocus
+)
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
 private fun SectionHeader(title: String, subtitle: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
-        Text(text = title, style = IpxTypography.TitleLarge, color = Accent)
+        Text(text = title, style = if (isAppleDesign) IpxTypography.TitleLarge.copy(fontSize = 17.sp, fontWeight = FontWeight.SemiBold) else IpxTypography.TitleLarge, color = if (isAppleDesign) TextSecondary else Accent)
         Spacer(Modifier.height(2.dp))
         Text(text = subtitle, style = IpxTypography.BodySmall, color = TextMuted)
     }
@@ -1061,14 +1087,14 @@ private fun SettingToggleItem(
             .fillMaxWidth()
             .height(58.dp)
             .onFocusChanged { isFocused = it.isFocused },
-        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
+        shape = ClickableSurfaceDefaults.shape(if (isAppleDesign) RoundedCornerShape(26.dp) else ipxShape(10.dp)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = SlateCard,
-            focusedContainerColor = SlateGlass
+            focusedContainerColor = if (isAppleDesign) ChipFocused else SlateGlass
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(10.dp)),
-            focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(10.dp))
+            border = if (isAppleDesign) Border.None else Border(BorderStroke(1.dp, BorderSubtle), shape = ipxShape(10.dp)),
+            focusedBorder = if (isAppleDesign) Border.None else Border(BorderStroke(2.dp, BorderFocus), shape = ipxShape(10.dp))
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.02f)
     ) {
@@ -1080,8 +1106,8 @@ private fun SettingToggleItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = IpxTypography.BodyMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-                Text(text = subtitle, style = IpxTypography.BodySmall.copy(fontSize = 11.sp), color = TextMuted, maxLines = 1)
+                Text(text = title, style = IpxTypography.BodyMedium, color = if (isAppleDesign && isFocused) TextOnFocus else TextPrimary, fontWeight = FontWeight.Bold)
+                Text(text = subtitle, style = IpxTypography.BodySmall.copy(fontSize = 11.sp), color = if (isAppleDesign && isFocused) TextOnFocus.copy(alpha = 0.7f) else TextMuted, maxLines = 1)
             }
 
             Spacer(Modifier.width(16.dp))
@@ -1092,7 +1118,7 @@ private fun SettingToggleItem(
                     .width(48.dp)
                     .height(26.dp)
                     .clip(CircleShape)
-                    .background(if (isChecked) Accent else Color.White.copy(alpha = 0.15f))
+                    .background(if (isChecked) { if (isAppleDesign) AccentGreen else Accent } else Color.White.copy(alpha = 0.15f))
                     .padding(3.dp),
                 contentAlignment = if (isChecked) Alignment.CenterEnd else Alignment.CenterStart
             ) {
@@ -1100,7 +1126,7 @@ private fun SettingToggleItem(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(CircleShape)
-                        .background(if (isChecked) TextOnFocus else Color.White.copy(alpha = 0.6f))
+                        .background(if (isAppleDesign) TextOnAccent else if (isChecked) TextOnFocus else Color.White.copy(alpha = 0.6f))
                 )
             }
         }
@@ -1122,7 +1148,7 @@ private fun <T> SettingSelectorItem(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(if (isAppleDesign) RoundedCornerShape(26.dp) else ipxShape(10.dp))
             .background(SlateCard)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -1133,7 +1159,8 @@ private fun <T> SettingSelectorItem(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .then(if (isAppleDesign) Modifier.clip(CircleShape).background(AppleFill).padding(4.dp) else Modifier),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             options.forEachIndexed { index, option ->
@@ -1147,17 +1174,17 @@ private fun <T> SettingSelectorItem(
                         // Only the first option leaves the row; the others move to their neighbour.
                         .focusProperties { if (index == 0) start = startFocus }
                         .onFocusChanged { isOptionFocused = it.isFocused },
-                    shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(6.dp)),
+                    shape = ClickableSurfaceDefaults.shape(if (isAppleDesign) CircleShape else ipxShape(6.dp)),
                     colors = ClickableSurfaceDefaults.colors(
-                        containerColor = if (isOptionSelected) Accent.copy(alpha = 0.2f) else SlateDeep,
-                        focusedContainerColor = if (isOptionSelected) Accent else Color.White.copy(alpha = 0.25f)
+                        containerColor = if (isAppleDesign) { if (isOptionSelected) AppleSegmentSelected else Color.Transparent } else if (isOptionSelected) Accent.copy(alpha = 0.2f) else SlateDeep,
+                        focusedContainerColor = if (isAppleDesign) ChipFocused else if (isOptionSelected) Accent else Color.White.copy(alpha = 0.25f)
                     ),
                     border = ClickableSurfaceDefaults.border(
-                        border = Border(
+                        border = if (isAppleDesign) Border.None else Border(
                             if (isOptionSelected) BorderStroke(1.dp, Accent) else BorderStroke(1.dp, Color.White.copy(alpha = 0.1f)),
-                            shape = RoundedCornerShape(6.dp)
+                            shape = ipxShape(6.dp)
                         ),
-                        focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(6.dp))
+                        focusedBorder = if (isAppleDesign) Border.None else Border(BorderStroke(2.dp, BorderFocus), shape = ipxShape(6.dp))
                     ),
                     scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f)
                 ) {
@@ -1171,14 +1198,14 @@ private fun <T> SettingSelectorItem(
                                 imageVector = Icons.Default.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = if (isOptionFocused) TextOnAccent else Accent
+                                tint = if (isAppleDesign) { if (isOptionFocused) TextOnFocus else TextPrimary } else if (isOptionFocused) TextOnAccent else Accent
                             )
                         }
                         Text(
                             text = labelProvider(option),
                             fontSize = 12.sp,
-                            fontWeight = if (isOptionSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isOptionFocused && isOptionSelected) TextOnAccent else if (isOptionSelected) Accent else TextPrimary
+                            fontWeight = if (isOptionSelected) { if (isAppleDesign) FontWeight.SemiBold else FontWeight.Bold } else FontWeight.Normal,
+                            color = if (isAppleDesign) { if (isOptionFocused) TextOnFocus else TextPrimary } else if (isOptionFocused && isOptionSelected) TextOnAccent else if (isOptionSelected) Accent else TextPrimary
                         )
                     }
                 }
@@ -1197,19 +1224,22 @@ private fun SettingActionItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val isFocused by interactionSource.collectIsFocusedAsState()
     Surface(
         onClick = onClick,
+        interactionSource = interactionSource,
         modifier = modifier
             .fillMaxWidth()
             .height(58.dp),
-        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(10.dp)),
+        shape = ClickableSurfaceDefaults.shape(if (isAppleDesign) RoundedCornerShape(26.dp) else ipxShape(10.dp)),
         colors = ClickableSurfaceDefaults.colors(
             containerColor = SlateCard,
-            focusedContainerColor = if (isDestructive) Color(0xFF8B0000) else SlateGlass
+            focusedContainerColor = if (isAppleDesign) ChipFocused else if (isDestructive) Color(0xFF8B0000) else SlateGlass
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, BorderSubtle), shape = RoundedCornerShape(10.dp)),
-            focusedBorder = Border(BorderStroke(2.dp, if (isDestructive) AccentRed else BorderFocus), shape = RoundedCornerShape(10.dp))
+            border = if (isAppleDesign) Border.None else Border(BorderStroke(1.dp, BorderSubtle), shape = ipxShape(10.dp)),
+            focusedBorder = if (isAppleDesign) Border.None else Border(BorderStroke(2.dp, if (isDestructive) AccentRed else BorderFocus), shape = ipxShape(10.dp))
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.02f)
     ) {
@@ -1221,22 +1251,22 @@ private fun SettingActionItem(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, style = IpxTypography.BodyMedium, color = TextPrimary, fontWeight = FontWeight.Bold)
-                Text(text = subtitle, style = IpxTypography.BodySmall.copy(fontSize = 11.sp), color = TextMuted, maxLines = 1)
+                Text(text = title, style = IpxTypography.BodyMedium, color = if (isAppleDesign && isFocused) TextOnFocus else TextPrimary, fontWeight = FontWeight.Bold)
+                Text(text = subtitle, style = IpxTypography.BodySmall.copy(fontSize = 11.sp), color = if (isAppleDesign && isFocused) TextOnFocus.copy(alpha = 0.7f) else TextMuted, maxLines = 1)
             }
 
             Spacer(Modifier.width(16.dp))
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(if (isDestructive) Color.Red.copy(alpha = 0.2f) else Accent.copy(alpha = 0.15f))
+                    .clip(if (isAppleDesign) CircleShape else ipxShape(6.dp))
+                    .background(if (isAppleDesign) AppleFill else if (isDestructive) Color.Red.copy(alpha = 0.2f) else Accent.copy(alpha = 0.15f))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {
                 Text(
                     text = actionLabel,
                     fontSize = 12.sp,
-                    color = if (isDestructive) Color.Red else Accent,
+                    color = if (isAppleDesign) { if (isFocused) TextOnFocus else Accent } else if (isDestructive) Color.Red else Accent,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1261,7 +1291,7 @@ private fun LegalInfoDialog(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(SlateDeep.copy(alpha = 0xE6 / 255f))
+            .background(if (isAppleDesign) AppleSheetDim else SlateDeep.copy(alpha = 0xE6 / 255f))
             .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -1269,9 +1299,10 @@ private fun LegalInfoDialog(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .fillMaxHeight(0.9f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(SlatePrimary)
-                .border(1.dp, BorderSubtle, RoundedCornerShape(12.dp))
+                .then(if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(32.dp)) else Modifier
+                    .clip(ipxShape(12.dp))
+                    .background(SlatePrimary)
+                    .border(1.dp, BorderSubtle, ipxShape(12.dp)))
         ) {
             Column(
                 modifier = Modifier
@@ -1316,8 +1347,8 @@ private fun LegalInfoDialog(
                         modifier = Modifier
                             .height(38.dp)
                             .focusRequester(closeFocusRequester),
-                        shape = ButtonDefaults.shape(RoundedCornerShape(8.dp)),
-                        colors = ButtonDefaults.colors(
+                        shape = ButtonDefaults.shape(if (isAppleDesign) CircleShape else ipxShape(8.dp)),
+                        colors = if (isAppleDesign) settingsActionButtonColors(primary = true) else ButtonDefaults.colors(
                             containerColor = Accent,
                             focusedContainerColor = Accent
                         )
@@ -1325,7 +1356,7 @@ private fun LegalInfoDialog(
                         Text(
                             text = stringResource(R.string.action_close),
                             style = IpxTypography.BodyMedium,
-                            color = TextOnAccent,
+                            color = if (isAppleDesign) Color.Unspecified else TextOnAccent,
                             fontWeight = FontWeight.Bold
                         )
                     }

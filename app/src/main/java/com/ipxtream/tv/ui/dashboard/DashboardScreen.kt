@@ -47,6 +47,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.ipxtream.tv.ui.theme.AppleSheetDim
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -1024,7 +1028,7 @@ fun DashboardScreen(
                     modifier = Modifier
                         .padding(start = 4.dp)     // thin divider gap
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
+                        .clip(RoundedCornerShape(topStart = if (isAppleDesign) 24.dp else 12.dp, bottomStart = if (isAppleDesign) 24.dp else 12.dp))
                 ) {
                     com.ipxtream.tv.ui.player.PlayerHost(
                         exoPlayer     = exoPlayer,
@@ -1186,8 +1190,7 @@ fun DashboardScreen(
         ) {
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
+                    .then(if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(50)) else Modifier.clip(RoundedCornerShape(50)).background(SurfaceElevated.copy(alpha = 0xE6 / 255f)))
                     .padding(horizontal = 22.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1215,8 +1218,7 @@ fun DashboardScreen(
         ) {
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(50))
-                    .background(SurfaceElevated.copy(alpha = 0xF2 / 255f))
+                    .then(if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(50)) else Modifier.clip(RoundedCornerShape(50)).background(SurfaceElevated.copy(alpha = 0xF2 / 255f)))
                     .padding(horizontal = 20.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1249,7 +1251,7 @@ fun DashboardScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.85f))
+                    .background(if (isAppleDesign) AppleSheetDim else Color.Black.copy(alpha = 0.85f))
                     .focusable(),
                 contentAlignment = Alignment.Center
             ) {
@@ -1257,9 +1259,12 @@ fun DashboardScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(com.ipxtream.tv.ui.theme.SurfaceElevated)
-                        .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(24.dp))
+                        .then(
+                            if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(32.dp))
+                            else Modifier.clip(RoundedCornerShape(24.dp))
+                                .background(com.ipxtream.tv.ui.theme.SurfaceElevated)
+                                .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(24.dp))
+                        )
                         .padding(36.dp)
                         .width(460.dp)
                 ) {
@@ -1294,7 +1299,7 @@ fun DashboardScreen(
                                 color = ProgressWatched,
                                 trackColor = Color.White.copy(alpha = 0.2f),
                                 strokeCap = StrokeCap.Round,
-                                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp))
+                                modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50))
                             )
                         }
                     } else {
@@ -1452,7 +1457,8 @@ private fun SectionHeader(title: String, itemCount: Int, isFromCache: Boolean, c
         modifier          = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, style = IpxTypography.TitleLarge, color = TextPrimary)
+        // Apple: a large title.
+        Text(title, style = if (isAppleDesign) IpxTypography.HeadlineMedium else IpxTypography.TitleLarge, color = TextPrimary)
         Spacer(Modifier.weight(1f))
         if (itemCount > 0) {
             Text(
@@ -1537,15 +1543,15 @@ private fun LibrarySection(
                     .focusProperties {
                         up = searchBarFocusRequester
                     },
-                shape = androidx.tv.material3.CardDefaults.shape(RoundedCornerShape(12.dp)),
+                shape = androidx.tv.material3.CardDefaults.shape(ipxShape(12.dp)),
                 colors = androidx.tv.material3.CardDefaults.colors(
                     containerColor = SlatePrimary,
                     focusedContainerColor = SlateGlass
                 ),
                 scale = androidx.tv.material3.CardDefaults.scale(focusedScale = 1.02f),
                 border = androidx.tv.material3.CardDefaults.border(
-                    border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)), shape = RoundedCornerShape(12.dp)),
-                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
+                    border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.10f)), shape = ipxShape(12.dp)),
+                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = ipxShape(12.dp))
                 )
             ) {
                 Row(
@@ -1718,13 +1724,13 @@ private fun LibraryCard(
             androidx.tv.material3.Card(
                 onClick = { onEpisodePlay(series, episode) },
                 modifier = Modifier.size(240.dp, 135.dp),
-                shape = androidx.tv.material3.CardDefaults.shape(RoundedCornerShape(12.dp)),
+                shape = androidx.tv.material3.CardDefaults.shape(ipxShape(12.dp)),
                 colors = androidx.tv.material3.CardDefaults.colors(
                     containerColor = com.ipxtream.tv.ui.theme.SlateCard,
                     focusedContainerColor = SlateGlass
                 ),
                 border = androidx.tv.material3.CardDefaults.border(
-                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
+                    focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(3.dp, BorderFocus), shape = ipxShape(12.dp))
                 )
             ) {
                 Box(Modifier.fillMaxSize()) {

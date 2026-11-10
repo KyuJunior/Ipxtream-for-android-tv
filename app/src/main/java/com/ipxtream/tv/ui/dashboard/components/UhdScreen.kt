@@ -56,6 +56,9 @@ import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.ProgressWatched
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.AppleSegmentSelected
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 private enum class UhdKind { MOVIES, SERIES }
 
@@ -366,13 +369,15 @@ internal fun PillChip(
         modifier = modifier.height(40.dp),
         shape    = ClickableSurfaceDefaults.shape(shape),
         colors   = ClickableSurfaceDefaults.colors(
-            containerColor        = if (selected) Color(0x33FFFFFF) else Color.Transparent,
-            contentColor          = if (selected) Color.White else TextSecondary,
+            containerColor        = if (isAppleDesign) {
+                if (selected) AppleSegmentSelected else AppleFill
+            } else if (selected) Color(0x33FFFFFF) else Color.Transparent,
+            contentColor          = if (isAppleDesign && selected) TextPrimary else if (selected) Color.White else TextSecondary,
             focusedContainerColor = ChipFocused,
             focusedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
-            border        = if (selected || !quiet) Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape) else Border.None,
+            border        = if (isAppleDesign) Border.None else if (selected || !quiet) Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape) else Border.None,
             focusedBorder = Border.None
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.06f)

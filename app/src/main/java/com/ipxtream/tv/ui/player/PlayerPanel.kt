@@ -1,5 +1,8 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import com.ipxtream.tv.ui.theme.bidi
 import com.ipxtream.tv.ui.theme.directionalKeys
 import androidx.compose.ui.AbsoluteAlignment
@@ -495,9 +498,12 @@ fun PlayerPanel(
             if (stream != null) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
-                        .border(BorderStroke(1.dp, GlassStroke), RoundedCornerShape(18.dp))
+                        .then(
+                            if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(28.dp))
+                            else Modifier.clip(RoundedCornerShape(18.dp))
+                                .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
+                                .border(BorderStroke(1.dp, GlassStroke), RoundedCornerShape(18.dp))
+                        )
                         .padding(start = 12.dp, end = 22.dp, top = 12.dp, bottom = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -505,7 +511,7 @@ fun PlayerPanel(
                     Box(
                         modifier = Modifier
                             .size(width = 88.dp, height = 56.dp)
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(ipxShape(10.dp))
                             .background(SurfaceElevated2),
                         contentAlignment = Alignment.Center
                     ) {
@@ -688,9 +694,10 @@ private fun FeedbackFlash(feedback: HudFeedback?, modifier: Modifier = Modifier)
                     scaleY = scale.value
                 }
                 .size(108.dp)
-                .clip(CircleShape)
-                .background(Color(0x73000000))
-                .border(1.dp, GlassStroke, CircleShape),
+                .then(
+                    if (isAppleDesign) Modifier.appleGlass(CircleShape)
+                    else Modifier.clip(CircleShape).background(Color(0x73000000)).border(1.dp, GlassStroke, CircleShape)
+                ),
             contentAlignment = Alignment.Center
         ) {
             androidx.tv.material3.Icon(
@@ -721,9 +728,10 @@ private fun ErrorOverlay(
         Column(
             modifier = Modifier
                 .widthIn(max = 560.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .background(SurfaceElevated)
-                .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                .then(
+                    if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(32.dp))
+                    else Modifier.clip(RoundedCornerShape(24.dp)).background(SurfaceElevated).border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                )
                 .padding(horizontal = 40.dp, vertical = 36.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

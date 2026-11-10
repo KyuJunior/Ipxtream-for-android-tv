@@ -47,6 +47,9 @@ import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.Hairline
 import com.ipxtream.tv.ui.theme.IpxMotion
@@ -141,9 +144,12 @@ fun TrackSelectionMenu(
                     .padding(top = 32.dp, bottom = 32.dp, end = 32.dp)
                     .widthIn(min = 360.dp, max = 440.dp)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(SurfaceElevated.copy(alpha = 0xF2 / 255f))
-                    .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                    .then(
+                        if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(32.dp))
+                        else Modifier.clip(RoundedCornerShape(24.dp))
+                            .background(SurfaceElevated.copy(alpha = 0xF2 / 255f))
+                            .border(1.dp, Hairline, RoundedCornerShape(24.dp))
+                    )
                     .padding(vertical = 28.dp)
             ) {
                 Text(
@@ -268,7 +274,7 @@ private fun TrackMenuItem(
             focusedContainerColor = ChipFocused,
             pressedContainerColor = FocusPressed
         ),
-        shape    = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
+        shape    = ClickableSurfaceDefaults.shape(shape = ipxShape(14.dp)),
         scale    = ClickableSurfaceDefaults.scale(focusedScale = 1.02f),
         border   = ClickableSurfaceDefaults.border(
             border        = androidx.tv.material3.Border.None,

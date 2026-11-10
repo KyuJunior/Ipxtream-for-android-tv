@@ -1,5 +1,9 @@
 package com.ipxtream.tv.ui.player
 
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.AppleGlassFill
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.bidi
 import androidx.compose.ui.unit.LayoutDirection
@@ -374,8 +378,11 @@ private fun qualityLabel(width: Int, height: Int): String? = when {
 private fun OutlineBadge(text: String) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(5.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.45f), RoundedCornerShape(5.dp))
+            // Apple: a filled capsule instead of an outline.
+            .then(
+                if (isAppleDesign) Modifier.clip(RoundedCornerShape(50)).background(AppleFill)
+                else Modifier.clip(RoundedCornerShape(5.dp)).border(1.dp, Color.White.copy(alpha = 0.45f), RoundedCornerShape(5.dp))
+            )
             .padding(horizontal = 7.dp, vertical = 2.dp)
     ) {
         Text(
@@ -390,7 +397,7 @@ private fun OutlineBadge(text: String) {
 internal fun LivePill(modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(5.dp))
+            .clip(if (isAppleDesign) RoundedCornerShape(50) else RoundedCornerShape(5.dp))
             .background(AccentRed)
             .padding(horizontal = 8.dp, vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -558,9 +565,12 @@ private fun Scrubber(
             ) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
-                        .border(1.dp, GlassStroke, RoundedCornerShape(10.dp))
+                        .then(
+                            if (isAppleDesign) Modifier.appleGlass(RoundedCornerShape(50))
+                            else Modifier.clip(RoundedCornerShape(10.dp))
+                                .background(SurfaceElevated.copy(alpha = 0xE6 / 255f))
+                                .border(1.dp, GlassStroke, RoundedCornerShape(10.dp))
+                        )
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -757,7 +767,8 @@ private fun HudButton(
                 },
             shape  = ClickableSurfaceDefaults.shape(CircleShape),
             colors = ClickableSurfaceDefaults.colors(
-                containerColor        = Color.White.copy(alpha = if (size > 56.dp) 0.16f else 0f),
+                // Apple: every control sits on a glass circle over the video.
+                containerColor        = if (isAppleDesign) AppleGlassFill else Color.White.copy(alpha = if (size > 56.dp) 0.16f else 0f),
                 contentColor          = Color.White,
                 focusedContainerColor = ChipFocused,
                 focusedContentColor   = TextOnFocus,

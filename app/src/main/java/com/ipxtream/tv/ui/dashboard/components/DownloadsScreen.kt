@@ -90,7 +90,13 @@ fun DownloadsScreen(
                     Button(
                         onClick = onClearDone,
                         modifier = Modifier.focusRequester(clearButtonFocusRequester),
-                        colors = ButtonDefaults.colors(
+                        shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+                        colors = if (isAppleDesign) ButtonDefaults.colors(
+                            containerColor = AppleFill,
+                            contentColor = Accent,
+                            focusedContainerColor = ChipFocused,
+                            focusedContentColor = TextOnFocus
+                        ) else ButtonDefaults.colors(
                             containerColor = Color.DarkGray.copy(alpha = 0.5f),
                             focusedContainerColor = ChipFocused,
                             focusedContentColor = TextOnFocus
@@ -174,13 +180,13 @@ private fun DownloadManagerCard(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight(),
-        shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
+        shape = CardDefaults.shape(ipxShape(12.dp)),
         colors = CardDefaults.colors(
-            containerColor = SlatePrimary,
+            containerColor = if (isAppleDesign) SlateCard else SlatePrimary,
             focusedContainerColor = SlateCard
         ),
         border = CardDefaults.border(
-            focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = RoundedCornerShape(12.dp))
+            focusedBorder = Border(BorderStroke(2.dp, BorderFocus), shape = ipxShape(12.dp))
         )
     ) {
         Column(
@@ -242,17 +248,44 @@ private fun DownloadManagerCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     when (item.status) {
                         DownloadStatus.DOWNLOADING -> {
-                            Button(onClick = onPause) {
+                            Button(
+                                onClick = onPause,
+                                shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+                                colors = if (isAppleDesign) ButtonDefaults.colors(
+                                    containerColor = AppleFill,
+                                    contentColor = Accent,
+                                    focusedContainerColor = ChipFocused,
+                                    focusedContentColor = TextOnFocus
+                                ) else ButtonDefaults.colors()
+                            ) {
                                 Text(stringResource(R.string.action_pause))
                             }
                         }
                         DownloadStatus.PAUSED, DownloadStatus.PENDING -> {
-                            Button(onClick = onResume) {
+                            Button(
+                                onClick = onResume,
+                                shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+                                colors = if (isAppleDesign) ButtonDefaults.colors(
+                                    containerColor = Accent,
+                                    contentColor = TextOnAccent,
+                                    focusedContainerColor = ChipFocused,
+                                    focusedContentColor = TextOnFocus
+                                ) else ButtonDefaults.colors()
+                            ) {
                                 Text(stringResource(R.string.action_resume))
                             }
                         }
                         DownloadStatus.FAILED -> {
-                            Button(onClick = onRetry) {
+                            Button(
+                                onClick = onRetry,
+                                shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+                                colors = if (isAppleDesign) ButtonDefaults.colors(
+                                    containerColor = Accent,
+                                    contentColor = TextOnAccent,
+                                    focusedContainerColor = ChipFocused,
+                                    focusedContentColor = TextOnFocus
+                                ) else ButtonDefaults.colors()
+                            ) {
                                 Text(stringResource(R.string.action_retry))
                             }
                         }
@@ -264,7 +297,13 @@ private fun DownloadManagerCard(
                     if (!item.isFinished) {
                         Button(
                             onClick = onCancel,
-                            colors = ButtonDefaults.colors(
+                            shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+                            colors = if (isAppleDesign) ButtonDefaults.colors(
+                                containerColor = AppleFill,
+                                contentColor = Accent,
+                                focusedContainerColor = ChipFocused,
+                                focusedContentColor = TextOnFocus
+                            ) else ButtonDefaults.colors(
                                 containerColor = Color.DarkGray.copy(alpha = 0.3f),
                                 focusedContainerColor = Color.Red,
                                 focusedContentColor = Color.White

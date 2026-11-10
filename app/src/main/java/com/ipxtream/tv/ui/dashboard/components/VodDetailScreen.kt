@@ -60,6 +60,9 @@ import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.SlateDeep
 import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.TextOnAccent
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -180,9 +183,9 @@ fun VodDetailScreen(
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(ipxShape(6.dp))
                                 .background(AccentAmber.copy(alpha = 0.18f))
-                                .border(1.dp, AccentAmber.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                .border(1.dp, AccentAmber.copy(alpha = 0.5f), ipxShape(6.dp))
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Icon(
@@ -220,9 +223,9 @@ fun VodDetailScreen(
                     if (!duration.isNullOrBlank()) {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(ipxShape(6.dp))
                                 .background(Color.White.copy(alpha = 0.08f))
-                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(6.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), ipxShape(6.dp))
                                 .padding(horizontal = 9.dp, vertical = 3.dp)
                         ) {
                             Text(
@@ -239,9 +242,9 @@ fun VodDetailScreen(
                     measured?.label?.let { label ->
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(6.dp))
+                                .clip(ipxShape(6.dp))
                                 .background(Color.White.copy(alpha = if (measured.is4K) 0.9f else 0.12f))
-                                .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(6.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.22f), ipxShape(6.dp))
                                 .padding(horizontal = 8.dp, vertical = 3.dp)
                         ) {
                             Text(
@@ -257,9 +260,9 @@ fun VodDetailScreen(
                     // Quality / Extension Badge
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(ipxShape(6.dp))
                             .background(Color.White.copy(alpha = 0.12f))
-                            .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(6.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.22f), ipxShape(6.dp))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
                         Text(
@@ -436,8 +439,8 @@ fun VodDetailScreen(
                     modifier = Modifier
                         .width(280.dp)
                         .height(420.dp)
-                        .clip(RoundedCornerShape(18.dp))
-                        .border(1.5.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(18.dp))
+                        .clip(ipxShape(18.dp))
+                        .border(1.5.dp, Color.White.copy(alpha = 0.22f), ipxShape(18.dp))
                         .background(SlateCard)
                 ) {
                     AsyncImage(
@@ -452,9 +455,9 @@ fun VodDetailScreen(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(14.dp)
-                            .clip(RoundedCornerShape(6.dp))
+                            .clip(ipxShape(6.dp))
                             .background(Color.Black.copy(alpha = 0.72f))
-                            .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(6.dp))
+                            .border(1.dp, Color.White.copy(alpha = 0.3f), ipxShape(6.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
@@ -492,8 +495,8 @@ private fun VodActionButton(
             )
         } else {
             ButtonDefaults.colors(
-                containerColor        = Color(0x2EFFFFFF),
-                contentColor          = Color.White,
+                containerColor        = if (isAppleDesign) AppleFill else Color(0x2EFFFFFF),
+                contentColor          = if (isAppleDesign) Accent else Color.White,
                 focusedContainerColor = ChipFocused,
                 focusedContentColor   = TextOnFocus
             )
@@ -501,7 +504,7 @@ private fun VodActionButton(
         shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
         scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
         border = ButtonDefaults.border(
-            border = Border(
+            border = if (isAppleDesign) Border.None else Border(
                 border = BorderStroke(1.dp, if (isPrimary) Color.Transparent else Color.White.copy(alpha = 0.2f)),
                 shape  = RoundedCornerShape(50)
             ),
@@ -516,7 +519,7 @@ private fun VodActionButton(
                 imageVector        = icon,
                 contentDescription = label,
                 modifier           = Modifier.size(20.dp),
-                tint               = if (isHeartFavorite) Color.Red else Color.Unspecified
+                tint               = if (isAppleDesign) androidx.tv.material3.LocalContentColor.current else if (isHeartFavorite) Color.Red else Color.Unspecified
             )
             Spacer(Modifier.width(8.dp))
             Text(

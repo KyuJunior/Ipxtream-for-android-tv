@@ -55,7 +55,9 @@ import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Settings
+import androidx.tv.material3.Icon
 import coil.compose.AsyncImage
 import com.ipxtream.tv.R
 import com.ipxtream.tv.data.match.Competition
@@ -68,6 +70,8 @@ import com.ipxtream.tv.data.match.MatchTeam
 import com.ipxtream.tv.data.model.StreamItem
 import com.ipxtream.tv.ui.dashboard.MatchListing
 import com.ipxtream.tv.ui.theme.Accent
+import com.ipxtream.tv.ui.theme.AppleSeparator
+import com.ipxtream.tv.ui.theme.AppleSheetDim
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.GlassStroke
 import com.ipxtream.tv.ui.theme.Hairline
@@ -82,6 +86,9 @@ import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.bidi
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import com.ipxtream.tv.ui.theme.premiumFocus
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -353,16 +360,18 @@ private fun LeaguesDialog(selected: Set<String>, onDismiss: (Set<String>?) -> Un
     Dialog(onDismissRequest = close, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         com.ipxtream.tv.ui.theme.TouchBridgeDialogHost {
             Box(
-                Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
+                Modifier.fillMaxSize().background(if (isAppleDesign) AppleSheetDim else SlateDeep.copy(alpha = 0xE6 / 255f)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     Modifier
                         .fillMaxWidth(0.62f)
                         .fillMaxHeight(0.86f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(SlateCard)
-                        .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
+                        .then(
+                            if (isAppleDesign) Modifier.appleGlass(ipxShape(18.dp))
+                            else Modifier.clip(ipxShape(18.dp)).background(SlateCard)
+                                .border(1.dp, GlassStroke, ipxShape(18.dp))
+                        )
                         .padding(28.dp)
                 ) {
                     Text(stringResource(R.string.matches_leagues_title), style = IpxTypography.HeadlineMedium, color = TextPrimary)
@@ -389,6 +398,9 @@ private fun LeaguesDialog(selected: Set<String>, onDismiss: (Set<String>?) -> Un
                                 onToggle = { chosen = if (slug in chosen) chosen - slug else chosen + slug },
                                 modifier = if (slug == FollowedCompetitions.CATALOG.first()) Modifier.focusRequester(firstFocus) else Modifier
                             )
+                            if (isAppleDesign) {
+                                Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(AppleSeparator))
+                            }
                         }
                     }
                     Spacer(Modifier.height(16.dp))
@@ -406,7 +418,7 @@ private fun LeaguesDialog(selected: Set<String>, onDismiss: (Set<String>?) -> Un
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun LeagueToggleRow(name: String, on: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(10.dp)
+    val shape = ipxShape(10.dp)
     Surface(
         onClick  = onToggle,
         modifier = modifier.fillMaxWidth().height(52.dp),
@@ -422,22 +434,35 @@ private fun LeagueToggleRow(name: String, on: Boolean, onToggle: () -> Unit, mod
     ) {
         Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(name, style = IpxTypography.BodyLarge, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            // A small switch: Ember track when on, a hairline outline when off.
-            Box(
-                Modifier
-                    .size(width = 44.dp, height = 24.dp)
-                    .clip(RoundedCornerShape(50))
-                    .background(if (on) Accent else Color.Transparent)
-                    .border(1.dp, if (on) Accent else GlassStroke, RoundedCornerShape(50)),
-                contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart
-            ) {
+            if (isAppleDesign) {
                 Box(
                     Modifier
-                        .padding(3.dp)
-                        .size(18.dp)
+                        .size(22.dp)
                         .clip(CircleShape)
-                        .background(if (on) TextOnAccent else TextSecondary)
-                )
+                        .background(if (on) Accent else Color.Transparent)
+                        .border(1.dp, if (on) Accent else GlassStroke, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (on) Icon(Icons.Rounded.Check, contentDescription = null, tint = TextOnAccent, modifier = Modifier.size(16.dp))
+                }
+            } else {
+                // A small switch: Ember track when on, a hairline outline when off.
+                Box(
+                    Modifier
+                        .size(width = 44.dp, height = 24.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(if (on) Accent else Color.Transparent)
+                        .border(1.dp, if (on) Accent else GlassStroke, RoundedCornerShape(50)),
+                    contentAlignment = if (on) Alignment.CenterEnd else Alignment.CenterStart
+                ) {
+                    Box(
+                        Modifier
+                            .padding(3.dp)
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(if (on) TextOnAccent else TextSecondary)
+                    )
+                }
             }
         }
     }
@@ -488,7 +513,7 @@ private fun MatchRow(
 ) {
     val match = listing.match
     var focused by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(14.dp)
+    val shape = ipxShape(14.dp)
     val finished = match.state == MatchState.FINISHED || match.state == MatchState.POSTPONED
     Surface(
         onClick     = onClick,
@@ -713,16 +738,18 @@ private fun ChannelPicker(
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         com.ipxtream.tv.ui.theme.TouchBridgeDialogHost {
             Box(
-                Modifier.fillMaxSize().background(SlateDeep.copy(alpha = 0xE6 / 255f)),
+                Modifier.fillMaxSize().background(if (isAppleDesign) AppleSheetDim else SlateDeep.copy(alpha = 0xE6 / 255f)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     Modifier
                         .fillMaxWidth(0.62f)
                         .fillMaxHeight(0.86f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(SlateCard)
-                        .border(1.dp, GlassStroke, RoundedCornerShape(18.dp))
+                        .then(
+                            if (isAppleDesign) Modifier.appleGlass(ipxShape(18.dp))
+                            else Modifier.clip(ipxShape(18.dp)).background(SlateCard)
+                                .border(1.dp, GlassStroke, ipxShape(18.dp))
+                        )
                         .padding(28.dp)
                 ) {
                     Text(stringResource(R.string.picker_title), style = IpxTypography.Eyebrow, color = TextSecondary)
@@ -770,6 +797,9 @@ private fun ChannelPicker(
                                     // Up from the first channel goes to the search, not back into the list.
                                     modifier = if (i == 0) Modifier.focusRequester(firstFocus).focusProperties { up = searchFocus } else Modifier
                                 )
+                                if (isAppleDesign) {
+                                    Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(1.dp).background(AppleSeparator))
+                                }
                             }
                         }
                     }
@@ -791,7 +821,7 @@ private fun PickerHeader(text: String) {
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 private fun PickerRow(stream: StreamItem, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(10.dp)
+    val shape = ipxShape(10.dp)
     Surface(
         onClick  = onClick,
         modifier = modifier.fillMaxWidth().height(52.dp),

@@ -30,6 +30,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import com.ipxtream.tv.ui.theme.IpxTypography
 import com.ipxtream.tv.ui.theme.TextSecondary
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.tv.material3.ButtonDefaults
+import com.ipxtream.tv.ui.theme.Accent
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 /**
  * Horizontal navigation bar with Previous / Next buttons and page indicator.
@@ -74,6 +81,15 @@ fun PaginationBar(
         Button(
             onClick  = onPrevPage,
             enabled  = hasPrevPage,
+            shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+            colors = if (isAppleDesign) ButtonDefaults.colors(
+                containerColor = AppleFill,
+                contentColor = Accent,
+                focusedContainerColor = ChipFocused,
+                focusedContentColor = TextOnFocus,
+                disabledContainerColor = AppleFill,
+                disabledContentColor = TextSecondary
+            ) else ButtonDefaults.colors(),
             modifier = Modifier
                 .padding(end = 12.dp)
                 .focusRequester(prevRequester)
@@ -106,6 +122,15 @@ fun PaginationBar(
         Button(
             onClick  = onNextPage,
             enabled  = hasNextPage,
+            shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
+            colors = if (isAppleDesign) ButtonDefaults.colors(
+                containerColor = AppleFill,
+                contentColor = Accent,
+                focusedContainerColor = ChipFocused,
+                focusedContentColor = TextOnFocus,
+                disabledContainerColor = AppleFill,
+                disabledContentColor = TextSecondary
+            ) else ButtonDefaults.colors(),
             modifier = Modifier
                 .padding(start = 12.dp)
                 .focusRequester(nextRequester)

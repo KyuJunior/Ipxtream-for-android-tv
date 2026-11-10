@@ -95,6 +95,9 @@ import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.AppleLens
+import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 /**
  * Data representation of a section item in the side navigation drawer.
@@ -136,10 +139,12 @@ fun SideNavBar(
     modifier:              Modifier = Modifier
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    // Apple: a floating glass capsule, centred on the start edge, instead of a full-height rail.
+    val apple = isAppleDesign
     // Read in the layout phase only: the menu re-measures while it slides open instead of
     // recomposing every item on every frame (that cost a frame each on slow TVs).
     val width = animateDpAsState(
-        targetValue   = if (isExpanded) 240.dp else 72.dp,
+        targetValue   = if (isExpanded) 240.dp else if (apple) 66.dp else 72.dp,
         animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
         label         = "navWidth"
     )
@@ -152,23 +157,28 @@ fun SideNavBar(
                 layout(w, placeable.height) { placeable.place(0, 0) }
             }
             .fillMaxHeight()
-            .background(
-                if (isExpanded) Brush.horizontalGradient(listOf(SlateDeep.copy(alpha = 0xFA / 255f), SurfaceDim.copy(alpha = 0xF0 / 255f)))
-                else Brush.horizontalGradient(listOf(SlateNav, SlateNav))
+            .then(
+                if (apple) Modifier.padding(start = 6.dp, end = 4.dp, top = 12.dp, bottom = 12.dp)
+                else Modifier
+                    .background(
+                        if (isExpanded) Brush.horizontalGradient(listOf(SlateDeep.copy(alpha = 0xFA / 255f), SurfaceDim.copy(alpha = 0xF0 / 255f)))
+                        else Brush.horizontalGradient(listOf(SlateNav, SlateNav))
+                    )
+                    .drawBehind {
+                        if (isExpanded) drawRect(Hairline, topLeft = Offset(size.width - 1.dp.toPx(), 0f), size = Size(1.dp.toPx(), size.height))
+                    }
             )
-            .drawBehind {
-                if (isExpanded) drawRect(Hairline, topLeft = Offset(size.width - 1.dp.toPx(), 0f), size = Size(1.dp.toPx(), size.height))
-            }
             .onFocusChanged { state ->
                 isExpanded = state.hasFocus
                 onFocusChanged(state.hasFocus)
-            }
+            },
+        contentAlignment = if (apple) Alignment.CenterStart else Alignment.TopStart
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .padding(vertical = 24.dp)
-                .selectableGroup(),
+            modifier = (
+                if (apple) Modifier.fillMaxWidth().appleGlass(RoundedCornerShape(28.dp)).padding(vertical = 4.dp)
+                else Modifier.fillMaxHeight().padding(vertical = 24.dp)
+            ).selectableGroup(),
             verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.Top),
             horizontalAlignment = Alignment.Start
         ) {
@@ -176,8 +186,8 @@ fun SideNavBar(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
-                    .padding(horizontal = 16.dp),
+                    .height(if (apple) 48.dp else 52.dp)
+                    .padding(horizontal = if (apple) 8.dp else 16.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 if (isExpanded) {
@@ -198,7 +208,7 @@ fun SideNavBar(
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(if (apple) 2.dp else 12.dp))
 
             // ── Dynamic Content Sections (Configured via Settings) ─────────────
             val visibleSections = remember(settings) {
@@ -217,7 +227,7 @@ fun SideNavBar(
             // Scrolls on short screens: a phone held sideways can't fit every section.
             Column(
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(1f, fill = !apple)
                     .focusProperties { canFocus = false }
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -262,18 +272,20 @@ private fun NavItem(
         label         = "navAlpha"
     )
 
+    val apple = isAppleDesign
     val contentColor = when {
         isFocused -> TextOnFocus
-        isActive  -> Color.White
+        isActive  -> if (apple) Accent else Color.White
         else      -> TextSecondary
     }
 
     val containerColor = when {
+        apple && isActive      -> AppleLens
         isActive && isExpanded -> Color.White.copy(alpha = 0.10f)
         else                   -> Color.Transparent
     }
 
-    val navItemShape = RoundedCornerShape(12.dp)
+    val navItemShape = if (apple) RoundedCornerShape(50) else RoundedCornerShape(12.dp)
     val keys = directionalKeys()
 
     Surface(
@@ -285,7 +297,7 @@ private fun NavItem(
         modifier = modifier
             .fillMaxWidth()
             .height(48.dp)
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = if (apple) 4.dp else 8.dp)
             .graphicsLayer { alpha = contentAlpha }
             .onFocusChanged { state -> isFocused = state.isFocused }
             .onPreviewKeyEvent { event ->
@@ -312,15 +324,15 @@ private fun NavItem(
             border        = Border.None,
             focusedBorder = Border.None
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.04f),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = if (apple) 1f else 1.04f),
         shape = ClickableSurfaceDefaults.shape(shape = navItemShape)
     ) {
         Row(
-            modifier            = Modifier.padding(horizontal = 10.dp).fillMaxHeight(),
+            modifier            = Modifier.padding(horizontal = if (apple) 0.dp else 10.dp).fillMaxHeight(),
             horizontalArrangement = Arrangement.Start,
             verticalAlignment   = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(if (apple) 12.dp else 14.dp))
 
             // Section Icon
             Icon(

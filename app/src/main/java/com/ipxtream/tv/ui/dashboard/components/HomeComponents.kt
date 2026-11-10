@@ -149,18 +149,19 @@ fun HeaderIconButton(
     modifier: Modifier = Modifier,
     tint: Color = TextPrimary
 ) {
-    // Frosted circle at rest, Halo platter with a dark glyph on focus.
+    // Frosted circle at rest, Halo platter with a dark glyph on focus. Apple: a filled circle, no rim.
+    val apple = isAppleDesign
     Surface(
         onClick = onClick,
-        modifier = modifier.size(42.dp),
+        modifier = modifier.size(if (apple) 44.dp else 42.dp),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.06f),
+            containerColor = if (apple) AppleFill else Color.White.copy(alpha = 0.06f),
             contentColor = tint,
             focusedContainerColor = ChipFocused,
             focusedContentColor = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, Hairline), shape = CircleShape),
+            border = if (apple) Border.None else Border(BorderStroke(1.dp, Hairline), shape = CircleShape),
             focusedBorder = Border.None
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.12f),
@@ -190,22 +191,25 @@ fun UserProfileCard(
     val initials = username.take(2).uppercase()
     val currentVersion = "v" + com.ipxtream.tv.BuildConfig.VERSION_NAME
     
+    // Apple: a filled capsule like the tvOS profile button.
+    val apple = isAppleDesign
+    val cardShape = if (apple) RoundedCornerShape(50) else RoundedCornerShape(14.dp)
     Surface(
         onClick = onCheckForUpdates,
         modifier = modifier,
-        shape = ClickableSurfaceDefaults.shape(shape = RoundedCornerShape(14.dp)),
+        shape = ClickableSurfaceDefaults.shape(shape = cardShape),
         colors = ClickableSurfaceDefaults.colors(
-            containerColor = Color.White.copy(alpha = 0.06f),
+            containerColor = if (apple) AppleFill else Color.White.copy(alpha = 0.06f),
             focusedContainerColor = Color.White.copy(alpha = 0.22f)
         ),
         border = ClickableSurfaceDefaults.border(
-            border = Border(BorderStroke(1.dp, Hairline), shape = RoundedCornerShape(14.dp)),
-            focusedBorder = Border(BorderStroke(1.dp, GlassStroke), shape = RoundedCornerShape(14.dp))
+            border = if (apple) Border.None else Border(BorderStroke(1.dp, Hairline), shape = cardShape),
+            focusedBorder = Border(BorderStroke(1.dp, GlassStroke), shape = cardShape)
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.06f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(start = if (apple) 6.dp else 14.dp, end = if (apple) 20.dp else 14.dp, top = if (apple) 6.dp else 8.dp, bottom = if (apple) 6.dp else 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Monogram avatar in the neutral grey gradient tvOS uses for profiles
@@ -342,7 +346,7 @@ fun QuickAccessCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val shape = RoundedCornerShape(16.dp)
+    val shape = ipxShape(16.dp)
     val glow by animateFloatAsState(
         targetValue = if (isFocused) 1f else 0f,
         animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
@@ -416,7 +420,8 @@ fun ContinueWatchingCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    
+    val cardShape = ipxShape(12.dp)
+
     Card(
         onClick = {
             when (item.type) {
@@ -472,10 +477,10 @@ fun ContinueWatchingCard(
             }
         },
         modifier = modifier
-            .premiumFocus(isFocused, focusedScale = 1.1f, shape = RoundedCornerShape(12.dp))
+            .premiumFocus(isFocused, focusedScale = 1.1f, shape = cardShape)
             .onFocusChanged { isFocused = it.isFocused }
             .size(180.dp, 270.dp),
-        shape = CardDefaults.shape(RoundedCornerShape(12.dp)),
+        shape = CardDefaults.shape(cardShape),
         colors = CardDefaults.colors(
             containerColor = SlateCard,
             focusedContainerColor = SlateCard
@@ -485,7 +490,7 @@ fun ContinueWatchingCard(
             focusedBorder = Border.None,
             border = Border(
                 border = BorderStroke(1.dp, Hairline),
-                shape = RoundedCornerShape(12.dp)
+                shape = cardShape
             )
         )
     ) {
@@ -550,7 +555,7 @@ fun ContinueWatchingCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(4.dp)
-                            .clip(RoundedCornerShape(2.dp)),
+                            .clip(RoundedCornerShape(50)),
                         color = ProgressWatched,
                         trackColor = ProgressRail
                     )

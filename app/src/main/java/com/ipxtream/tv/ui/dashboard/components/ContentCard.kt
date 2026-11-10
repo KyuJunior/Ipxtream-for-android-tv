@@ -56,6 +56,9 @@ import com.ipxtream.tv.ui.theme.SlateCard
 import com.ipxtream.tv.ui.theme.SurfaceElevated
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.premiumFocus
+import com.ipxtream.tv.ui.theme.AppleGlassFill
+import com.ipxtream.tv.ui.theme.isAppleDesign
+import com.ipxtream.tv.ui.theme.ipxShape
 
 // ─── Shared card dimensions ────────────────────────────────────────────────────
 
@@ -65,7 +68,7 @@ private val CardHeightVod   = 270.dp  // 2:3 poster ratio
 private val CardWidthLive   = 240.dp
 private val CardHeightLive  = 135.dp  // 16:9 channel card
 
-private val CardShape = RoundedCornerShape(12.dp)
+private val CardShape get() = ipxShape(12.dp)
 private const val FocusScalePoster = 1.1f
 private const val FocusScaleLive   = 1.08f
 
@@ -355,7 +358,7 @@ internal fun GlassPill(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(50))
-            .background(Color(0x99000000))
+            .background(if (isAppleDesign) AppleGlassFill else Color(0x99000000))
             .border(1.dp, Color(0x26FFFFFF), RoundedCornerShape(50))
             .padding(horizontal = 8.dp, vertical = 3.dp),
         contentAlignment = Alignment.Center

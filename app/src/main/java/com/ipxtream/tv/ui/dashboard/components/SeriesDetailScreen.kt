@@ -52,6 +52,10 @@ import kotlinx.coroutines.delay
 import com.ipxtream.tv.ui.theme.ChipFocused
 import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.SlateDeep
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.AppleSegmentSelected
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 @OptIn(ExperimentalTvMaterial3Api::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
@@ -194,15 +198,15 @@ fun SeriesDetailScreen(
                                 .focusRequester(likeButtonFocusRequester)
                                 .focusProperties { if (seasonsShown) down = seasonFocusRequester },
                             colors = ButtonDefaults.colors(
-                                containerColor = Color(0x2EFFFFFF),
-                                contentColor = Color.White,
+                                containerColor = if (isAppleDesign) AppleFill else Color(0x2EFFFFFF),
+                                contentColor = if (isAppleDesign) Accent else Color.White,
                                 focusedContainerColor = ChipFocused,
                                 focusedContentColor = TextOnFocus
                             ),
                             shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
                             scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
                             border = ButtonDefaults.border(
-                                border = Border(
+                                border = if (isAppleDesign) Border.None else Border(
                                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
                                     shape = RoundedCornerShape(50)
                                 ),
@@ -216,7 +220,7 @@ fun SeriesDetailScreen(
                                 Icon(
                                     imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                     contentDescription = stringResource(if (isFavorite) R.string.favorites_remove else R.string.favorites_add),
-                                    tint = if (isFavorite) Color.Red else Color.Unspecified,
+                                    tint = if (isAppleDesign) androidx.tv.material3.LocalContentColor.current else if (isFavorite) Color.Red else Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
@@ -231,15 +235,15 @@ fun SeriesDetailScreen(
                             onClick = onClose,
                             modifier = Modifier.focusProperties { if (seasonsShown) down = seasonFocusRequester },
                             colors = ButtonDefaults.colors(
-                                containerColor = Color(0x2EFFFFFF),
-                                contentColor = Color.White,
+                                containerColor = if (isAppleDesign) AppleFill else Color(0x2EFFFFFF),
+                                contentColor = if (isAppleDesign) Accent else Color.White,
                                 focusedContainerColor = ChipFocused,
                                 focusedContentColor = TextOnFocus
                             ),
                             shape = ButtonDefaults.shape(shape = RoundedCornerShape(50)),
                             scale = ButtonDefaults.scale(scale = 1.0f, focusedScale = 1.08f),
                             border = ButtonDefaults.border(
-                                border = Border(
+                                border = if (isAppleDesign) Border.None else Border(
                                     border = BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
                                     shape = RoundedCornerShape(50)
                                 ),
@@ -253,7 +257,7 @@ fun SeriesDetailScreen(
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(R.string.action_back),
-                                    tint = Color.Unspecified,
+                                    tint = if (isAppleDesign) androidx.tv.material3.LocalContentColor.current else Color.Unspecified,
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
@@ -309,9 +313,29 @@ fun SeriesDetailScreen(
                                 },
                                 modifier = Modifier
                                     .then(if (index == seasonAnchor) Modifier.focusRequester(seasonFocusRequester) else Modifier)
-                                    .focusProperties { down = episodesFocusRequester }
+                                    .focusProperties { down = episodesFocusRequester },
+                                shape = if (isAppleDesign) FilterChipDefaults.shape(shape = RoundedCornerShape(50)) else FilterChipDefaults.shape(),
+                                colors = if (isAppleDesign) FilterChipDefaults.colors(
+                                    containerColor = AppleFill,
+                                    contentColor = TextPrimary,
+                                    selectedContainerColor = AppleSegmentSelected,
+                                    selectedContentColor = TextPrimary,
+                                    focusedContainerColor = ChipFocused,
+                                    focusedContentColor = TextOnFocus,
+                                    focusedSelectedContainerColor = ChipFocused,
+                                    focusedSelectedContentColor = TextOnFocus
+                                ) else FilterChipDefaults.colors(),
+                                border = if (isAppleDesign) FilterChipDefaults.border(
+                                    border = Border.None,
+                                    selectedBorder = Border.None,
+                                    focusedBorder = Border.None,
+                                    focusedSelectedBorder = Border.None
+                                ) else FilterChipDefaults.border()
                             ) {
-                                Text(stringResource(R.string.season_n, season.seasonNumber))
+                                Text(
+                                    stringResource(R.string.season_n, season.seasonNumber),
+                                    fontWeight = if (isAppleDesign) androidx.compose.ui.text.font.FontWeight.SemiBold else null
+                                )
                             }
                         }
                     }
@@ -375,11 +399,11 @@ private fun EpisodeCard(
             containerColor = com.ipxtream.tv.ui.theme.SlateCard,
             focusedContainerColor = com.ipxtream.tv.ui.theme.SurfaceElevated2
         ),
-        shape = CardDefaults.shape(shape = RoundedCornerShape(14.dp)),
+        shape = CardDefaults.shape(shape = ipxShape(14.dp)),
         scale = CardDefaults.scale(focusedScale = 1.03f),
         border = CardDefaults.border(
-            border = Border(BorderStroke(1.dp, com.ipxtream.tv.ui.theme.Hairline), shape = RoundedCornerShape(14.dp)),
-            focusedBorder = Border(BorderStroke(1.dp, Color(0x40FFFFFF)), shape = RoundedCornerShape(14.dp))
+            border = if (isAppleDesign) Border.None else Border(BorderStroke(1.dp, com.ipxtream.tv.ui.theme.Hairline), shape = ipxShape(14.dp)),
+            focusedBorder = Border(BorderStroke(1.dp, Color(0x40FFFFFF)), shape = ipxShape(14.dp))
         )
     ) {
         Column(

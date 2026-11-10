@@ -1,5 +1,7 @@
 package com.ipxtream.tv.ui.dashboard.components
 
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.isAppleDesign
 import com.ipxtream.tv.ui.theme.bidi
 import com.ipxtream.tv.ui.theme.directionalKeys
 import com.ipxtream.tv.R
@@ -450,8 +452,9 @@ private fun PageDots(count: Int, selected: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
         repeat(count) { i ->
             val active = i == selected
+            // Apple's page control: equal dots, the current one solid.
             val w by animateDpAsState(
-                targetValue   = if (active) 22.dp else 6.dp,
+                targetValue   = if (active && !isAppleDesign) 22.dp else 6.dp,
                 animationSpec = tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
                 label         = "dotWidth"
             )
@@ -480,12 +483,14 @@ fun PremiumButton(
     modifier: Modifier = Modifier
 ) {
     val shape = RoundedCornerShape(50)
+    // Apple: a filled capsule with no rim and a gentler lift.
+    val apple = isAppleDesign
     Surface(
         onClick  = onClick,
-        modifier = modifier.height(48.dp),
+        modifier = modifier.height(if (apple) 52.dp else 48.dp),
         shape    = ClickableSurfaceDefaults.shape(shape),
         colors   = ClickableSurfaceDefaults.colors(
-            containerColor        = GlassFill,
+            containerColor        = if (apple) AppleFill else GlassFill,
             contentColor          = Color.White,
             focusedContainerColor = ChipFocused,
             focusedContentColor   = TextOnFocus,
@@ -493,10 +498,10 @@ fun PremiumButton(
             pressedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
-            border        = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape),
+            border        = if (apple) androidx.tv.material3.Border.None else androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = shape),
             focusedBorder = androidx.tv.material3.Border.None
         ),
-        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.08f),
+        scale = ClickableSurfaceDefaults.scale(focusedScale = if (apple) 1.05f else 1.08f),
         glow  = ClickableSurfaceDefaults.glow()
     ) {
         Row(
@@ -528,13 +533,14 @@ fun GlassIconButton(
         modifier = modifier.size(size),
         shape    = ClickableSurfaceDefaults.shape(CircleShape),
         colors   = ClickableSurfaceDefaults.colors(
-            containerColor        = GlassFill,
+            containerColor        = if (isAppleDesign) AppleFill else GlassFill,
             contentColor          = Color.White,
             focusedContainerColor = ChipFocused,
             focusedContentColor   = TextOnFocus
         ),
         border = ClickableSurfaceDefaults.border(
-            border        = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = CircleShape),
+            border        = if (isAppleDesign) androidx.tv.material3.Border.None
+                            else androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, GlassStroke), shape = CircleShape),
             focusedBorder = androidx.tv.material3.Border.None
         ),
         scale = ClickableSurfaceDefaults.scale(focusedScale = 1.1f)

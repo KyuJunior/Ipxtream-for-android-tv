@@ -147,15 +147,17 @@ private fun CategoryChip(
     onClick:    () -> Unit,
     modifier:   Modifier = Modifier
 ) {
+    // Apple: every chip is a filled capsule; the selected one is the lighter segment, no rim.
+    val apple = com.ipxtream.tv.ui.theme.isAppleDesign
     FilterChip(
         selected = isSelected,
         onClick  = onClick,
         modifier = modifier,
         shape    = FilterChipDefaults.shape(shape = ChipShape),
         colors   = FilterChipDefaults.colors(
-            containerColor                = Color.Transparent,
+            containerColor                = if (apple) com.ipxtream.tv.ui.theme.AppleFill else Color.Transparent,
             contentColor                  = TextSecondary,
-            selectedContainerColor        = Color(0x29FFFFFF), // Frosted glass when selected
+            selectedContainerColor        = if (apple) com.ipxtream.tv.ui.theme.AppleSegmentSelected else Color(0x29FFFFFF), // Frosted glass when selected
             selectedContentColor          = Color.White,
             focusedContainerColor         = ChipFocused,
             focusedContentColor           = TextOnFocus,
@@ -165,7 +167,7 @@ private fun CategoryChip(
         border  = FilterChipDefaults.border(
             border                = Border.None,
             focusedBorder         = Border.None,
-            selectedBorder        = Border(BorderStroke(1.dp, Color(0x33FFFFFF)), shape = ChipShape),
+            selectedBorder        = if (apple) Border.None else Border(BorderStroke(1.dp, Color(0x33FFFFFF)), shape = ChipShape),
             focusedSelectedBorder = Border.None
         ),
         scale   = FilterChipDefaults.scale(focusedScale = 1.08f)

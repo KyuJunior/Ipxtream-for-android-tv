@@ -57,6 +57,11 @@ import com.ipxtream.tv.ui.theme.TextMuted
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.TextOnAccent
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.ChipFocused
+import com.ipxtream.tv.ui.theme.TextOnFocus
+import com.ipxtream.tv.ui.theme.isAppleDesign
+import com.ipxtream.tv.ui.theme.ipxShape
 
 /**
  * Persistent bottom tray showing all active, paused, completed, and failed
@@ -128,7 +133,7 @@ fun DownloadTray(
                 Spacer(Modifier.width(10.dp))
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(ipxShape(12.dp))
                         .background(Accent)
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
@@ -324,11 +329,12 @@ private fun StatusBadge(status: DownloadStatus) {
 private fun TrayIconButton(label: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
+        shape = if (isAppleDesign) ButtonDefaults.shape(RoundedCornerShape(50)) else ButtonDefaults.shape(),
         colors  = ButtonDefaults.colors(
-            containerColor        = Color(0x22FFFFFF),
-            contentColor          = TextPrimary,
-            focusedContainerColor = Accent,
-            focusedContentColor   = TextOnAccent
+            containerColor        = if (isAppleDesign) AppleFill else Color(0x22FFFFFF),
+            contentColor          = if (isAppleDesign) Accent else TextPrimary,
+            focusedContainerColor = if (isAppleDesign) ChipFocused else Accent,
+            focusedContentColor   = if (isAppleDesign) TextOnFocus else TextOnAccent
         ),
         scale   = ButtonDefaults.scale(focusedScale = 1.06f),
         modifier = Modifier.height(28.dp)

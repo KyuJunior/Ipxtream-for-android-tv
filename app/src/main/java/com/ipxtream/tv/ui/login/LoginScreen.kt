@@ -85,6 +85,9 @@ import com.ipxtream.tv.ui.theme.TextOnFocus
 import com.ipxtream.tv.ui.theme.TextPrimary
 import com.ipxtream.tv.ui.theme.TextSecondary
 import com.ipxtream.tv.ui.theme.AccentRed
+import com.ipxtream.tv.ui.theme.AppleFill
+import com.ipxtream.tv.ui.theme.ipxShape
+import com.ipxtream.tv.ui.theme.isAppleDesign
 
 /**
  * Login screen — glass panel centred on a dark gradient background.
@@ -217,9 +220,9 @@ fun LoginScreen(
                     alpha = cardAlpha
                     translationY = cardOffset.toPx()
                 }
-                .clip(RoundedCornerShape(28.dp))
+                .clip(ipxShape(28.dp))
                 .background(SlateCard.copy(alpha = 0.85f))
-                .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, RoundedCornerShape(28.dp))
+                .border(1.dp, com.ipxtream.tv.ui.theme.Hairline, ipxShape(28.dp))
                 // Taller than a 1080p screen with the HTTP note, an error and the demo button: D-Pad focus scrolls it.
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
                 .padding(horizontal = 36.dp, vertical = 40.dp),
@@ -334,7 +337,7 @@ fun LoginScreen(
                     color    = AccentRed,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(ipxShape(8.dp))
                         .background(AccentRed.copy(alpha = 0.13f))
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                 )
@@ -357,10 +360,17 @@ fun LoginScreen(
                     enabled  = canSubmit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(52.dp)
+                        .height(if (isAppleDesign) 50.dp else 52.dp)
                         .focusRequester(buttonFocuser),
                     shape    = ButtonDefaults.shape(RoundedCornerShape(50)),
-                    colors   = ButtonDefaults.colors(
+                    colors   = if (isAppleDesign) ButtonDefaults.colors(
+                        containerColor        = Accent,
+                        contentColor          = TextOnAccent,
+                        focusedContainerColor = ChipFocused,
+                        focusedContentColor   = TextOnFocus,
+                        disabledContainerColor = SlateGlass,
+                        disabledContentColor  = TextSecondary
+                    ) else ButtonDefaults.colors(
                         containerColor        = Accent,
                         focusedContainerColor = Accent,
                         disabledContainerColor = SlateGlass
@@ -375,16 +385,16 @@ fun LoginScreen(
                         ) {
                             CircularProgressIndicator(
                                 modifier  = Modifier.size(18.dp),
-                                color     = onButton,
+                                color     = if (isAppleDesign) androidx.tv.material3.LocalContentColor.current else onButton,
                                 strokeWidth = 2.dp
                             )
                             Spacer(Modifier.width(12.dp))
-                            Text(stringResource(R.string.login_connecting), color = onButton, fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.login_connecting), color = if (isAppleDesign) Color.Unspecified else onButton, fontWeight = FontWeight.SemiBold)
                         }
                     } else {
                         Text(
                             stringResource(R.string.login_sign_in),
-                            color      = onButton,
+                            color      = if (isAppleDesign) Color.Unspecified else onButton,
                             fontWeight = FontWeight.SemiBold,
                             fontSize   = 16.sp,
                             textAlign  = androidx.compose.ui.text.style.TextAlign.Center,
@@ -400,11 +410,11 @@ fun LoginScreen(
                 Button(
                     onClick  = { if (!isLoading) onDemo() },
                     enabled  = !isLoading,
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                    modifier = Modifier.fillMaxWidth().height(if (isAppleDesign) 50.dp else 48.dp),
                     shape    = ButtonDefaults.shape(RoundedCornerShape(50)),
                     colors   = ButtonDefaults.colors(
-                        containerColor        = SlateGlass,
-                        contentColor          = TextPrimary,
+                        containerColor        = if (isAppleDesign) AppleFill else SlateGlass,
+                        contentColor          = if (isAppleDesign) Accent else TextPrimary,
                         focusedContainerColor = ChipFocused,
                         focusedContentColor   = TextOnFocus
                     ),
@@ -489,7 +499,18 @@ private fun LoginField(
                     }
                 }
             } else null,
-            colors = OutlinedTextFieldDefaults.colors(
+            colors = if (isAppleDesign) OutlinedTextFieldDefaults.colors(
+                focusedTextColor      = TextPrimary,
+                unfocusedTextColor    = TextSecondary,
+                focusedBorderColor    = Accent,
+                unfocusedBorderColor  = Color.Transparent,
+                disabledBorderColor   = Color.Transparent,
+                cursorColor           = Accent,
+                focusedLabelColor     = Accent,
+                focusedContainerColor = AppleFill,
+                unfocusedContainerColor = AppleFill,
+                disabledContainerColor  = AppleFill
+            ) else OutlinedTextFieldDefaults.colors(
                 focusedTextColor      = TextPrimary,
                 unfocusedTextColor    = TextSecondary,
                 focusedBorderColor    = Accent,
@@ -500,9 +521,10 @@ private fun LoginField(
                 unfocusedContainerColor = SlateCard.copy(alpha = 0.4f),
                 disabledContainerColor  = SlateCard.copy(alpha = 0.1f)
             ),
-            shape    = RoundedCornerShape(10.dp),
+            shape    = if (isAppleDesign) RoundedCornerShape(50) else ipxShape(10.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .then(if (isAppleDesign) Modifier.height(52.dp) else Modifier)
                 .focusRequester(focusRequester)
                 .onFocusChanged { isFocused = it.isFocused }
         )
