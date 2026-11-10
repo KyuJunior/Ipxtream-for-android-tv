@@ -292,7 +292,9 @@ class DashboardActivity : ComponentActivity() {
                 return super.dispatchKeyEvent(event)
             }
 
-            if (state.detailVodItem != null || state.detailSeriesItem != null) {
+            // The Apple details Info sheet closes on Back itself; only then do details close.
+            if (!com.ipxtream.tv.ui.dashboard.components.AppleInfoSheet.open &&
+                (state.detailVodItem != null || state.detailSeriesItem != null)) {
                 dashboardViewModel.closeDetails()
                 return true
             }

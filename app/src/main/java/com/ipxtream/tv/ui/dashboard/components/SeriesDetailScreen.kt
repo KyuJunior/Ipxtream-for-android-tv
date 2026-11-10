@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.*
+import com.ipxtream.tv.ui.theme.appleGlass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,10 +99,21 @@ fun SeriesDetailScreen(
         }
     }
     val seasonsShown = !isLoadingSeriesInfo && seasons.isNotEmpty()
+    // Apple: episodes are one horizontal shelf; its return requester follows the first visible card.
+    val apple = isAppleDesign
+    val episodeRowState = rememberLazyListState()
+    val episodeAnchor by remember {
+        derivedStateOf { episodeRowState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0 }
+    }
 
     LaunchedEffect(isPlayerOpen) {
         if (!isPlayerOpen) {
             delay(100)
+            // Apple shelf: bring the played episode back into view so its requester is attached.
+            if (apple) {
+                val idx = selectedSeason?.episodes?.indexOfFirst { it.id == playedEpisodeId } ?: -1
+                if (idx >= 0) runCatching { episodeRowState.scrollToItem(idx) }
+            }
             runCatching {
                 when {
                     seasons.isEmpty() -> likeButtonFocusRequester.requestFocus()
@@ -133,12 +145,19 @@ fun SeriesDetailScreen(
             model = seriesItem.backdropPath?.firstOrNull() ?: seriesItem.cover,
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            alpha = 0.25f,
+            alpha = if (apple) 1f else 0.25f,
             modifier = Modifier.fillMaxSize()
         )
 
         // ─── Heavy Gradients for Readability ────────────────────────────────
-        Box(
+        // Apple: bright art on the top half; the scrims darken the start side and the bottom for the shelf.
+        if (apple) Box(
+            modifier = Modifier.fillMaxSize().background(
+                Brush.horizontalGradient(
+                    0f to SlateDeep.copy(alpha = 0xD9 / 255f), 0.5f to SlateDeep.copy(alpha = 0x55 / 255f), 0.85f to Color.Transparent
+                )
+            )
+        ) else Box(
             modifier = Modifier.fillMaxSize().background(
                 Brush.horizontalGradient(
                     colors = listOf(SlateDeep, SlateDeep.copy(alpha = 0xDD / 255f), SlateDeep.copy(alpha = 0x22 / 255f))
@@ -149,7 +168,7 @@ fun SeriesDetailScreen(
             modifier = Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
                     colors = listOf(Color.Transparent, SlateDeep.copy(alpha = 0xDD / 255f), SlateDeep),
-                    startY = 200f
+                    startY = if (apple) 520f else 200f
                 )
             )
         )
@@ -159,7 +178,7 @@ fun SeriesDetailScreen(
                 .fillMaxSize()
                 .padding(start = 80.dp, end = 80.dp)
                 .focusProperties { canFocus = false },
-            contentPadding = PaddingValues(top = 80.dp, bottom = 80.dp),
+            contentPadding = PaddingValues(top = if (apple) 220.dp else 80.dp, bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
@@ -298,7 +317,10 @@ fun SeriesDetailScreen(
                 item {
                     LazyRow(
                         state = seasonsRowState,
-                        modifier = Modifier.focusProperties { canFocus = false },
+                        // Apple: the seasons sit in one glass track, like a segmented control.
+                        modifier = Modifier
+                            .then(if (apple) Modifier.appleGlass(RoundedCornerShape(50)).padding(4.dp) else Modifier)
+                            .focusProperties { canFocus = false },
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         itemsIndexed(seasons, key = { _, it -> it.seasonNumber }) { index, season ->
@@ -343,8 +365,35 @@ fun SeriesDetailScreen(
 
                 // Episodes Grid in LazyColumn via chunking
                 val currentEpisodes = selectedSeason?.episodes ?: emptyList()
-                val chunkedEpisodes = currentEpisodes.chunked(3)
+                val chunkedEpisodes = if (apple) emptyList() else currentEpisodes.chunked(3)
                 
+
+                if (apple) item(key = "episode_shelf_${selectedSeason?.seasonNumber}") {
+                    LazyRow(
+                        state = episodeRowState,
+                        modifier = Modifier.fillMaxWidth().focusProperties { canFocus = false },
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
+                    ) {
+                        itemsIndexed(currentEpisodes, key = { _, e -> e.id }) { index, episode ->
+                            EpisodeCard(
+                                episode = episode,
+                                onPlay = {
+                                    playedEpisodeId = episode.id
+                                    onEpisodePlay(episode)
+                                },
+                                onDownload = { onEpisodeDownload(episode) },
+                                modifier = Modifier
+                                    .width(380.dp)
+                                    .height(200.dp)
+                                    .then(if (index == episodeAnchor) Modifier.focusRequester(episodesFocusRequester) else Modifier)
+                                    .then(if (episode.id == playedEpisodeId) Modifier.focusRequester(playedEpisodeFocusRequester) else Modifier)
+                                    .focusProperties { up = seasonFocusRequester }
+                            )
+                        }
+                    }
+                }
+
                 itemsIndexed(chunkedEpisodes, key = { index, row -> row.firstOrNull()?.id ?: index.toString() }) { rowIndex, rowEpisodes ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),

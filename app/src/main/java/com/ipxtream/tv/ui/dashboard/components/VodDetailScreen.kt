@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
@@ -20,6 +21,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.ipxtream.tv.ui.theme.appleGlass
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -112,67 +116,14 @@ fun VodDetailScreen(
     val posterUrl = info?.posterUrl ?: streamItem.streamIcon
     val backdropUrl = info?.backdropUrl ?: posterUrl
 
-    Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(SlateDeep)
-            .focusProperties { canFocus = !isPlayerOpen }
-            .onPreviewKeyEvent { keyEvent ->
-                if (!isPlayerOpen && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
-                    onClose()
-                    true
-                } else {
-                    false
-                }
-            }
-    ) {
-        // ─── High-Res Cinematic Backdrop Fanart ───────────────────────────────
-        AsyncImage(
-            model              = backdropUrl,
-            contentDescription = null,
-            contentScale       = ContentScale.Crop,
-            alpha              = 0.35f,
-            modifier           = Modifier.fillMaxSize()
-        )
-
-        // ─── Double Cinematic Gradients ──────────────────────────────────────
-        // Horizontal: solid Night canvas on the left, fading gently to reveal backdrop art on the right
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.horizontalGradient(
-                    0.0f to SlateDeep,
-                    0.48f to SlateDeep.copy(alpha = 0xEE / 255f),
-                    0.75f to SlateDeep.copy(alpha = 0x77 / 255f),
-                    1.0f to SlateDeep.copy(alpha = 0x18 / 255f)
-                )
-            )
-        )
-        // Vertical: subtle dark vignette on bottom and top
-        Box(
-            modifier = Modifier.fillMaxSize().background(
-                Brush.verticalGradient(
-                    0.0f to SlateDeep.copy(alpha = 0x66 / 255f),
-                    0.25f to Color.Transparent,
-                    0.7f to SlateDeep.copy(alpha = 0x44 / 255f),
-                    1.0f to SlateDeep
-                )
-            )
-        )
-
-        // ─── Main 10-Foot Content Canvas ─────────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 72.dp, end = 72.dp, top = 48.dp, bottom = 48.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // ─── Left Section: Title, Badges, Actions, Synopsis, Cast ────────
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
-            ) {
+    val apple = isAppleDesign
+    var showInfo by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    val infoCloseFocus = remember { FocusRequester() }
+    LaunchedEffect(showInfo) { if (showInfo) runCatching { infoCloseFocus.requestFocus() } }
+    // DashboardActivity closes details on Back before Compose sees the key; it lets Back through while this is set.
+    androidx.compose.runtime.SideEffect { AppleInfoSheet.open = showInfo }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { AppleInfoSheet.open = false } }
+    val badgesRow: @Composable () -> Unit = {
                 // 1. Metadata Badges Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -292,8 +243,8 @@ fun VodDetailScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
+    }
+    val titleBlock: @Composable () -> Unit = {
                 // 2. Movie Title
                 Text(
                     text       = bidi(title),
@@ -304,8 +255,8 @@ fun VodDetailScreen(
                     overflow   = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
-
+    }
+    val buttonsRow: @Composable () -> Unit = {
                 // 3. Action Buttons Row (Sleek TV Pills)
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -336,6 +287,14 @@ fun VodDetailScreen(
                         isHeartFavorite = isFavorite
                     )
 
+                    if (apple) {
+                        VodActionButton(
+                            onClick   = { showInfo = true },
+                            icon      = Icons.Filled.Info,
+                            label     = stringResource(R.string.action_details),
+                            isPrimary = false
+                        )
+                    }
                     VodActionButton(
                         onClick   = onClose,
                         icon      = Icons.AutoMirrored.Filled.ArrowBack,
@@ -344,8 +303,8 @@ fun VodDetailScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(26.dp))
-
+    }
+    val plotBlock: @Composable () -> Unit = {
                 // 4. Synopsis / Plot
                 if (isLoadingVodInfo && plot == null) {
                     Text(
@@ -364,8 +323,8 @@ fun VodDetailScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-
+    }
+    val creditsBlock: @Composable () -> Unit = {
                 // 5. Cast, Director & Country metadata
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     if (!director.isNullOrBlank()) {
@@ -424,12 +383,108 @@ fun VodDetailScreen(
                         }
                     }
                 }
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(SlateDeep)
+            .focusProperties { canFocus = !isPlayerOpen }
+            .onPreviewKeyEvent { keyEvent ->
+                if (!isPlayerOpen && keyEvent.type == KeyEventType.KeyDown && keyEvent.key == Key.Back) {
+                    if (showInfo) {
+                        showInfo = false
+                        runCatching { playButtonFocus.requestFocus() }
+                    } else onClose()
+                    true
+                } else {
+                    false
+                }
+            }
+    ) {
+        // ─── High-Res Cinematic Backdrop Fanart ───────────────────────────────
+        AsyncImage(
+            model              = backdropUrl,
+            contentDescription = null,
+            contentScale       = ContentScale.Crop,
+            alpha              = if (apple) 1f else 0.35f,
+            modifier           = Modifier.fillMaxSize()
+        )
+
+        // ─── Double Cinematic Gradients ──────────────────────────────────────
+        // Horizontal: solid Night canvas on the left, fading gently to reveal backdrop art on the right
+        // Apple: the art stays bright; the scrims only darken the bottom-start where the copy sits.
+        if (apple) Box(
+            modifier = Modifier.fillMaxSize().background(
+                Brush.horizontalGradient(
+                    0.0f to SlateDeep.copy(alpha = 0xD9 / 255f),
+                    0.45f to SlateDeep.copy(alpha = 0x66 / 255f),
+                    0.8f to Color.Transparent
+                )
+            )
+        ) else Box(
+            modifier = Modifier.fillMaxSize().background(
+                Brush.horizontalGradient(
+                    0.0f to SlateDeep,
+                    0.48f to SlateDeep.copy(alpha = 0xEE / 255f),
+                    0.75f to SlateDeep.copy(alpha = 0x77 / 255f),
+                    1.0f to SlateDeep.copy(alpha = 0x18 / 255f)
+                )
+            )
+        )
+        // Vertical: subtle dark vignette on bottom and top
+        Box(
+            modifier = Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    0.0f to SlateDeep.copy(alpha = 0x66 / 255f),
+                    0.25f to Color.Transparent,
+                    0.7f to SlateDeep.copy(alpha = 0x44 / 255f),
+                    1.0f to SlateDeep
+                )
+            )
+        )
+
+        // ─── Main 10-Foot Content Canvas ─────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 72.dp, end = 72.dp, top = 48.dp, bottom = if (apple) 64.dp else 48.dp),
+            verticalAlignment = if (apple) Alignment.Bottom else Alignment.CenterVertically
+        ) {
+            // ─── Left Section: Title, Badges, Actions, Synopsis, Cast ────────
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+                verticalArrangement = if (apple) Arrangement.Bottom else Arrangement.Center
+            ) {
+                if (apple) {
+                    // Apple: title first, then the facts, a short synopsis and the actions, all at the bottom-start.
+                    titleBlock()
+                    Spacer(modifier = Modifier.height(14.dp))
+                    badgesRow()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    plotBlock()
+                    Spacer(modifier = Modifier.height(28.dp))
+                    buttonsRow()
+                } else {
+                    badgesRow()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    titleBlock()
+                    Spacer(modifier = Modifier.height(28.dp))
+                    buttonsRow()
+                    Spacer(modifier = Modifier.height(26.dp))
+                    plotBlock()
+                    Spacer(modifier = Modifier.height(20.dp))
+                    creditsBlock()
+                }
             }
 
-            Spacer(modifier = Modifier.width(48.dp))
+            // Apple: full-bleed art instead of a separate poster.
+            if (!apple) Spacer(modifier = Modifier.width(48.dp))
 
             // ─── Right Section: Floating Cinematic Poster Card ────────────────
-            Box(
+            if (!apple) Box(
                 modifier = Modifier
                     .width(300.dp)
                     .fillMaxHeight(),
@@ -470,8 +525,50 @@ fun VodDetailScreen(
                 }
             }
         }
+
+        // Apple: cast, director and the full synopsis in a glass sheet (Info button); Back closes it.
+        if (apple && showInfo) {
+            Box(Modifier.fillMaxSize().background(com.ipxtream.tv.ui.theme.AppleSheetDim), contentAlignment = Alignment.CenterEnd) {
+                Column(
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .width(560.dp)
+                        .fillMaxHeight()
+                        .appleGlass(androidx.compose.foundation.shape.RoundedCornerShape(32.dp))
+                        .padding(36.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text     = bidi(title),
+                        style    = IpxTypography.HeadlineMedium,
+                        color    = TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text  = plot ?: stringResource(R.string.no_synopsis),
+                        style = IpxTypography.BodyLarge,
+                        color = TextSecondary,
+                        maxLines = 10,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    creditsBlock()
+                    Spacer(Modifier.weight(1f))
+                    VodActionButton(
+                        onClick   = { showInfo = false; runCatching { playButtonFocus.requestFocus() } },
+                        icon      = Icons.AutoMirrored.Filled.ArrowBack,
+                        label     = stringResource(R.string.action_close),
+                        isPrimary = false,
+                        modifier  = Modifier.focusRequester(infoCloseFocus)
+                    )
+                }
+            }
+        }
     }
 }
+
+/** Whether the Apple details Info sheet is open (Back should close it, not the details page). */
+internal object AppleInfoSheet { @Volatile var open = false }
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable

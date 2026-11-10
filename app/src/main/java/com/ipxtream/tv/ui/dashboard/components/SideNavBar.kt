@@ -121,6 +121,19 @@ private val NAV_SECTIONS = listOf(
     NavSectionItem(ContentSection.SETTINGS,   Icons.Rounded.Settings)
 )
 
+/** The sections the menu (side rail or Apple tab bar) shows, following Settings and the build. */
+internal fun visibleNavSections(settings: com.ipxtream.tv.data.local.AppSettings?): List<NavSectionItem> =
+    NAV_SECTIONS.filter { item ->
+        when (item.section) {
+            ContentSection.WHATS_NEW  -> settings?.showWhatsNewSection ?: true
+            ContentSection.GAME       -> com.ipxtream.tv.BuildConfig.MINIGAME
+            ContentSection.DOWNLOADS  -> com.ipxtream.tv.BuildConfig.DOWNLOADS &&
+                                         (settings?.showDownloadsSection ?: true)
+            ContentSection.MY_LIBRARY -> settings?.showLibrarySection ?: true
+            else                      -> true
+        }
+    }
+
 /**
  * Left-side vertical navigation bar for Android TV.
  *
@@ -211,18 +224,7 @@ fun SideNavBar(
             Spacer(Modifier.height(if (apple) 2.dp else 12.dp))
 
             // ── Dynamic Content Sections (Configured via Settings) ─────────────
-            val visibleSections = remember(settings) {
-                NAV_SECTIONS.filter { item ->
-                    when (item.section) {
-                        ContentSection.WHATS_NEW  -> settings?.showWhatsNewSection ?: true
-                        ContentSection.GAME       -> com.ipxtream.tv.BuildConfig.MINIGAME
-                        ContentSection.DOWNLOADS  -> com.ipxtream.tv.BuildConfig.DOWNLOADS &&
-                                                     (settings?.showDownloadsSection ?: true)
-                        ContentSection.MY_LIBRARY -> settings?.showLibrarySection ?: true
-                        else                      -> true
-                    }
-                }
-            }
+            val visibleSections = remember(settings) { visibleNavSections(settings) }
 
             // Scrolls on short screens: a phone held sideways can't fit every section.
             Column(
@@ -364,7 +366,7 @@ private fun NavItem(
 
 /** The IPXtream mark (Ember X + Halo play triangle), [size] wide. */
 @Composable
-private fun BrandGlyph(size: androidx.compose.ui.unit.Dp) {
+internal fun BrandGlyph(size: androidx.compose.ui.unit.Dp) {
     Image(
         painter = painterResource(R.drawable.ic_brand_mark),
         contentDescription = null,

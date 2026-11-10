@@ -51,6 +51,8 @@ import com.ipxtream.tv.ui.theme.AppleSheetDim
 import com.ipxtream.tv.ui.theme.appleGlass
 import com.ipxtream.tv.ui.theme.ipxShape
 import com.ipxtream.tv.ui.theme.isAppleDesign
+import dev.chrisbanes.haze.haze
+import com.ipxtream.tv.ui.dashboard.components.AppleTabBarHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -251,11 +253,17 @@ fun DashboardScreen(
     onPickMatchChannel: (com.ipxtream.tv.ui.dashboard.MatchListing, StreamItem, Boolean) -> Unit = { _, _, _ -> }
 ) {
     val focusManager = LocalFocusManager.current
+    // Apple design: a top tab bar replaces the side menu and header (see AppleTabBar).
+    val apple = isAppleDesign
+    var appleSearchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val appleSearchFieldFocus = remember { FocusRequester() }
     val firstItemFocusRequester = remember { FocusRequester() }
     val searchBarFocusRequester = remember { FocusRequester() }
     val searchFirstCardFocusRequester = remember { FocusRequester() }
     val updateDialogFocusRequester = remember { FocusRequester() }
     val sideNavFocusRequester = remember { FocusRequester() }
+    // "Left from the first column goes to the side menu"; with the tab bar there is no menu at the start.
+    val navStart = if (apple) FocusRequester.Default else sideNavFocusRequester
     val categoryRowFocusRequester = remember { FocusRequester() }
     val liveTvCardFocusRequester = remember { FocusRequester() }
     val moviesCardFocusRequester = remember { FocusRequester() }
@@ -333,7 +341,8 @@ fun DashboardScreen(
             if (!moved) {
                 runCatching {
                     focusManager.moveFocus(
-                        if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) FocusDirection.Left
+                        if (apple) FocusDirection.Down
+                        else if (layoutDirection == androidx.compose.ui.unit.LayoutDirection.Rtl) FocusDirection.Left
                         else FocusDirection.Right
                     )
                 }
@@ -374,7 +383,11 @@ fun DashboardScreen(
     var heroIndex by remember { mutableIntStateOf(0) }
     if (heroIndex >= heroFeatures.size && heroFeatures.isNotEmpty()) heroIndex = 0
     val homeListState = rememberLazyListState()
-    val heroHeight = 430.dp
+    // Apple: the featured art fills the screen ("Top Shelf"), leaving the first shelf peeking in below.
+    val screenHeight = with(LocalDensity.current) {
+        androidx.compose.ui.platform.LocalContext.current.resources.displayMetrics.heightPixels.toDp()
+    }
+    val heroHeight = if (apple) (screenHeight - 150.dp).coerceAtLeast(430.dp) else 430.dp
     val heroHeightPx = with(LocalDensity.current) { heroHeight.toPx() }
     // Read only inside draw (graphicsLayer) — reading it here would rebuild the whole
     // dashboard on every scroll frame.
@@ -384,7 +397,8 @@ fun DashboardScreen(
             else (homeListState.firstVisibleItemScrollOffset / heroHeightPx).coerceIn(0f, 1f)
         }
     }
-    val hasHero = uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isBlank() && heroFeatures.isNotEmpty()
+    val hasHero = uiState.activeSection == ContentSection.HOME && uiState.searchQuery.isBlank() && heroFeatures.isNotEmpty() &&
+        !(apple && appleSearchOpen)
 
     // Auto-advance like the TV app's billboard; pauses once it has scrolled away.
     val heroScrolledAway by remember { derivedStateOf { heroScrollProgress.value >= 1f } }
@@ -491,11 +505,14 @@ fun DashboardScreen(
 
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep).trackFocusTravel()) {
         val showSplitPlayer = uiState.hasActivePlayback && playback.isLive && !uiState.playFullScreen && exoPlayer != null
+        // Apple: the page is the backdrop the floating tab bar's liquid glass blurs.
+        val glassBackdrop = if (apple && !reducedEffects) remember { dev.chrisbanes.haze.HazeState() } else null
 
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(start = 66.dp) // Margin for the collapsed side nav
+                .padding(start = if (apple) 0.dp else 66.dp) // Margin for the collapsed side nav
+                .then(if (glassBackdrop != null) Modifier.haze(glassBackdrop) else Modifier)
                 .focusProperties {
                     canFocus = !isOverlayOpen
                 }
@@ -512,7 +529,7 @@ fun DashboardScreen(
                     feature        = heroFeatures.getOrNull(heroIndex),
                     scrollProgress = { heroScrollProgress.value },
                     animate        = !isOverlayOpen && !heroScrolledAway,
-                    modifier       = Modifier.fillMaxWidth().height(heroHeight + 120.dp).align(Alignment.TopCenter)
+                    modifier       = Modifier.fillMaxWidth().height(if (apple) heroHeight + 150.dp else heroHeight + 120.dp).align(Alignment.TopCenter)
                 )
             } else if (uiState.settings.showSpotlightBackdrop && !reducedEffects && uiState.activeSection != ContentSection.HOME) {
                 SpotlightLayer(
@@ -552,7 +569,9 @@ fun DashboardScreen(
 
             // Content area grows to fill space above the tray
             Column(modifier = Modifier.fillMaxSize()) {
-                TopHeader(
+                // Apple: the tab bar floats over the page; leave its band free (the Home art runs under it).
+                if (apple) Spacer(Modifier.height(if (hasHero) 0.dp else AppleTabBarHeight))
+                else TopHeader(
                     query = uiState.searchQuery,
                     onQueryChange = onSearchQueryChange,
                     activeAccount = uiState.activeAccount,
@@ -631,7 +650,44 @@ fun DashboardScreen(
                         val recentHistory = remember(uiState.historyList) {
                             uiState.historyList.take(10)
                         }
-                        if (uiState.searchQuery.isNotBlank()) {
+                        if (apple && appleSearchOpen) {
+                            Column(Modifier.fillMaxSize()) {
+                                com.ipxtream.tv.ui.dashboard.components.SearchBar(
+                                    query = uiState.searchQuery,
+                                    onQueryChange = onSearchQueryChange,
+                                    placeholder = stringResource(R.string.search_home_hint),
+                                    modifier = Modifier
+                                        .padding(horizontal = 160.dp, vertical = 8.dp)
+                                        .focusRequester(appleSearchFieldFocus)
+                                        .focusProperties { up = searchBarFocusRequester },
+                                    onDownNavigation = {
+                                        runCatching { searchFirstCardFocusRequester.requestFocus() }
+                                    }
+                                )
+                                if (uiState.searchQuery.isNotBlank()) {
+                                    com.ipxtream.tv.ui.dashboard.components.HomeSearchResultsView(
+                                        searchQuery = uiState.searchQuery,
+                                        isSearching = uiState.isSearchingHome,
+                                        movies = uiState.paginatedSearchMovies,
+                                        series = uiState.paginatedSearchSeries,
+                                        totalMoviesCount = uiState.searchResultsMovies.size,
+                                        totalSeriesCount = uiState.searchResultsSeries.size,
+                                        totalSearchPages = uiState.totalSearchPages,
+                                        currentPage = uiState.currentPage,
+                                        hasPrevPage = uiState.hasPrevPage,
+                                        hasNextPage = uiState.hasNextPage,
+                                        onPrevPage = onPrevPage,
+                                        onNextPage = onNextPage,
+                                        onStreamSelected = onStreamSelected,
+                                        onSeriesSelected = onSeriesSelected,
+                                        firstCardFocusRequester = searchFirstCardFocusRequester,
+                                        searchBarFocusRequester = appleSearchFieldFocus,
+                                        sideNavFocusRequester = navStart,
+                                        watchProgress = { uiState.getWatchProgress(it) }
+                                    )
+                                }
+                            }
+                        } else if (uiState.searchQuery.isNotBlank()) {
                             com.ipxtream.tv.ui.dashboard.components.HomeSearchResultsView(
                                 searchQuery = uiState.searchQuery,
                                 isSearching = uiState.isSearchingHome,
@@ -649,7 +705,7 @@ fun DashboardScreen(
                                 onSeriesSelected = onSeriesSelected,
                                 firstCardFocusRequester = searchFirstCardFocusRequester,
                                 searchBarFocusRequester = searchBarFocusRequester,
-                                sideNavFocusRequester = sideNavFocusRequester,
+                                sideNavFocusRequester = navStart,
                                 watchProgress = { uiState.getWatchProgress(it) }
                             )
                         } else {
@@ -680,19 +736,20 @@ fun DashboardScreen(
                                                 f.stream?.let(onToggleFavoriteStream) ?: f.series?.let(onToggleFavoriteSeries)
                                             },
                                             onIndexChange = { heroIndex = it },
-                                            height = heroHeight - 64.dp,
+                                            height = if (apple) heroHeight - 24.dp else heroHeight - 64.dp,
                                             modifier = Modifier.onFocusChanged { if (it.hasFocus) homeFocusMemory.forget() },
                                             primaryModifier = Modifier
                                                 .focusRequester(liveTvCardFocusRequester)
                                                 .focusRequester(firstItemFocusRequester)
                                                 .focusProperties {
                                                     up = searchBarFocusRequester
-                                                    start = sideNavFocusRequester
+                                                    start = navStart
                                                 }
                                         )
                                     }
                                 }
-                                item(key = "tiles") {
+                                // Apple: the tab bar already leads to Live/Movies/Series, so the tiles show only without a billboard.
+                                if (!(apple && hasHero)) item(key = "tiles") {
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
@@ -716,7 +773,7 @@ fun DashboardScreen(
                                                 )
                                                 .focusProperties {
                                                     up = if (hasHero) liveTvCardFocusRequester else searchBarFocusRequester
-                                                    start = sideNavFocusRequester
+                                                    start = navStart
                                                 }
                                         )
                                         QuickAccessCard(
@@ -739,7 +796,7 @@ fun DashboardScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .focusRequester(seriesCardFocusRequester)
-                                                .focusProperties { up = if (hasHero) liveTvCardFocusRequester else userProfileFocusRequester }
+                                                .focusProperties { up = if (hasHero) liveTvCardFocusRequester else if (apple) searchBarFocusRequester else userProfileFocusRequester }
                                         )
                                     }
                                 }
@@ -803,7 +860,7 @@ fun DashboardScreen(
                                 onSeriesSelected = onSeriesSelected,
                                 onEpisodePlay = onEpisodePlay,
                                 firstItemFocusRequester = firstItemFocusRequester,
-                                sideNavFocusRequester = sideNavFocusRequester,
+                                sideNavFocusRequester = navStart,
                                 upFocusRequester = searchBarFocusRequester
                             )
                         }
@@ -873,7 +930,7 @@ fun DashboardScreen(
                     }
                     ContentSection.GAME -> com.ipxtream.tv.ui.dashboard.components.GamesScreen(
                         firstItemFocusRequester = firstItemFocusRequester,
-                        sideNavFocusRequester   = sideNavFocusRequester,
+                        sideNavFocusRequester   = navStart,
                         headerFocusRequester    = searchBarFocusRequester,
                         onOpen                  = { openGame = it },
                         modifier                = Modifier.fillMaxSize()
@@ -893,7 +950,7 @@ fun DashboardScreen(
                             onPlay                  = onPlayMatch,
                             onPick                  = onPickMatchChannel,
                             firstItemFocusRequester = firstItemFocusRequester,
-                            sideNavFocusRequester   = sideNavFocusRequester,
+                            sideNavFocusRequester   = navStart,
                             headerFocusRequester    = searchBarFocusRequester,
                             onNewDay                = onRefresh,
                             followedLeagues         = uiState.settings.followedLeagues,
@@ -909,7 +966,7 @@ fun DashboardScreen(
                             onStreamSelected        = onStreamSelected,
                             onSeriesSelected        = onSeriesSelected,
                             firstItemFocusRequester = firstItemFocusRequester,
-                            sideNavFocusRequester   = sideNavFocusRequester,
+                            sideNavFocusRequester   = navStart,
                             headerFocusRequester    = searchBarFocusRequester,
                             watchProgress           = { uiState.getWatchProgress(it) },
                             resolutions             = uiState.uhdResolutions,
@@ -920,13 +977,40 @@ fun DashboardScreen(
                         )
                     }
                     else -> {
-                        if (uiState.categories.isNotEmpty()) {
+                        // Apple: categories as a list beside the grid instead of a chip row on top.
+                        val appleCategories = apple && uiState.categories.isNotEmpty()
+                        val gridHasItems = !uiState.isLoadingContent && uiState.itemCount > 0
+                        Row(Modifier.fillMaxSize()) {
+                        if (appleCategories) {
+                            com.ipxtream.tv.ui.dashboard.components.AppleCategoryList(
+                                categories         = uiState.categories,
+                                selectedCategoryId = uiState.selectedCategoryId,
+                                onCategorySelected = onCategorySelected,
+                                anchorRequester    = categoryRowFocusRequester,
+                                gridFocusRequester = if (gridHasItems) firstItemFocusRequester else null,
+                                upFocusRequester   = searchBarFocusRequester,
+                                modifier           = Modifier
+                                    .width(300.dp)
+                                    .fillMaxHeight()
+                                    .onFocusChanged { if (it.hasFocus) lastContentInGrid = false }
+                            )
+                        }
+                        Column(Modifier.weight(1f).fillMaxHeight()) {
+                        if (apple) {
+                            SectionHeader(
+                                title       = stringResource(uiState.activeSection.titleRes),
+                                itemCount   = if (gridHasItems) uiState.itemCount else 0,
+                                isFromCache = uiState.isFromCache,
+                                currentPage = uiState.currentPage,
+                                totalPages  = uiState.totalPages
+                            )
+                        } else if (uiState.categories.isNotEmpty()) {
                             CategoryRow(
                                 categories              = uiState.categories,
                                 selectedCategoryId      = uiState.selectedCategoryId,
                                 onCategorySelected      = onCategorySelected,
                                 firstChipFocusRequester = categoryRowFocusRequester,
-                                sideNavFocusRequester   = sideNavFocusRequester,
+                                sideNavFocusRequester   = navStart,
                                 gridFocusRequester      = firstItemFocusRequester,
                                 searchBarFocusRequester = searchBarFocusRequester,
                                 modifier                = Modifier
@@ -936,6 +1020,9 @@ fun DashboardScreen(
                             Spacer(Modifier.height(8.dp))
                         }
 
+                        // Apple: Left from the first column returns to the selected category; Up goes to the tab bar.
+                        val gridStart = if (appleCategories) categoryRowFocusRequester else navStart
+                        val gridUp = if (apple) searchBarFocusRequester else categoryRowFocusRequester
                         Box(
                             modifier         = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -951,8 +1038,8 @@ fun DashboardScreen(
                                         seriesList                = uiState.paginatedSeries,
                                         onSeriesSelected          = onSeriesSelected,
                                         firstItemFocusRequester   = firstItemFocusRequester,
-                                        sideNavFocusRequester     = sideNavFocusRequester,
-                                        categoryRowFocusRequester = categoryRowFocusRequester,
+                                        sideNavFocusRequester     = gridStart,
+                                        categoryRowFocusRequester = gridUp,
                                         onItemFocused             = {
                                             focusedSeriesItem.value = it; focusedStreamItem.value = null
                                             lastContentInGrid = true
@@ -971,8 +1058,8 @@ fun DashboardScreen(
                                         section                   = uiState.activeSection,
                                         onStreamSelected          = onStreamSelected,
                                         firstItemFocusRequester   = firstItemFocusRequester,
-                                        sideNavFocusRequester     = sideNavFocusRequester,
-                                        categoryRowFocusRequester = categoryRowFocusRequester,
+                                        sideNavFocusRequester     = gridStart,
+                                        categoryRowFocusRequester = gridUp,
                                         onItemFocused             = {
                                             focusedStreamItem.value = it; focusedSeriesItem.value = null
                                             lastContentInGrid = true
@@ -987,6 +1074,8 @@ fun DashboardScreen(
                                         showChannelNumbers        = uiState.settings.showChannelNumbers
                                     )
                             }
+                        }
+                        }
                         }
                     }
                 }
@@ -1044,7 +1133,7 @@ fun DashboardScreen(
         } // Close Grid/Player Row
 
         // Dimming backdrop scrim when side navigation is expanded/focused
-        androidx.compose.animation.AnimatedVisibility(
+        if (!apple) androidx.compose.animation.AnimatedVisibility(
             visible = isSideNavFocused && !isOverlayOpen,
             enter = androidx.compose.animation.fadeIn(tween(200)),
             exit = androidx.compose.animation.fadeOut(tween(200)),
@@ -1057,8 +1146,53 @@ fun DashboardScreen(
             )
         }
 
-        // ─── Floating Sidebar (OVERLAYS content gracefully) ──────────────────
-        SideNavBar(
+        // ─── Apple: top tab bar instead of the side menu and header ─────────
+        if (apple) {
+            // On Home it slides away once the shelves scroll over the art; Up brings focus (and it) back.
+            val hideBar = hasHero && heroScrolledAway && !isSideNavFocused
+            val barOffset by androidx.compose.animation.core.animateFloatAsState(
+                targetValue = if (hideBar) 1f else 0f,
+                animationSpec = if (reducedEffects) androidx.compose.animation.core.snap() else tween(IpxMotion.Standard, easing = IpxMotion.EaseApple),
+                label = "tabBarOffset"
+            )
+            androidx.compose.runtime.CompositionLocalProvider(com.ipxtream.tv.ui.theme.LocalGlassBackdrop provides glassBackdrop) {
+            com.ipxtream.tv.ui.dashboard.components.AppleTabBar(
+                activeSection       = uiState.activeSection,
+                searchOpen          = appleSearchOpen,
+                sections            = remember(uiState.settings) { com.ipxtream.tv.ui.dashboard.components.visibleNavSections(uiState.settings) },
+                onSelect            = { section ->
+                    if (appleSearchOpen) {
+                        appleSearchOpen = false
+                        onSearchQueryChange("")
+                    }
+                    onSectionSelected(section)
+                },
+                onSearch            = {
+                    appleSearchOpen = true
+                    if (uiState.activeSection != ContentSection.HOME) onSectionSelected(ContentSection.HOME)
+                },
+                onEnterContent      = {
+                    if (appleSearchOpen) runCatching { appleSearchFieldFocus.requestFocus() }
+                    else focusContentForSection()
+                },
+                activeTabModifier   = Modifier.focusRequester(sideNavFocusRequester).focusRequester(searchBarFocusRequester),
+                onFocusChanged      = { isSideNavFocused = it },
+                activeAccount       = uiState.activeAccount,
+                isCheckingForUpdate = uiState.isCheckingForUpdate,
+                isCachingAll        = uiState.isCachingAll,
+                updateRelease       = uiState.updateRelease,
+                onCheckForUpdates   = onCheckForUpdates,
+                onRefresh           = onRefresh,
+                onCacheAll          = onCacheAll,
+                onSwitchAccount     = onAddAccount,
+                onLogout            = onLogout,
+                modifier            = Modifier
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer { translationY = -barOffset * AppleTabBarHeight.toPx() * 1.2f }
+                    .focusProperties { canFocus = !isOverlayOpen }
+            )
+            }
+        } else SideNavBar(
             activeSection         = uiState.activeSection,
             onSectionSelected     = onSectionSelected,
             onNavigateToContent   = focusContentForSection,
@@ -1454,7 +1588,7 @@ private fun SeriesGrid(
 @Composable
 private fun SectionHeader(title: String, itemCount: Int, isFromCache: Boolean, currentPage: Int, totalPages: Int) {
     Row(
-        modifier          = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier          = Modifier.fillMaxWidth().padding(horizontal = if (isAppleDesign) IpxSpacing.Gutter else 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Apple: a large title.

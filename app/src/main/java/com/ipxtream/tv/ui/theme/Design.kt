@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -16,6 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.staticCompositionLocalOf
+import android.os.Build
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeChild
 
 // The design language: shapes, materials, layout and type. Colours live in Color.kt.
 // Ember = the brand look. Apple = Settings → General → Theme "Apple": continuous large corners,
@@ -53,23 +60,47 @@ val AppleGlassFill = Color(0xC71C1E1D)
 val AppleSheetDim = Color(0x61000000)
 
 /**
- * Liquid-glass material for floating controls: translucent fill, a specular rim that is brighter at
- * the top-start and bottom-end, and a soft sheen on the upper half. No backdrop blur (Android can't
- * blur what is behind a view cheaply), so the fill is dense enough to keep text readable.
- * With reduced effects it is a plain fill and a hairline.
+ * The backdrop that glass in this part of the tree blurs (Haze). Provided only around controls that float
+ * over the page (tab bar, account menu); glass inside the page itself can't blur the layer it is part of,
+ * so there it is null and the glass uses its tinted fill.
+ */
+val LocalGlassBackdrop = staticCompositionLocalOf<HazeState?> { null }
+
+/**
+ * Liquid-glass material for floating controls. Over a [LocalGlassBackdrop] (Android 12+) the page behind
+ * is blurred and lightly tinted; elsewhere a translucent fill stands in. On top: a specular sheen on the
+ * upper half, a darker refraction band at the bottom edge, and a rim that catches light at the
+ * top-start and bottom-end. With reduced effects it is a plain fill and a hairline.
  */
 @Composable
 fun Modifier.appleGlass(shape: Shape, fill: Color = AppleGlassFill): Modifier {
     if (LocalReducedEffects.current) {
         return clip(shape).background(fill.copy(alpha = 0.94f)).border(1.dp, Hairline, shape)
     }
-    return clip(shape)
-        .background(fill)
+    val backdrop = LocalGlassBackdrop.current
+    val blurred = backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    // Values from Apple's iOS & iPadOS 27 kit: dark glass rgb(28 30 29 / .78), blur 16, layered soft shadow.
+    // Over a blurred backdrop the tint is lighter so the art reads through (no saturate/refraction here).
+    return shadow(18.dp, shape, ambientColor = Color.Black.copy(alpha = 0.35f), spotColor = Color.Black.copy(alpha = 0.45f))
+        .clip(shape)
+        .then(
+            if (blurred) Modifier.hazeChild(
+                backdrop!!,
+                HazeStyle(
+                    backgroundColor = SlateDeep,
+                    tint            = HazeTint(fill.copy(alpha = 0.6f)),
+                    blurRadius      = 20.dp,
+                    noiseFactor     = 0.06f
+                )
+            ) else Modifier.background(fill)
+        )
         .drawWithContent {
             drawRect(
                 Brush.verticalGradient(
-                    0f to Color.White.copy(alpha = 0.10f),
-                    0.5f to Color.Transparent
+                    0f to Color.White.copy(alpha = 0.16f),
+                    0.45f to Color.White.copy(alpha = 0.03f),
+                    0.7f to Color.Transparent,
+                    1f to Color.Black.copy(alpha = 0.16f)
                 )
             )
             drawContent()
@@ -77,10 +108,10 @@ fun Modifier.appleGlass(shape: Shape, fill: Color = AppleGlassFill): Modifier {
         .border(
             1.5.dp,
             Brush.linearGradient(
-                0f to Color.White.copy(alpha = 0.42f),
-                0.35f to Color.White.copy(alpha = 0.06f),
-                0.65f to Color.White.copy(alpha = 0.06f),
-                1f to Color.White.copy(alpha = 0.26f),
+                0f to Color.White.copy(alpha = 0.55f),
+                0.3f to Color.White.copy(alpha = 0.10f),
+                0.7f to Color.White.copy(alpha = 0.06f),
+                1f to Color.White.copy(alpha = 0.32f),
                 start = Offset.Zero,
                 end = Offset.Infinite
             ),

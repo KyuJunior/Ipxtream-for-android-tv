@@ -224,6 +224,7 @@ dependencies {
 
     // ─── Image loading (Coil) ─────────────────────────────────────────────────
     implementation(libs.coil.compose)               // AsyncImage for posters + channel logos
+    implementation(libs.haze)                       // backdrop blur behind the Apple theme's glass
 
     // ─── AndroidX Core ────────────────────────────────────────────────────────
     // Required for NotificationCompat (used in DownloadService)
