@@ -766,3 +766,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/components/CategoryRow.kt, AGENTS.md
 - Status: done. CI command passes. Emulator (GitHub debug preview, a mock provider with 40 film categories): chips scrolled to Category 25 then Down/Up returns to a visible chip; Category 27 selected, Up from the grid lands on it. Not checked: Live TV and Series (same component), the owner's TV, Arabic.
 - For the other agent: any lazy row/list holding a shared `FocusRequester` must move it onto a composed item (see `focusAnchorIndex`).
+
+### 2026-11-10 | claude
+- Did: Google granted production access for Xtream TV (`com.xtream.kyu`). Owner said to publish: Production track set to all countries/regions (177 + rest of world, same as the closed test), Production release created from bundle 2.0.42 (code 116, the one live in the closed test) at full rollout with en-GB release notes, and all 3 changes sent for Google's review from Publishing overview. Managed publishing is off, so the app goes public by itself once Google approves. Only warning: no native debug symbols (the FFmpeg library).
+- Files: AGENTS.md
+- Status: "Changes in review" (Play's quick checks were still running when sent; they pass on to review by themselves). Not checked: the store listing text and content rating answers (still the owner's earlier to-do).
+- For the other agent: owner still has to declare trader status in Play Console (deadline February 2027; needs the owner's personal details). Play's 2 Nov notice says `androidx.fragment:fragment 1.0.0` is outdated (warning only; fix with a dependency bump in a later release).
