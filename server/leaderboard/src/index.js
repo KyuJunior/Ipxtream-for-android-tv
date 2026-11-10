@@ -30,14 +30,15 @@ async function postScore(input, env) {
   const entry = checkScore(input);
   if (entry.error) return json(entry, 400);
   const now = Date.now();
-  const last = await env.DB.prepare("SELECT MAX(at) AS at FROM scores WHERE player = ?").bind(entry.player).first();
+  const last = await env.DB.prepare("SELECT MAX(submitted_at) AS at FROM scores WHERE player = ?").bind(entry.player).first();
   if (last?.at && now - last.at < MIN_GAP_MS) return json({ error: "too fast" }, 429);
   // Keep the best score; the name always follows the latest submission.
   await env.DB.prepare(
-    `INSERT INTO scores (game, player, name, score, at) VALUES (?1, ?2, ?3, ?4, ?5)
+    `INSERT INTO scores (game, player, name, score, at, submitted_at) VALUES (?1, ?2, ?3, ?4, ?5, ?5)
      ON CONFLICT (game, player) DO UPDATE SET
        name = excluded.name,
-       at = excluded.at,
+       at = CASE WHEN excluded.score > scores.score THEN excluded.at ELSE scores.at END,
+       submitted_at = excluded.submitted_at,
        score = MAX(scores.score, excluded.score)`
   ).bind(entry.game, entry.player, entry.name, entry.score, now).run();
   return json({ ok: true, rank: await rankOf(env, entry.game, entry.player) });

@@ -286,7 +286,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     fun resume() { if (_uiState.value.hasActiveMedia) exoPlayer.play() }
 
     fun togglePlayPause() {
-        if (exoPlayer.isPlaying) {
+        if (exoPlayer.playWhenReady) {
             saveCurrentProgress()
             exoPlayer.pause()
         } else {
@@ -787,8 +787,8 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 exoPlayer.seekToDefaultPosition()
             }
+            // prepare() preserves playWhenReady, including a pause during the reconnect delay.
             exoPlayer.prepare()
-            exoPlayer.playWhenReady = true
         }
         return true
     }

@@ -7,6 +7,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -28,6 +30,7 @@ object Leaderboard {
     private val base get() = BuildConfig.LEADERBOARD_URL.trimEnd('/')
     private val http by lazy { ApiClient.sharedHttp.newBuilder().callTimeout(8, TimeUnit.SECONDS).build() }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val mutationMutex = Mutex()
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
     /**
@@ -36,16 +39,16 @@ object Leaderboard {
      */
     fun sync(game: String, scores: SharedPreferences, player: SharedPreferences) {
         if (!enabled) return
-        val best = scores.getInt("best", 0)
-        if (best <= scores.getInt("sent", 0)) return
-        val name = player.getString(PlayerKeys.NAME, null).orEmpty()
-        if (name.isEmpty()) return
-        val id = PlayerKeys.id(player)
         scope.launch {
-            val body = JSONObject().put("game", game).put("player", id).put("name", name).put("score", best)
-            val code = post("/v1/score", body) ?: return@launch
-            // 2xx: stored. 4xx other than 429: refused for good (e.g. a blocked name), don't retry it forever.
-            if (code in 200..299 || (code in 400..499 && code != 429)) scores.edit().putInt("sent", best).apply()
+            mutationMutex.withLock {
+                retryRename(player)
+                val best = scores.getInt("best", 0)
+                if (best <= scores.getInt("sent", 0)) return@withLock
+                val name = player.getString(PlayerKeys.NAME, null).orEmpty()
+                if (name.isEmpty()) return@withLock
+                val body = JSONObject().put("game", game).put("player", PlayerKeys.id(player)).put("name", name).put("score", best)
+                if (leaderboardRequestFinished(post("/v1/score", body))) scores.edit().putInt("sent", best).apply()
+            }
         }
     }
 
@@ -54,13 +57,18 @@ object Leaderboard {
         if (!enabled) return
         val name = player.getString(PlayerKeys.NAME, null).orEmpty()
         if (name.isEmpty()) return
-        val body = JSONObject().put("player", PlayerKeys.id(player)).put("name", name)
-        scope.launch { post("/v1/name", body) }
+        synchronized(player) { player.edit().putString(PlayerKeys.PENDING_NAME, name).apply() }
+        scope.launch { mutationMutex.withLock { retryRename(player) } }
+    }
+
+    private fun retryRename(player: SharedPreferences) = retryPendingRename(player) { name ->
+        post("/v1/name", JSONObject().put("player", PlayerKeys.id(player)).put("name", name))
     }
 
     /** The top of [game], or null when the server can't be reached. */
     suspend fun top(game: String, player: SharedPreferences): Board? = withContext(Dispatchers.IO) {
         if (!enabled) return@withContext null
+        mutationMutex.withLock { retryRename(player) }
         runCatching {
             val request = Request.Builder().url("$base/v1/top?game=$game&player=${PlayerKeys.id(player)}").build()
             http.newCall(request).execute().use { response ->
@@ -83,10 +91,26 @@ object Leaderboard {
     }.getOrNull()
 }
 
+// 2xx: stored. 4xx other than 429: refused for good, so don't retry forever.
+internal fun leaderboardRequestFinished(code: Int?): Boolean =
+    code != null && (code in 200..299 || (code in 400..499 && code != 429))
+
+internal fun retryPendingRename(player: SharedPreferences, send: (String) -> Int?) {
+    val name = player.getString(PlayerKeys.PENDING_NAME, null) ?: return
+    if (!leaderboardRequestFinished(send(name))) return
+    synchronized(player) {
+        // An older response must not discard a newer name queued while the request was in flight.
+        if (player.getString(PlayerKeys.PENDING_NAME, null) == name) {
+            player.edit().remove(PlayerKeys.PENDING_NAME).apply()
+        }
+    }
+}
+
 /** Where the player's identity lives in the "games_player" prefs. */
 object PlayerKeys {
     const val PREFS = "games_player"
     const val NAME = "name"
+    internal const val PENDING_NAME = "pending_name"
     private const val ID = "id"
 
     /** A random id per install, so the board can tell players with the same name apart. */
