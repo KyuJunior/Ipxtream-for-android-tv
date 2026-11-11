@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.ipxtream.tv.ui.theme.appleGlass
+import com.ipxtream.tv.ui.theme.glassSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -402,6 +403,9 @@ fun VodDetailScreen(
                 }
             }
     ) {
+        // Apple: the page is recorded so the Info sheet's glass can bend and blur it (LiquidGlass.kt).
+        val detailsBackdrop = if (apple && !com.ipxtream.tv.ui.theme.LocalReducedEffects.current) com.ipxtream.tv.ui.theme.rememberGlassBackdrop() else null
+        Box(Modifier.fillMaxSize().then(Modifier.glassSource(detailsBackdrop))) {
         // ─── High-Res Cinematic Backdrop Fanart ───────────────────────────────
         AsyncImage(
             model              = backdropUrl,
@@ -525,9 +529,10 @@ fun VodDetailScreen(
                 }
             }
         }
+        }
 
         // Apple: cast, director and the full synopsis in a glass sheet (Info button); Back closes it.
-        if (apple && showInfo) {
+        if (apple && showInfo) androidx.compose.runtime.CompositionLocalProvider(com.ipxtream.tv.ui.theme.LocalGlassBackdrop provides detailsBackdrop) {
             Box(Modifier.fillMaxSize().background(com.ipxtream.tv.ui.theme.AppleSheetDim), contentAlignment = Alignment.CenterEnd) {
                 Column(
                     modifier = Modifier

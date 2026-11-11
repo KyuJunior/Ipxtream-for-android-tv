@@ -51,7 +51,6 @@ import com.ipxtream.tv.ui.theme.AppleSheetDim
 import com.ipxtream.tv.ui.theme.appleGlass
 import com.ipxtream.tv.ui.theme.ipxShape
 import com.ipxtream.tv.ui.theme.isAppleDesign
-import dev.chrisbanes.haze.haze
 import com.ipxtream.tv.ui.dashboard.components.AppleTabBarHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.ipxtream.tv.ui.theme.glassSource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
@@ -506,13 +506,13 @@ fun DashboardScreen(
     Box(modifier = Modifier.fillMaxSize().background(SlateDeep).trackFocusTravel()) {
         val showSplitPlayer = uiState.hasActivePlayback && playback.isLive && !uiState.playFullScreen && exoPlayer != null
         // Apple: the page is the backdrop the floating tab bar's liquid glass blurs.
-        val glassBackdrop = if (apple && !reducedEffects) remember { dev.chrisbanes.haze.HazeState() } else null
+        val glassBackdrop = if (apple && !reducedEffects) com.ipxtream.tv.ui.theme.rememberGlassBackdrop() else null
 
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(start = if (apple) 0.dp else 66.dp) // Margin for the collapsed side nav
-                .then(if (glassBackdrop != null) Modifier.haze(glassBackdrop) else Modifier)
+                .glassSource(glassBackdrop)
                 .focusProperties {
                     canFocus = !isOverlayOpen
                 }

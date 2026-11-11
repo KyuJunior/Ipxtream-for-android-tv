@@ -27,7 +27,6 @@ securityCrypto          = "1.1.0-alpha06"
 
 # Image
 coil                    = "2.7.0"
-haze                    = "1.1.1"           # backdrop blur for the Apple theme's liquid glass
 
 # Coroutines
 coroutines              = "1.8.1"
@@ -78,7 +77,6 @@ security-crypto                     = { group = "androidx.security",            
 
 # ── Image loading ─────────────────────────────────────────────────────────────
 coil-compose                        = { group = "io.coil-kt",                    name = "coil-compose",                       version.ref = "coil" }
-haze                                = { group = "dev.chrisbanes.haze",           name = "haze",                               version.ref = "haze" }
 
 # ── Coroutines ────────────────────────────────────────────────────────────────
 kotlinx-coroutines-android          = { group = "org.jetbrains.kotlinx",        name = "kotlinx-coroutines-android",         version.ref = "coroutines" }

@@ -18,11 +18,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.staticCompositionLocalOf
-import android.os.Build
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeChild
 
 // The design language: shapes, materials, layout and type. Colours live in Color.kt.
 // Ember = the brand look. Apple = Settings → General → Theme "Apple": continuous large corners,
@@ -60,15 +55,15 @@ val AppleGlassFill = Color(0xC71C1E1D)
 val AppleSheetDim = Color(0x61000000)
 
 /**
- * The backdrop that glass in this part of the tree blurs (Haze). Provided only around controls that float
- * over the page (tab bar, account menu); glass inside the page itself can't blur the layer it is part of,
- * so there it is null and the glass uses its tinted fill.
+ * The page that glass in this part of the tree sees through ([GlassBackdrop], LiquidGlass.kt). Provided only
+ * around controls that float over the page (tab bar, account menu, details sheet); glass inside the page itself
+ * can't show the layer it is part of, so there it is null and the glass uses its tinted fill.
  */
-val LocalGlassBackdrop = staticCompositionLocalOf<HazeState?> { null }
+val LocalGlassBackdrop = staticCompositionLocalOf<GlassBackdrop?> { null }
 
 /**
- * Liquid-glass material for floating controls. Over a [LocalGlassBackdrop] (Android 12+) the page behind
- * is blurred and lightly tinted; elsewhere a translucent fill stands in. On top: a specular sheen on the
+ * Liquid-glass material for floating controls. Over a [LocalGlassBackdrop] the page behind is blurred
+ * (Android 12+) and bent by a lens along the rim (Android 13+); elsewhere a translucent fill stands in. On top: a specular sheen on the
  * upper half, a darker refraction band at the bottom edge, and a rim that catches light at the
  * top-start and bottom-end. With reduced effects it is a plain fill and a hairline.
  */
@@ -78,21 +73,14 @@ fun Modifier.appleGlass(shape: Shape, fill: Color = AppleGlassFill): Modifier {
         return clip(shape).background(fill.copy(alpha = 0.94f)).border(1.dp, Hairline, shape)
     }
     val backdrop = LocalGlassBackdrop.current
-    val blurred = backdrop != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    // Values from Apple's iOS & iPadOS 27 kit: dark glass rgb(28 30 29 / .78), blur 16, layered soft shadow.
-    // Over a blurred backdrop the tint is lighter so the art reads through (no saturate/refraction here).
+    // Values from Apple's iOS & iPadOS 27 kit: dark glass rgb(28 30 29 / .78) with blur 16 and a layered soft
+    // shadow; with refraction (lens, Android 13+) the fill is clearer, rgb(20 20 20 / .32), blur 6.
+    val tint = if (hasLens) Color(0x52141414) else fill.copy(alpha = 0.6f)
     return shadow(18.dp, shape, ambientColor = Color.Black.copy(alpha = 0.35f), spotColor = Color.Black.copy(alpha = 0.45f))
         .clip(shape)
         .then(
-            if (blurred) Modifier.hazeChild(
-                backdrop!!,
-                HazeStyle(
-                    backgroundColor = SlateDeep,
-                    tint            = HazeTint(fill.copy(alpha = 0.6f)),
-                    blurRadius      = 20.dp,
-                    noiseFactor     = 0.06f
-                )
-            ) else Modifier.background(fill)
+            if (canSeeThrough(backdrop)) Modifier.glassBackdrop(backdrop!!, shape, tint)
+            else Modifier.background(fill)
         )
         .drawWithContent {
             drawRect(

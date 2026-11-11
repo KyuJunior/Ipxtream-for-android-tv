@@ -34,7 +34,9 @@ Both agents MUST read this whole file at the start of every task and append to t
   `components/AppleTabBar.kt` replaces the side menu + header (account menu under the avatar; Search tab), Movies/Series/Live
   use `AppleCategoryList` beside the grid, Home is a full-screen Top Shelf, details are full-bleed. In Apple,
   `sideNavFocusRequester`/`searchBarFocusRequester` sit on the active tab and `navStart` (= Default) replaces "Left to the menu".
-  Glass = `Modifier.appleGlass` (`ui/theme/Design.kt`): real backdrop blur (Haze 1.1.1) only under `LocalGlassBackdrop`.
+  Shown to users as "Glass" (enum stays `AppTheme.APPLE`). Glass = `Modifier.appleGlass` (`ui/theme/Design.kt`): under a
+  `LocalGlassBackdrop` (`ui/theme/LiquidGlass.kt`: `rememberGlassBackdrop` + `Modifier.glassSource` on the page) it shows the
+  page behind it, blurred (Android 12+) and bent by an AGSL lens at the rim (13+); no library. Glass must not sit inside its source.
 - **Look & feel:** Apple TV–style. Tokens in `ui/theme/` — `Color.kt` (neutral greys, glass fills, white focus),
   `Motion.kt` (`IpxMotion` curves/springs, `IpxSpacing.Gutter` = 32dp), `Theme.kt` (`IpxTypography`).
   Focusable cards use `Modifier.premiumFocus(isFocused)` (`ui/theme/Focus.kt`) with the component's own focus
@@ -819,3 +821,10 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/dashboard/DashboardScreen.kt, ui/dashboard/DashboardActivity.kt, ui/dashboard/components/{AppleTabBar,AppleCategoryList,SideNavBar,VodDetailScreen,SeriesDetailScreen}.kt, ui/theme/Design.kt, gradle/libs.versions.toml, app/build.gradle.kts, AGENTS.md
 - Status: done. Locks from my previous entry are released. CI command passes. Owner's TV (Play debug preview, demo, uninstalled afterwards): launch focus, Up/Down between tabs and pages, Movies category list ↔ grid ↔ tabs, account menu (Full Effects: the blur shows the tiles through it), Search/4K pages under the bar, movie details + Info sheet + Back. Not checked on screen: the series page (the demo has no series), the Home Top Shelf (the demo has no billboard art), Arabic in the new layout, playback started from the new details page, a phone.
 - For the other agent: in Apple, the bar's whole-box `onFocusChanged` fired with nothing focused at launch, so AppleTabBar tracks focus from its own controls. Found, not fixed (Ember too): Left from Settings into the side menu shows no focused item.
+
+### 2026-11-11 | claude
+- Did: Theme renamed "Apple" → "Glass" in Settings (Arabic زجاجي; trademark risk on Play; stored value unchanged). Real liquid glass without Haze (dependency removed): `ui/theme/LiquidGlass.kt` records the page into a GraphicsLayer (`glassSource`) and each glass element redraws it under itself through a RenderEffect: blur 16 dp on Android 12, and on 13+ blur 6 dp + an AGSL rounded-rect lens (rim refraction, slight colour split, saturation 1.6) with the kit's clearer tint rgb(20 20 20/.32). Used by the tab bar, account menu and the movie Info sheet (details page is now a glass source). Figma (owner's iOS & iPadOS 27 kit) was connected, but the Starter plan allowed one call (page list only); values are the kit values already in use.
+- Files: ui/theme/{LiquidGlass,Design}.kt, ui/dashboard/DashboardScreen.kt, ui/dashboard/components/VodDetailScreen.kt, res/values*/strings.xml, gradle/libs.versions.toml, app/build.gradle.kts, AGENTS.md
+- Status: done. CI command passes. Owner's TV (Android 14, Play debug preview, demo, Full Effects, uninstalled afterwards): account menu shows the Home card blurred and bent at its rim, the Info sheet shows the page behind it, no errors in logcat. Not checked: Android 12 (blur-only path), the bar over real Home art (demo has none), frame times with the lens.
+- For the other agent: Haze is gone; use `rememberGlassBackdrop`/`glassSource` + `LocalGlassBackdrop` for new floating glass.
+
