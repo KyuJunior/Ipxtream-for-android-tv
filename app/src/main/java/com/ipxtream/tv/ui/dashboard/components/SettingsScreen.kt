@@ -435,7 +435,7 @@ private fun GeneralSettingsContent(
     // Theme
     SettingSelectorItem(
         title = stringResource(R.string.settings_theme),
-        subtitle = stringResource(if (settings.appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) R.string.settings_theme_apple_sub else R.string.settings_theme_ember_sub),
+        subtitle = stringResource(if (settings.appTheme == com.ipxtream.tv.data.local.AppTheme.GLASS) R.string.settings_theme_glass_sub else R.string.settings_theme_ember_sub),
         options = com.ipxtream.tv.data.local.AppTheme.values().toList(),
         selected = settings.appTheme,
         onSelect = onAppThemeChange,

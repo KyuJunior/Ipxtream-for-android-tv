@@ -41,7 +41,7 @@ enum class PerformanceMode(@StringRes val labelRes: Int) {
 
 enum class AppTheme(@StringRes val labelRes: Int) {
     EMBER(R.string.theme_ember),
-    APPLE(R.string.theme_apple)
+    GLASS(R.string.theme_glass)
 }
 
 enum class AppLanguage(val code: String, val displayName: String) {
@@ -117,7 +117,8 @@ class AppSettingsStore(private val context: Context) {
         val perf = runCatching { PerformanceMode.valueOf(perfName) }.getOrDefault(PerformanceMode.AUTO)
 
         val themeName = prefs.getString(KEY_APP_THEME, AppTheme.EMBER.name) ?: AppTheme.EMBER.name
-        val theme = runCatching { AppTheme.valueOf(themeName) }.getOrDefault(AppTheme.EMBER)
+        // "APPLE" is what versions up to 2.0.46 stored for the Glass theme.
+        val theme = runCatching { AppTheme.valueOf(if (themeName == "APPLE") "GLASS" else themeName) }.getOrDefault(AppTheme.EMBER)
 
         return AppSettings(
             appLanguage = lang,

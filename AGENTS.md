@@ -34,7 +34,7 @@ Both agents MUST read this whole file at the start of every task and append to t
   `components/AppleTabBar.kt` replaces the side menu + header (account menu under the avatar; Search tab), Movies/Series/Live
   use `AppleCategoryList` beside the grid, Home is a full-screen Top Shelf, details are full-bleed. In Apple,
   `sideNavFocusRequester`/`searchBarFocusRequester` sit on the active tab and `navStart` (= Default) replaces "Left to the menu".
-  Shown to users as "Glass" (enum stays `AppTheme.APPLE`). Glass = `Modifier.appleGlass` (`ui/theme/Design.kt`): under a
+  Shown to users as "Glass" (`AppTheme.GLASS`; a stored "APPLE" reads as GLASS; code names still say Apple). Glass = `Modifier.appleGlass` (`ui/theme/Design.kt`): under a
   `LocalGlassBackdrop` (`ui/theme/LiquidGlass.kt`: `rememberGlassBackdrop` + `Modifier.glassSource` on the page) it shows the
   page behind it, blurred (Android 12+) and bent by an AGSL lens at the rim (13+); no library. Glass must not sit inside its source.
 - **Look & feel:** Apple TV–style. Tokens in `ui/theme/` — `Color.kt` (neutral greys, glass fills, white focus),
@@ -827,4 +827,16 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: ui/theme/{LiquidGlass,Design}.kt, ui/dashboard/DashboardScreen.kt, ui/dashboard/components/VodDetailScreen.kt, res/values*/strings.xml, gradle/libs.versions.toml, app/build.gradle.kts, AGENTS.md
 - Status: done. CI command passes. Owner's TV (Android 14, Play debug preview, demo, Full Effects, uninstalled afterwards): account menu shows the Home card blurred and bent at its rim, the Info sheet shows the page behind it, no errors in logcat. Not checked: Android 12 (blur-only path), the bar over real Home art (demo has none), frame times with the lens.
 - For the other agent: Haze is gone; use `rememberGlassBackdrop`/`glassSource` + `LocalGlassBackdrop` for new floating glass.
+
+### 2026-11-11 17:31 | codex
+- Did: Reviewed changes against 567f0e41ba57aa673a4b3a50b01f0cccfb5f65c7; identified Glass live-search and Info-sheet input, Back handling, and short-screen layout regressions. No production code changed.
+- Files: AGENTS.md (review log only).
+- Status: done. Read the diff and connected search, focus, Back, touch-bridge and layout code. Gradle unit tests blocked by permission to create the external wrapper lock directory; device UI not tested.
+- For the other agent: Graph query and Obsidian vault used; no refresh needed because no code changed. Review findings are returned to the owner; no fixes or commits made.
+
+### 2026-11-11 | claude
+- Did: Fixed the Glass-theme review findings (Claude /code-review 10, Codex 4; one overlap). Search tab now searches the section it is opened in (Live/Movies/Series filter their list as the Ember header did; elsewhere Home's search), and closes when the section changes by any route (`appleSearchSection`). Movie Info sheet: Back always closes it first (activity lets Back through before the details/update/search branches; a `BackHandler` for phone gestures), nothing under it takes focus or taps (`canFocus = false` + `touchShield()`), its text scrolls so Close stays on short screens. Series shelf: one scroll state per season, keys `id_index` (duplicate ids no longer crash). Tab bar: the menu requesters fall back to the first tab when the active section has none; focus keys of removed controls are dropped; the bar slides with `offset` (layout) so its glass tracks the page. `AppTheme.APPLE` -> `GLASS` and string keys `theme_glass` / `settings_theme_glass_sub`. New `NavSectionsTest`.
+- Files: ui/dashboard/{DashboardActivity,DashboardScreen}.kt, ui/dashboard/components/{AppleTabBar,VodDetailScreen,SeriesDetailScreen,SettingsScreen}.kt, ui/theme/Theme.kt, data/local/AppSettingsStore.kt, res/values*/strings.xml, app/src/test/.../NavSectionsTest.kt, AGENTS.md
+- Status: done. Owner's TV (Play debug preview, demo, uninstalled afterwards): a stored "APPLE" opens in Glass; Search in Movies filters the grid; Info sheet opened from a search keeps focus on Close and Back closes only the sheet. Frame times on Home, debug build: lens on, GPU median 17 ms (99th 24); Smooth, 7 ms (99th 14); the lens was not made cheaper. Not checked: series page (demo has none), phone gestures/taps, the bar sliding over Home art, hidden-section fallback on screen.
+- For the other agent: Codex's review entry above is its own; its Gradle run was blocked, mine passed.
 

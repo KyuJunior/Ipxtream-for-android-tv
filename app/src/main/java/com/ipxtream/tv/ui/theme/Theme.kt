@@ -128,10 +128,10 @@ fun IpxTvTheme(content: @Composable () -> Unit) {
     }
     val reducedEffects = remember(perfMode) { reducedEffectsFor(context, perfMode) }
     val appTheme = settingsStore.settings.collectAsState().value.appTheme
-    val colors = if (appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) AppleColors else EmberColors
+    val colors = if (appTheme == com.ipxtream.tv.data.local.AppTheme.GLASS) AppleColors else EmberColors
     // Written before the content reads it, so the first frame already has the chosen palette.
     if (activeColors !== colors) activeColors = colors
-    val design = if (appTheme == com.ipxtream.tv.data.local.AppTheme.APPLE) IpxDesign.APPLE else IpxDesign.EMBER
+    val design = if (appTheme == com.ipxtream.tv.data.local.AppTheme.GLASS) IpxDesign.APPLE else IpxDesign.EMBER
     if (activeDesign != design) activeDesign = design
 
     // Rows and grids stay still while focus moves across visible items (see EdgeBringIntoViewSpec).

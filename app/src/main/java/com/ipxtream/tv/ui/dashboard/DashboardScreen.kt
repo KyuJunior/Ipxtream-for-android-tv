@@ -60,6 +60,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.offset
 import com.ipxtream.tv.ui.theme.glassSource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
@@ -255,7 +256,10 @@ fun DashboardScreen(
     val focusManager = LocalFocusManager.current
     // Apple design: a top tab bar replaces the side menu and header (see AppleTabBar).
     val apple = isAppleDesign
-    var appleSearchOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    // Search belongs to the section it was opened in (Home: movies and series; Live/Movies/Series: that list),
+    // so leaving the section by any route closes it.
+    var appleSearchSection by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    val appleSearchOpen = apple && appleSearchSection == uiState.activeSection.name
     val appleSearchFieldFocus = remember { FocusRequester() }
     val firstItemFocusRequester = remember { FocusRequester() }
     val searchBarFocusRequester = remember { FocusRequester() }
@@ -996,6 +1000,18 @@ fun DashboardScreen(
                             )
                         }
                         Column(Modifier.weight(1f).fillMaxHeight()) {
+                        // Glass: the Search tab filters this section's list, like the header field in Ember.
+                        if (appleSearchOpen) {
+                            com.ipxtream.tv.ui.dashboard.components.SearchBar(
+                                query = uiState.searchQuery,
+                                onQueryChange = onSearchQueryChange,
+                                modifier = Modifier
+                                    .padding(horizontal = IpxSpacing.Gutter, vertical = 8.dp)
+                                    .focusRequester(appleSearchFieldFocus)
+                                    .focusProperties { up = searchBarFocusRequester },
+                                onDownNavigation = { runCatching { firstItemFocusRequester.requestFocus() } }
+                            )
+                        }
                         if (apple) {
                             SectionHeader(
                                 title       = stringResource(uiState.activeSection.titleRes),
@@ -1022,7 +1038,7 @@ fun DashboardScreen(
 
                         // Apple: Left from the first column returns to the selected category; Up goes to the tab bar.
                         val gridStart = if (appleCategories) categoryRowFocusRequester else navStart
-                        val gridUp = if (apple) searchBarFocusRequester else categoryRowFocusRequester
+                        val gridUp = if (appleSearchOpen) appleSearchFieldFocus else if (apple) searchBarFocusRequester else categoryRowFocusRequester
                         Box(
                             modifier         = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -1161,15 +1177,16 @@ fun DashboardScreen(
                 searchOpen          = appleSearchOpen,
                 sections            = remember(uiState.settings) { com.ipxtream.tv.ui.dashboard.components.visibleNavSections(uiState.settings) },
                 onSelect            = { section ->
-                    if (appleSearchOpen) {
-                        appleSearchOpen = false
-                        onSearchQueryChange("")
-                    }
+                    if (appleSearchOpen) onSearchQueryChange("")
+                    appleSearchSection = null
                     onSectionSelected(section)
                 },
                 onSearch            = {
-                    appleSearchOpen = true
-                    if (uiState.activeSection != ContentSection.HOME) onSectionSelected(ContentSection.HOME)
+                    val here = uiState.activeSection
+                    val searchable = here == ContentSection.HOME || here == ContentSection.LIVE ||
+                        here == ContentSection.VOD || here == ContentSection.SERIES
+                    appleSearchSection = (if (searchable) here else ContentSection.HOME).name
+                    if (!searchable) onSectionSelected(ContentSection.HOME)
                 },
                 onEnterContent      = {
                     if (appleSearchOpen) runCatching { appleSearchFieldFocus.requestFocus() }
@@ -1188,7 +1205,7 @@ fun DashboardScreen(
                 onLogout            = onLogout,
                 modifier            = Modifier
                     .align(Alignment.TopCenter)
-                    .graphicsLayer { translationY = -barOffset * AppleTabBarHeight.toPx() * 1.2f }
+                    .offset { androidx.compose.ui.unit.IntOffset(0, (-barOffset * AppleTabBarHeight.toPx() * 1.2f).toInt()) }
                     .focusProperties { canFocus = !isOverlayOpen }
             )
             }

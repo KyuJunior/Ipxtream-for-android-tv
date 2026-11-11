@@ -158,10 +158,10 @@ contact@dryaser.me\n\n7. البرمجيات مفتوحة المصدر\nيستخ�
     <string name="performance_full">كل المؤثرات</string>
     <string name="performance_smooth">سلس (مؤثرات أقل)</string>
     <string name="theme_ember">إمبر (افتراضي)</string>
-    <string name="theme_apple">زجاجي</string>
+    <string name="theme_glass">زجاجي</string>
     <string name="settings_theme">المظهر</string>
     <string name="settings_theme_ember_sub">ألوان التطبيق الدافئة: برتقالي إمبر وتركيز هالو الناعم.</string>
-    <string name="settings_theme_apple_sub">مظهر سينمائي: شريط تبويب علوي وصور بملء الشاشة وأزرار من الزجاج المصنفر.</string>
+    <string name="settings_theme_glass_sub">مظهر سينمائي: شريط تبويب علوي وصور بملء الشاشة وأزرار من الزجاج المصنفر.</string>
     <string name="player_cant_play">تعذّر تشغيل هذا الآن</string>
     <string name="player_err_behind_live">تأخّر البث المباشر. جارٍ إعادة الاتصال…</string>
     <string name="player_err_code">خطأ في التشغيل (%1$d).</string>

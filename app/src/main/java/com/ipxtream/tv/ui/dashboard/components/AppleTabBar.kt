@@ -99,6 +99,18 @@ fun AppleTabBar(
     val focusedKeys = remember { androidx.compose.runtime.mutableStateMapOf<String, Boolean>() }
     val barFocused = focusedKeys.values.any { it }
     LaunchedEffect(barFocused) { onFocusChanged(barFocused) }
+    // A control that leaves the bar while focused never reports "unfocused": drop its key, and tell the
+    // dashboard when the whole bar goes away.
+    LaunchedEffect(sections, menuOpen) {
+        val live = sections.map { it.section.name } + listOf("search", "settings", "avatar") +
+            (if (menuOpen) List(5) { "menu$it" } else emptyList())
+        focusedKeys.keys.retainAll(live.toSet())
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { onFocusChanged(false) } }
+    // The dashboard's "menu" requesters must always sit on a composed tab: the active one, or the first
+    // tab when the active section has none (a section hidden in Settings).
+    val tabs = sections.filter { it.section != ContentSection.SETTINGS }
+    val activeHasTab = searchOpen || activeSection == ContentSection.SETTINGS || tabs.any { it.section == activeSection }
     val track: (String) -> Modifier = { key -> Modifier.onFocusChanged { focusedKeys[key] = it.isFocused } }
     val menuRows = remember { List(5) { FocusRequester() } }
     var menuIndex by remember { mutableStateOf(0) }
@@ -131,13 +143,14 @@ fun AppleTabBar(
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            sections.filter { it.section != ContentSection.SETTINGS }.forEach { item ->
+            tabs.forEachIndexed { index, item ->
                 val active = item.section == activeSection && !searchOpen
+                val holdsMenuFocus = active || (!activeHasTab && index == 0)
                 AppleTab(
                     label    = stringResource(item.section.titleRes),
                     selected = active,
                     onClick  = { onSelect(item.section) },
-                    modifier = downToContent.then(track(item.section.name)).then(if (active) activeTabModifier else Modifier)
+                    modifier = downToContent.then(track(item.section.name)).then(if (holdsMenuFocus) activeTabModifier else Modifier)
                 )
             }
             AppleTab(

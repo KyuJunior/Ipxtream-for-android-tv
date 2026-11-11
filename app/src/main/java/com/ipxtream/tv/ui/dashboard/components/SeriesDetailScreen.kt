@@ -101,8 +101,9 @@ fun SeriesDetailScreen(
     val seasonsShown = !isLoadingSeriesInfo && seasons.isNotEmpty()
     // Apple: episodes are one horizontal shelf; its return requester follows the first visible card.
     val apple = isAppleDesign
-    val episodeRowState = rememberLazyListState()
-    val episodeAnchor by remember {
+    // One scroll state per season: a new season starts at its first episode.
+    val episodeRowState = androidx.compose.runtime.key(selectedSeason?.seasonNumber) { rememberLazyListState() }
+    val episodeAnchor by remember(episodeRowState) {
         derivedStateOf { episodeRowState.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0 }
     }
 
@@ -375,7 +376,7 @@ fun SeriesDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(20.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
-                        itemsIndexed(currentEpisodes, key = { _, e -> e.id }) { index, episode ->
+                        itemsIndexed(currentEpisodes, key = { i, e -> "${e.id}_$i" }) { index, episode ->
                             EpisodeCard(
                                 episode = episode,
                                 onPlay = {

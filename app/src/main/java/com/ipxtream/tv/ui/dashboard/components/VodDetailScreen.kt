@@ -25,6 +25,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.ipxtream.tv.ui.theme.appleGlass
 import com.ipxtream.tv.ui.theme.glassSource
+import com.ipxtream.tv.ui.theme.touchShield
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -124,6 +127,11 @@ fun VodDetailScreen(
     // DashboardActivity closes details on Back before Compose sees the key; it lets Back through while this is set.
     androidx.compose.runtime.SideEffect { AppleInfoSheet.open = showInfo }
     androidx.compose.runtime.DisposableEffect(Unit) { onDispose { AppleInfoSheet.open = false } }
+    // Gesture Back on phones: the sheet closes first (registered after the page's own handler, so it wins).
+    BackHandler(enabled = showInfo && !isPlayerOpen) {
+        showInfo = false
+        runCatching { playButtonFocus.requestFocus() }
+    }
     val badgesRow: @Composable () -> Unit = {
                 // 1. Metadata Badges Row
                 Row(
@@ -405,7 +413,8 @@ fun VodDetailScreen(
     ) {
         // Apple: the page is recorded so the Info sheet's glass can bend and blur it (LiquidGlass.kt).
         val detailsBackdrop = if (apple && !com.ipxtream.tv.ui.theme.LocalReducedEffects.current) com.ipxtream.tv.ui.theme.rememberGlassBackdrop() else null
-        Box(Modifier.fillMaxSize().then(Modifier.glassSource(detailsBackdrop))) {
+        // While the sheet is open nothing under it takes focus (D-Pad) or taps (touchShield on the sheet).
+        Box(Modifier.fillMaxSize().focusProperties { if (showInfo) canFocus = false }.glassSource(detailsBackdrop)) {
         // ─── High-Res Cinematic Backdrop Fanart ───────────────────────────────
         AsyncImage(
             model              = backdropUrl,
@@ -533,7 +542,7 @@ fun VodDetailScreen(
 
         // Apple: cast, director and the full synopsis in a glass sheet (Info button); Back closes it.
         if (apple && showInfo) androidx.compose.runtime.CompositionLocalProvider(com.ipxtream.tv.ui.theme.LocalGlassBackdrop provides detailsBackdrop) {
-            Box(Modifier.fillMaxSize().background(com.ipxtream.tv.ui.theme.AppleSheetDim), contentAlignment = Alignment.CenterEnd) {
+            Box(Modifier.fillMaxSize().touchShield().background(com.ipxtream.tv.ui.theme.AppleSheetDim), contentAlignment = Alignment.CenterEnd) {
                 Column(
                     modifier = Modifier
                         .padding(32.dp)
@@ -543,22 +552,25 @@ fun VodDetailScreen(
                         .padding(36.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        text     = bidi(title),
-                        style    = IpxTypography.HeadlineMedium,
-                        color    = TextPrimary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text  = plot ?: stringResource(R.string.no_synopsis),
-                        style = IpxTypography.BodyLarge,
-                        color = TextSecondary,
-                        maxLines = 10,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    creditsBlock()
-                    Spacer(Modifier.weight(1f))
+                    // The text scrolls (drag on phones) so Close always keeps its place on short screens.
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text     = bidi(title),
+                            style    = IpxTypography.HeadlineMedium,
+                            color    = TextPrimary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text  = plot ?: stringResource(R.string.no_synopsis),
+                            style = IpxTypography.BodyLarge,
+                            color = TextSecondary
+                        )
+                        creditsBlock()
+                    }
                     VodActionButton(
                         onClick   = { showInfo = false; runCatching { playButtonFocus.requestFocus() } },
                         icon      = Icons.AutoMirrored.Filled.ArrowBack,
