@@ -115,6 +115,11 @@ class LoginActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        com.ipxtream.tv.data.api.AppGate.enforce(this)
+    }
+
     // Phones and tablets (Play build): taps reach the TV controls, which only react to keys.
     private val touchBridge by lazy { com.ipxtream.tv.ui.theme.TouchBridge(this) }
 

@@ -61,6 +61,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - **Grids:** use `ui/dashboard/components/PosterGrid` for any poster/channel grid (no container focus, real
   column/row for the side-menu/Up jumps, focus returns to the last opened item). Player state is collected inside
   `ui/player/PlayerHost`; the dashboard only sees `PlaybackSummary` (changes per title, not per second).
+- **Remote switch (`data/api/AppGate.kt`):** `docs/app-config.json` (GitHub Pages, per flavor: `min_version`, `disabled`,
+  `message`) is read on every Login/Dashboard start (at most hourly). Older than `min_version` or `disabled` → `ui/gate/BlockedActivity`
+  replaces the task. No successful read for 1 day also blocks. Edit only that JSON to stop or force-update installs.
 - **Updates:** the startup check runs 30 s after launch and shows a banner; the dialog appears only for a check
   the user starts. Downloads go to `cacheDir/updates/` and must match this app's package and signing key.
 - **TV focus gotcha:** Lazy grids/rows holding focusable cards need `focusProperties { canFocus = false }` on the
@@ -840,3 +843,15 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Status: done. Owner's TV (Play debug preview, demo, uninstalled afterwards): a stored "APPLE" opens in Glass; Search in Movies filters the grid; Info sheet opened from a search keeps focus on Close and Back closes only the sheet. Frame times on Home, debug build: lens on, GPU median 17 ms (99th 24); Smooth, 7 ms (99th 14); the lens was not made cheaper. Not checked: series page (demo has none), phone gestures/taps, the bar sliding over Home art, hidden-section fallback on screen.
 - For the other agent: Codex's review entry above is its own; its Gradle run was blocked, mine passed.
 
+
+### 2026-11-24 | codex
+- Did: Reviewed staged, unstaged and untracked changes for the remote app gate; no production code changed and no fixes or commits made.
+- Files: AGENTS.md (review log only).
+- Status: done. Traced startup, coroutine cancellation, retry state and update downloads. Gradle tests could not run because the sandbox cannot create the external wrapper lock directory; existing AppGateTest reports show four passing tests per flavor. Device UI not tested.
+- For the other agent: Graph query and Obsidian vault used; no refresh needed because no code changed. Findings returned to the owner.
+
+### 2026-11-24 | claude
+- Did: Remote switch (owner request: be able to stop the app everywhere, or allow only updated versions). `AppGate` reads `docs/app-config.json` from GitHub Pages in Login/Dashboard `onStart` (throttled to 1 h, a `Mutex` so the Dashboard waits for Login's fetch). Per flavor: `min_version` (versions older → "Update required" with Download (GitHub updater) / Open in Google Play), `disabled` (+ `message`, shown instead of the default text). If the file can't be read, the last saved rule applies; after 1 day without a successful read (from the last success or first launch) the app stops with Try Again. `BlockedActivity` re-checks on Try Again and shows the new reason. Privacy texts (in-app both flavors + `docs/privacy/`) list the file. Codex reviewed it: 3 findings (check cancelled by the Login→Dashboard switch, Try Again ignoring a changed reason, double Download), all fixed.
+- Files: data/api/AppGate.kt, ui/gate/BlockedActivity.kt, ui/login/LoginActivity.kt, ui/dashboard/DashboardActivity.kt, AndroidManifest.xml, res/values*/strings.xml, src/play/res/values*/strings.xml, docs/app-config.json, docs/privacy/index.html, app/src/test/.../AppGateTest.kt, AGENTS.md
+- Status: done, not pushed. CI command passes (AppGateTest 4/4 both flavors). Not checked on a device (none connected): the block screen, its buttons and focus. Installs before this version (Play 2.0.42, GitHub ≤ 2.0.47) can't be stopped.
+- For the other agent: keep `docs/app-config.json` valid JSON with `min_version` empty unless the owner asks; a typo there falls back to the cached rule, a wrong `min_version` blocks everyone.

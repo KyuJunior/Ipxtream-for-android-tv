@@ -74,6 +74,11 @@
              (common on TV when switching HDMI sources).
         -->
         <activity
+            android:name=".ui.gate.BlockedActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <activity
             android:name=".ui.dashboard.DashboardActivity"
             android:exported="false"
             android:screenOrientation="landscape"

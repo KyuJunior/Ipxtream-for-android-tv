@@ -63,6 +63,11 @@ class DashboardActivity : ComponentActivity() {
      */
     private val playerViewModel: PlayerViewModel by viewModels()
 
+    override fun onStart() {
+        super.onStart()
+        com.ipxtream.tv.data.api.AppGate.enforce(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
