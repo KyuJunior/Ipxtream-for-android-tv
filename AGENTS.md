@@ -855,3 +855,9 @@ Both agents MUST read this whole file at the start of every task and append to t
 - Files: data/api/AppGate.kt, ui/gate/BlockedActivity.kt, ui/login/LoginActivity.kt, ui/dashboard/DashboardActivity.kt, AndroidManifest.xml, res/values*/strings.xml, src/play/res/values*/strings.xml, docs/app-config.json, docs/privacy/index.html, app/src/test/.../AppGateTest.kt, AGENTS.md
 - Status: done, not pushed. CI command passes (AppGateTest 4/4 both flavors). Not checked on a device (none connected): the block screen, its buttons and focus. Installs before this version (Play 2.0.42, GitHub ≤ 2.0.47) can't be stopped.
 - For the other agent: keep `docs/app-config.json` valid JSON with `min_version` empty unless the owner asks; a typo there falls back to the cached rule, a wrong `min_version` blocks everyone.
+
+### 2026-11-24 | claude
+- Did: Published the remote switch. GitHub release v2.0.48 by CI. Play bundle 2.0.48 (code 122) built by `play.yml` (upload key C9:4A…D8:B1), added to a Production release (full rollout, en-GB notes) and sent for Google's review. Play's quick checks flagged `android.hardware.screen.landscape` as a required feature (from the landscape lock on our activities, not new; supported-device counts unchanged); ignored as "already planned".
+- Files: AGENTS.md
+- Status: in Google's review; temporary upload branch deleted. Production 2.0.42 stays live until then.
+- For the other agent: to clear that warning, add `<uses-feature android:name="android.hardware.screen.landscape" android:required="false" />` to the main manifest in a later release.
